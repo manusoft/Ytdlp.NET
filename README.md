@@ -43,12 +43,13 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ---
 
-# 🚀 New in v3.0
+# 🚀 New in v3.1
 
 Major redesign for reliability and modern .NET usage.
 
 ### Highlights
 
+* Improved UpdateAsync with specific version support
 * Immutable **fluent builder API**
 * `IAsyncDisposable` implemented
 * Thread‑safe usage

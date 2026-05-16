@@ -1380,27 +1380,31 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Updates the underlying yt-dlp binary to the latest version on the specified release channel.
     /// </summary>
     /// <param name="channel">The release channel to pull updates from (Master, Nightly, Stable.).</param>
+    /// <param name="specificVersion">The specific version to update to. e.g., "2026.03.17" or "latest"</param>
     /// <param name="ct">A <see cref="CancellationToken"/> to abort the download and installation process.</param>
     /// <returns>
     /// A <see cref="string"/> containing the update log or the new version number; 
     /// returns an empty string or throws if the update process fails.
     /// </returns>
-    public async Task<string> UpdateAsync(UpdateChannel channel = UpdateChannel.Stable, CancellationToken ct = default)
+    public async Task<string> UpdateAsync(UpdateChannel channel = UpdateChannel.Stable, string? specificVersion = null, CancellationToken ct = default)
     {
-        var output = await Probe().RunAsync($"--update-to {channel.ToString().ToLowerInvariant()}", ct);
-        if (output is null)
+        string target = channel.ToString().ToLowerInvariant();
+
+        if(!string.IsNullOrWhiteSpace(specificVersion))
+            target += $"@{specificVersion.ToLowerInvariant()}";
+
+        var output = await Probe().RunAsync($"--update-to {target}", ct);
+        if (string.IsNullOrWhiteSpace(output))
             return string.Empty;
 
         // Analyze output for professional messages
         if (output.Contains("Updated", StringComparison.OrdinalIgnoreCase))
-            return "yt-dlp was successfully updated to the latest version.";
+            return $"yt-dlp was successfully updated to the latest {target}.";
 
         if (output.Contains("up to date", StringComparison.OrdinalIgnoreCase))
-            return "yt-dlp is already up to date.";
+            return $"yt-dlp is already up to date on {target}.";
 
-        return "yt-dlp update check completed (no changes detected).";
-
-
+        return output;
     }
 
     /// <summary>
