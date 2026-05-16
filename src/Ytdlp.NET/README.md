@@ -2,7 +2,7 @@
 
 # Ytdlp.NET
 
-> **v3.0**
+> **v3.1**
 
 **Ytdlp.NET** is a **fluent, strongly-typed .NET wrapper** around [`yt-dlp`](https://github.com/yt-dlp/yt-dlp). It provides a fully **async, event-driven interface** for downloading videos, extracting audio, retrieving metadata, and post-processing media from YouTube and hundreds of other platforms.
 
@@ -52,8 +52,9 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
 ---
 
-## 🚀 New in v3.0
+## 🚀 New in v3.1
 
+* Improved UpdateAsync with specific version support.
 * Full support for `IAsyncDisposable` with `await using`.
 * Immutable builder (`WithXxx`) for safe instance reuse.
 * Updated examples for event-driven downloads.
@@ -65,7 +66,7 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
 ## 🛠 Methods
 * `VersionAsync(CancellationToken ct)`
-* `UpdateAsync(UpdateChannel channel, CancellationToken ct)`
+* `UpdateAsync(UpdateChannel channel, string specificVersion, CancellationToken ct)`
 * `ExtractorsAsync(CancellationToken ct, int bufferKb)`
 * `GetMetadataAsync(string url, CancellationToken ct, int bufferKb)`
 * `GetMetadataRawAsync(string url, CancellationToken ct, int bufferKb)`
