@@ -316,7 +316,7 @@ public class FragmentMetadata
 public class Entry
 {
     [JsonPropertyName("type")]
-    public string? Type { get; set; }
+    public string? Type { get; set; } // "playlist", "season", "video"
 
     [JsonPropertyName("id")]
     public string? Id { get; set; }
@@ -354,10 +354,10 @@ public class Entry
     [JsonPropertyName("thumbnails")]
     public List<ThumbnailMetadata>? Thumbnails { get; set; }
 
-    /// <summary>
-    /// How many users have watched the video on the platform
-    /// </summary>
     [JsonPropertyName("view_count")]
     public float? ViewCount { get; set; }
+
+    [JsonPropertyName("entries")]
+    public List<Entry>? Entries { get; set; }   // deep playlist / season / episode support
 
 }
