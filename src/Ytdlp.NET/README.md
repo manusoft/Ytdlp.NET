@@ -38,6 +38,66 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
 ---
 
+## 🌲 Deep Metadata Support
+
+Ytdlp.NET now supports **deep playlist extraction** with full hierarchical structure support (seasons → episodes → nested playlists).
+
+### 🔹 Flat Mode (default - no change)
+
+```csharp
+var metadata = await ytdlp.GetMetadataAsync(url);
+```
+
+* Fast
+* Returns only top-level items
+* Fully backward compatible
+
+---
+
+### 🔹 Deep Mode (NEW)
+
+```csharp
+var metadata = await ytdlp.GetDeepMetadataAsync(url);
+```
+
+* Returns full hierarchy
+* Supports playlists → seasons → episodes
+* Slightly slower but complete data
+
+---
+
+## 🔁 Traverse Nested Entries
+
+Use this helper to read all items in deep mode:
+
+```csharp
+foreach (var root in metadata.Entries ?? [])
+{
+    foreach (var item in root.Traverse())
+    {
+        Console.WriteLine(item.Title);
+    }
+}
+```
+
+---
+
+## 🚀 New in v3.2
+
+* New 'Traverse()' method for easy iteration over nested playlist entries.
+* New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
+* New `GetDeepMetadataRawAsync()` for raw JSON metadata.
+* Improved `Metadata` model with more fields and better parsing.
+* Improved UpdateAsync with specific version support.
+* Full support for `IAsyncDisposable` with `await using`.
+* Immutable builder (`WithXxx`) for safe instance reuse.
+* Updated examples for event-driven downloads.
+* Simplified metadata fetching & format selection.
+* High-performance probe methods with optional buffer size.
+* Improved cancellation & error handling.
+
+---
+
 ## ✨ Features
 
 * **Fluent API**: Build yt-dlp commands with `WithXxx()` methods.
@@ -49,21 +109,6 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 * **Output Templates**: Flexible naming with yt-dlp placeholders.
 * **Custom Command Injection**: Add extra yt-dlp options safely.
 * **Cross-platform**: Windows, macOS, Linux (where yt-dlp is supported).
-
----
-
-## 🚀 New in v3.2
-
-* New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
-* New `GetDeepMetadataRawAsync()` for raw JSON metadata.
-* Improved `Metadata` model with more fields and better parsing.
-* Improved UpdateAsync with specific version support.
-* Full support for `IAsyncDisposable` with `await using`.
-* Immutable builder (`WithXxx`) for safe instance reuse.
-* Updated examples for event-driven downloads.
-* Simplified metadata fetching & format selection.
-* High-performance probe methods with optional buffer size.
-* Improved cancellation & error handling.
 
 ---
 

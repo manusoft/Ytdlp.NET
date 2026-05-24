@@ -106,4 +106,3 @@ internal static class ProcessExtensions
         return process.ExitCode;
     }
 }
-
