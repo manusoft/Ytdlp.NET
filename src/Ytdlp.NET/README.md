@@ -2,7 +2,7 @@
 
 # Ytdlp.NET
 
-> **v3.1**
+> **v3.2**
 
 **Ytdlp.NET** is a **fluent, strongly-typed .NET wrapper** around [`yt-dlp`](https://github.com/yt-dlp/yt-dlp). It provides a fully **async, event-driven interface** for downloading videos, extracting audio, retrieving metadata, and post-processing media from YouTube and hundreds of other platforms.
 
@@ -52,8 +52,11 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
 ---
 
-## 🚀 New in v3.1
+## 🚀 New in v3.2
 
+* New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
+* New `GetDeepMetadataRawAsync()` for raw JSON metadata.
+* Improved `Metadata` model with more fields and better parsing.
 * Improved UpdateAsync with specific version support.
 * Full support for `IAsyncDisposable` with `await using`.
 * Immutable builder (`WithXxx`) for safe instance reuse.
@@ -70,6 +73,8 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 * `ExtractorsAsync(CancellationToken ct, int bufferKb)`
 * `GetMetadataAsync(string url, CancellationToken ct, int bufferKb)`
 * `GetMetadataRawAsync(string url, CancellationToken ct, int bufferKb)`
+* `GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
+* `GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
 * `GetFormatsAsync(string url, CancellationToken ct, int bufferKb)`
 * `GetMetadataLiteAsync(string url, CancellationToken ct, int bufferKb)`
 * `GetMetadataLiteAsync(string url, IEnumerable<string> fields, CancellationToken ct, int bufferKb)`
@@ -77,7 +82,6 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 * `GetBestVideoFormatIdAsync(string url, int maxHeight, CancellationToken ct, int bufferKb)`
 * `ExecuteAsync(string url, CancellationToken ct)`
 * `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency, CancellationToken ct)`
-
 
 
 ## 🔧 Thread Safety & Disposal

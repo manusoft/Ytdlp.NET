@@ -1390,7 +1390,7 @@ public sealed class Ytdlp : IAsyncDisposable
     {
         string target = channel.ToString().ToLowerInvariant();
 
-        if(!string.IsNullOrWhiteSpace(specificVersion))
+        if (!string.IsNullOrWhiteSpace(specificVersion))
             target += $"@{specificVersion.ToLowerInvariant()}";
 
         var output = await Probe().RunAsync($"--update-to {target}", ct);
@@ -1460,32 +1460,15 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <exception cref="ArgumentException"></exception>
     public async Task<Metadata?> GetMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
-        if (string.IsNullOrWhiteSpace(url))
-            throw new ArgumentException("URL cannot be empty.", nameof(url));
+        var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            _logger.Log(LogType.Warning, "Empty JSON output.");
+            return null;
+        }
 
         try
         {
-            var arguments =
-                $"--dump-single-json " +
-                $"--simulate " +
-                $"--skip-download " +
-                $"--flat-playlist " +
-                $"--lazy-playlist " +
-                $"--quiet " +
-                $"--no-warnings " +
-                $"{Quote(url)}";
-
-            if (ct.IsCancellationRequested)
-                Debug.WriteLine("Cancellation requested before starting the process.");
-
-            var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                _logger.Log(LogType.Warning, "Empty JSON output.");
-                return null;
-            }
-
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -1493,16 +1476,11 @@ public sealed class Ytdlp : IAsyncDisposable
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
 
-            return JsonSerializer.Deserialize<Metadata>(json, options);
+            var metadata = JsonSerializer.Deserialize<Metadata>(json, options);
+            return metadata;
         }
-        catch (OperationCanceledException)
+        catch (Exception)
         {
-            _logger.Log(LogType.Warning, "Metadata fetch cancelled.");
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.Log(LogType.Warning, $"Metadata fetch failed: {ex.Message}");
             return null;
         }
     }
@@ -1513,13 +1491,85 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The source URL (video or playlist) to probe.</param>
     /// <param name="ct">The <see cref="CancellationToken"/> to abort the process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size for the process output stream (default 128KB).</param>
+    /// <param name="bufferKb">The buffer size for the process output stream (default 256KB).</param>
     /// <returns>
-    /// A raw JSON <see cref="object"/> containing the parsed metadata output; 
+    /// A raw JSON <see cref="string"/> containing the parsed metadata output; 
     /// returns <see langword="null"/> if the process fails, returns empty, or is cancelled.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<object?> GetMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<string?> GetMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    {
+       var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            _logger.Log(LogType.Warning, "Empty JSON output.");
+            return null;
+        }
+        return json;
+    }
+
+
+    /// <summary>
+    /// Gets deep metadata for the specified URL by requesting non-flat JSON and deserializing it into a Metadata object.
+    /// </summary>
+    /// <remarks>Requests non-flat JSON via GetMetadataInternalAsync. Logs a warning when the JSON output is
+    /// empty. Deserialization uses case-insensitive property names and allows numeric values provided as strings; any
+    /// deserialization error results in a null return.</remarks>
+    /// <param name="url">The resource URL to retrieve metadata from.</param>
+    /// <param name="ct">Cancellation token to cancel the operation.</param>
+    /// <param name="tuneProcess">True to enable process tuning for metadata retrieval; otherwise false.</param>
+    /// <param name="bufferKb">Read buffer size in kilobytes used when retrieving metadata.</param>
+    /// <returns>A Metadata instance if JSON is present and deserialization succeeds; otherwise null.</returns>
+    public async Task<Metadata?> GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    {
+        var json = await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            _logger.Log(LogType.Warning, "Empty JSON output.");
+            return null;
+        }
+
+        try
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+            var metadata = JsonSerializer.Deserialize<Metadata>(json, options);
+            return metadata;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously retrieves deep (non-flattened) metadata for the specified URL as raw JSON.
+    /// </summary>
+    /// <remarks>Invokes GetMetadataInternalAsync with flat set to false. Logs a warning when the returned
+    /// JSON is null or consists only of whitespace.</remarks>
+    /// <param name="url">The URL from which to retrieve metadata.</param>
+    /// <param name="ct">A cancellation token to cancel the asynchronous operation.</param>
+    /// <param name="tuneProcess">Whether to apply process tuning for the metadata retrieval.</param>
+    /// <param name="bufferKb">Read buffer size in kilobytes used during metadata retrieval.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result is a JSON string containing deep
+    /// (non-flattened) metadata, or null if the output is empty.</returns>
+    public async Task<string?> GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    {
+        var json = await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            _logger.Log(LogType.Warning, "Empty JSON output.");
+            return null;
+        }
+        return json;
+    }
+
+    private async Task<string?> GetMetadataInternalAsync(string url, bool flat, CancellationToken ct, bool tuneProcess, int bufferKb)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL cannot be empty.", nameof(url));
@@ -1527,22 +1577,19 @@ public sealed class Ytdlp : IAsyncDisposable
         try
         {
             var arguments =
-                $"--dump-single-json " +
-                $"--simulate " +
-                $"--skip-download " +
-                $"--flat-playlist " +
-                $"--lazy-playlist " +
-                $"--quiet " +
-                $"--no-warnings " +
+                "--dump-single-json " +
+                "--simulate " +
+                "--skip-download " +
+                (flat ? "--flat-playlist " : "") +   // ✅ KEY SWITCH
+                "--lazy-playlist " +
+                "--quiet " +
+                "--no-warnings " +
                 $"{Quote(url)}";
 
-            var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
+            if (ct.IsCancellationRequested)
+                Debug.WriteLine("Cancellation requested before starting process.");
 
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                _logger.Log(LogType.Warning, "Empty JSON output.");
-                return null;
-            }
+            var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);                  
 
             return json;
         }
@@ -1822,7 +1869,7 @@ public sealed class Ytdlp : IAsyncDisposable
 
         // Forward other events        
         void OnPostProcessingStartHandler(object? s, string msg) => OnPostProcessingStart?.Invoke(this, msg);
-        void OnPostProcessingCompleteHandler(object? s, string msg) => OnPostProcessingComplete?.Invoke(this, msg);       
+        void OnPostProcessingCompleteHandler(object? s, string msg) => OnPostProcessingComplete?.Invoke(this, msg);
         progressParser.OnPostProcessingStart += OnPostProcessingStartHandler;
         progressParser.OnPostProcessingComplete += OnPostProcessingCompleteHandler;
 
@@ -1843,7 +1890,7 @@ public sealed class Ytdlp : IAsyncDisposable
             // Unsubscribe immediately after execution to prevent memory leaks
             progressParser.OnProgressDownload -= OnProgressDownloadHandler;
             progressParser.OnProgressMessage -= OnProgressMessageHandler;
-            progressParser.OnCompleteDownload -= OnCompleteDownloadHanlder;            
+            progressParser.OnCompleteDownload -= OnCompleteDownloadHanlder;
             progressParser.OnPostProcessingStart -= OnPostProcessingStartHandler;
             progressParser.OnPostProcessingComplete -= OnPostProcessingCompleteHandler;
             download.OnOutput -= OnOutputMessageHandler;
