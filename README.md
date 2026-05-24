@@ -43,9 +43,13 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ---
 
-# 🚀 New in v3.1
+# 🚀 New in v3.2
 
-Major redesign for reliability and modern .NET usage.
+* New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
+* New `GetDeepMetadataRawAsync()` for raw JSON metadata.
+* Improved `Metadata` model with more fields and better parsing.
+
+---
 
 ### Highlights
 
@@ -205,6 +209,26 @@ await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 | `OnCommandCompleted`       | Process finished         |
 
 ---
+
+
+## 🛠 Methods
+* `VersionAsync(CancellationToken ct)`
+* `UpdateAsync(UpdateChannel channel, string specificVersion, CancellationToken ct)`
+* `ExtractorsAsync(CancellationToken ct, int bufferKb)`
+* `GetMetadataAsync(string url, CancellationToken ct, int bufferKb)`
+* `GetMetadataRawAsync(string url, CancellationToken ct, int bufferKb)`
+* `GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
+* `GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
+* `GetFormatsAsync(string url, CancellationToken ct, int bufferKb)`
+* `GetMetadataLiteAsync(string url, CancellationToken ct, int bufferKb)`
+* `GetMetadataLiteAsync(string url, IEnumerable<string> fields, CancellationToken ct, int bufferKb)`
+* `GetBestAudioFormatIdAsync(string url, CancellationToken ct, int bufferKb)`
+* `GetBestVideoFormatIdAsync(string url, int maxHeight, CancellationToken ct, int bufferKb)`
+* `ExecuteAsync(string url, CancellationToken ct)`
+* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency, CancellationToken ct)`
+
+---
+
 
 # 🔧 Fluent API Methods
 
