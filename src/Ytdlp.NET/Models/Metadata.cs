@@ -331,7 +331,7 @@ public class Entry
     public string? Description { get; set; }
 
     [JsonPropertyName("duration")]
-    public float Duration { get; set; }
+    public float? Duration { get; set; }
 
     [JsonPropertyName("channel_id")]
     public string? ChannelId { get; set; } 
