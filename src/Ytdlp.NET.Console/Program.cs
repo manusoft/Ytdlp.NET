@@ -12,7 +12,7 @@ internal class Program
         Console.InputEncoding = Encoding.UTF8;
 
         Console.Clear();
-        Console.WriteLine("Ytdlp.NET Wrapper v3.0 Demo Console App");
+        Console.WriteLine("Ytdlp.NET Wrapper v3.2 Demo Console App");
         Console.WriteLine("----------------------------------------");
 
         // Initialize the wrapper (assuming yt-dlp is in PATH or specify path)
@@ -20,15 +20,18 @@ internal class Program
             .WithFFmpegLocation("tools");
 
         // Run all demos/tests sequentially
-        //await TestGetVersionAsync(baseYtdlp);
-        //await TestUpdateAsync(baseYtdlp);
+        await TestGetVersionAsync(baseYtdlp);
+        await TestUpdateAsync(baseYtdlp);
 
         //await TestGetFormatsAsync(baseYtdlp);
-        //await TestGetMetadataAsync(baseYtdlp);
+        await TestGetMetadataAsync(baseYtdlp);
+        await TestGetMetedataRawAsync(baseYtdlp);
+        await TestGetDeepMetadataAsync(baseYtdlp);
+        await TestGetDeepMetadataRawAsync(baseYtdlp);
         //await TestGetLiteMetadataAsync(baseYtdlp);
         //await TestGetTitleAsync(baseYtdlp);
 
-        await TestDownloadVideoAsync(baseYtdlp);
+        //await TestDownloadVideoAsync(baseYtdlp);
         //await TestDownloadAudioAsync(baseYtdlp);
         //await TestBatchDownloadAsync(baseYtdlp);
         //await TestSponsorBlockAsync(baseYtdlp);
@@ -60,14 +63,14 @@ internal class Program
 
     private static async Task TestGetVersionAsync(Ytdlp ytdlp)
     {
-        Console.WriteLine("\nTest 1: Getting yt-dlp version...");
+        Console.WriteLine("\nTest 1:Getting yt-dlp version...");
         var version = await ytdlp.VersionAsync();
         Console.WriteLine($"Version: {version}");
     }
 
     private static async Task TestUpdateAsync(Ytdlp ytdlp)
     {
-        Console.WriteLine("\nTest 2: Checking yt-dlp update...");
+        Console.WriteLine("\nTest 2:Checking yt-dlp update...");
         var version = await ytdlp.UpdateAsync(UpdateChannel.Stable);
         Console.WriteLine($"Status: {version}");
     }
@@ -76,7 +79,7 @@ internal class Program
     {
         var stopwatch = Stopwatch.StartNew();
 
-        Console.WriteLine("\nTest 3: Fetching available formats...");
+        Console.WriteLine("\nTest 3:Fetching available formats...");
         var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
         var formats = await ytdlp.GetFormatsAsync(url);
 
@@ -104,7 +107,7 @@ internal class Program
     {
         var stopwatch = Stopwatch.StartNew();
 
-        Console.WriteLine("\nTest 4: Fetching detailed metedata...");
+        Console.WriteLine("\nTest 4:Fetching detailed metedata...");
         var token = new CancellationTokenSource().Token; // In real use, you might want to cancel if it takes too long
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token, timeoutCts.Token);
@@ -136,10 +139,63 @@ internal class Program
         }
     }
 
+    private static async Task TestGetMetedataRawAsync(Ytdlp ytdlp)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        Console.WriteLine("\nTest 5: Fetching raw metedata...");
+        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
+        var rawJson = await ytdlp.GetMetadataRawAsync(url);
+        stopwatch.Stop(); // stop timer
+        Console.WriteLine($"Raw metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
+        if (!string.IsNullOrEmpty(rawJson))
+        {
+            Console.WriteLine($"Raw JSON length: {rawJson.Length} characters");
+            // Optionally print the raw JSON (commented out for brevity)
+            // Console.WriteLine(rawJson);
+        }
+    }
+
+    private static async Task TestGetDeepMetadataAsync(Ytdlp ytdlp)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        Console.WriteLine("\nTest 6: Fetching deep metedata...");
+        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
+        var metadata = await ytdlp.GetDeepMetadataAsync(url);
+        stopwatch.Stop(); // stop timer
+        Console.WriteLine($"Deep metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
+        if (metadata != null)
+        {
+            Console.WriteLine($"Type: {metadata.Type}");
+            Console.WriteLine($"ID: {metadata.Id}");
+            Console.WriteLine($"Title: {metadata.Title}");
+            Console.WriteLine($"Uploader: {metadata.Uploader}");
+            Console.WriteLine($"Upload Date: {metadata.UploadDate}");
+            Console.WriteLine($"View Count: {metadata.ViewCount}");
+            Console.WriteLine($"Like Count: {metadata.LikeCount}");
+            // And more fields as needed...
+        }
+    }
+
+    private static async Task TestGetDeepMetadataRawAsync(Ytdlp ytdlp)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        Console.WriteLine("\nTest 7: Fetching deep raw metedata...");
+        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
+        var rawJson = await ytdlp.GetDeepMetadataRawAsync(url);
+        stopwatch.Stop(); // stop timer
+        Console.WriteLine($"Deep raw metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
+        if (!string.IsNullOrEmpty(rawJson))
+        {
+            Console.WriteLine($"Deep Raw JSON length: {rawJson.Length} characters");
+            // Optionally print the raw JSON (commented out for brevity)
+            // Console.WriteLine(rawJson);
+        }
+    }
+
     private static async Task TestGetLiteMetadataAsync(Ytdlp ytdlp)
     {
         var stopwatch = Stopwatch.StartNew();
-        Console.WriteLine("\nTest 5: Fetching lite metedata...");
+        Console.WriteLine("\nTest 8: Fetching lite metedata...");
 
         var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
 
@@ -159,7 +215,7 @@ internal class Program
     // Test 6: Download a video with progress events
     private static async Task TestDownloadVideoAsync(Ytdlp ytdlpBase)
     {
-        Console.WriteLine("\nTest 6: Downloading a video...");
+        Console.WriteLine("\nTest 9: Downloading a video...");
         var url = "https://www.youtube.com/watch?v=2vTkipUlhik"; //"https://www.dailymotion.com/video/xa3ron2"; 
 
         var ytdlp = ytdlpBase
@@ -207,7 +263,7 @@ internal class Program
 
     private static async Task TestDownloadAudioAsync(Ytdlp ytdlpBase)
     {
-        Console.WriteLine("\nTest 7: Extracting audio...");
+        Console.WriteLine("\nTest 10: Extracting audio...");
         var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
 
         var ytdlp = ytdlpBase
@@ -221,7 +277,7 @@ internal class Program
     // Test 8: Batch download (concurrent)
     private static async Task TestBatchDownloadAsync(Ytdlp baseYtdlp)
     {
-        Console.WriteLine("\nTest 8: Batch download (3 concurrent)...");
+        Console.WriteLine("\nTest 11: Batch download (3 concurrent)...");
         var urls = new List<string>
             {
                 "https://www.youtube.com/watch?v=ZGnQH0LN_98",
@@ -239,7 +295,7 @@ internal class Program
     // Test 9: SponsorBlock removal
     private static async Task TestSponsorBlockAsync(Ytdlp ytdlpBase)
     {
-        Console.WriteLine("\nTest 9: Download with SponsorBlock removal...");
+        Console.WriteLine("\nTest 12: Download with SponsorBlock removal...");
         var url = "https://www.youtube.com/watch?v=oDSEGkT6J-0";
 
         var ytdlp = ytdlpBase
@@ -253,7 +309,7 @@ internal class Program
     // Test 10: Concurrent fragments (faster download)
     private static async Task TestConcurrentFragmentsAsync(Ytdlp ytdlpBase)
     {
-        Console.WriteLine("\nTest 10: Download with concurrent fragments...");
+        Console.WriteLine("\nTest 13: Download with concurrent fragments...");
         var url = "https://www.youtube.com/watch?v=oDSEGkT6J-0";
 
         var ytdlp = ytdlpBase
@@ -271,7 +327,7 @@ internal class Program
     // Test 11: Cancellation support
     private static async Task TestCancellationAsync(Ytdlp ytdlp)
     {
-        Console.WriteLine("\nTest 11: Testing cancellation (will cancel after 10 seconds)...");
+        Console.WriteLine("\nTest 14: Testing cancellation (will cancel after 10 seconds)...");
         var url = "https://www.youtube.com/watch?v=zGlwuHqGVIA";  // A longer video
 
         var cts = new CancellationTokenSource();
@@ -309,7 +365,7 @@ internal class Program
     // Test 12: Get Title Test
     private static async Task TestGetTitleAsync(Ytdlp ytdlp)
     {
-        Console.WriteLine("\nTest 12: Get Title Test");
+        Console.WriteLine("\nTest 15: Get Title Test");
         var url = "https://www.youtube.com/watch?v=zGlwuHqGVIA";
 
         try
