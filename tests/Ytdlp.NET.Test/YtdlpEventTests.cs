@@ -21,16 +21,25 @@ public class YtdlpEventTests : IDisposable
 
         // 2. Ensure the directory and a dummy file exist so ValidatePath passes
         Directory.CreateDirectory(toolsDir);
+
         if (!File.Exists(_fullFakePath))
         {
-            File.WriteAllText(_fullFakePath, "");
+            try
+            {
+                File.WriteAllText(_fullFakePath, "");
+            }
+            catch (IOException)
+            {
+                // If another parallel test class is writing to it right now, 
+                // ignore the error because the file is being taken care of.
+            }
         }
     }
 
     public void Dispose()
     {
         // Clean up the dummy file after all tests in this class finish
-        try { File.Delete(_fullFakePath); } catch { }
+        //try { File.Delete(_fullFakePath); } catch { }
     }
 
     [Fact]
