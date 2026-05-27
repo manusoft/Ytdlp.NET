@@ -6,6 +6,12 @@
 
 ![icon](https://github.com/user-attachments/assets/2147c398-4e0f-43e2-99cb-32b34be7dc2f)
 
+> **Ytdlp.NET** is a **fluent, strongly-typed .NET wrapper** around [`yt-dlp`](https://github.com/yt-dlp/yt-dlp). It provides a fully **async, event-driven interface** for downloading videos, extracting audio, retrieving metadata, and post-processing media from YouTube and hundreds of other platforms.
+
+The library exposes **event‑driven progress reporting**, **metadata probing**, and **safe command construction** while staying very close to the native `yt-dlp` functionality.
+
+---
+
 ### ClipMate - MAUI.NET App - [Download](https://apps.microsoft.com/detail/9NTP1DH4CQ4X?hl=en&gl=IN&ocid=pdpshare)
 
 <img width="986" height="693" alt="image" src="https://github.com/user-attachments/assets/39e09415-fa0c-4991-976f-8966e9c50c5b" />
@@ -17,14 +23,6 @@
 ![Screenshot 2025-01-23 153252](https://github.com/user-attachments/assets/1b977927-ea26-4220-bd41-9f64d6716058)
 
 [Download the latest App](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/gui-app.zip)
-
----
-
-# Ytdlp.NET
-
-**Ytdlp.NET** is a modern **.NET wrapper for `yt-dlp`** that provides a fluent, strongly‑typed API for downloading videos, extracting audio, fetching metadata, and monitoring progress.
-
-The library exposes **event‑driven progress reporting**, **metadata probing**, and **safe command construction** while staying very close to the native `yt-dlp` functionality.
 
 ---
 
@@ -47,6 +45,8 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 * New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
 * New `GetDeepMetadataRawAsync()` for raw JSON metadata.
+* New `Metadata.Flatten()` method to simplify nested metadata structures.
+* Improved progress download events for batch downloads with better tracking.
 * Improved `Metadata` model with more fields and better parsing.
 
 ---
