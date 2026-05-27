@@ -23,12 +23,25 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore Ytdlp.NET
+      # ── 1. Restore & Build ────────────────────────────────────────────
+      - name: Restore Library
         run: dotnet restore src/Ytdlp.NET/Ytdlp.NET.csproj
 
-      - name: Build Ytdlp.NET
-        run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release
+      - name: Restore Tests
+        run: dotnet restore tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj
 
+      - name: Build Library
+        run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --no-restore
+
+      - name: Build Tests
+        run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-restore
+        
+      # ── 2. Test Guard ─────────────────────────────────────────────────
+      - name: Run Unit Tests Guard
+        # If any unit tests fail here, the pipeline stops and won't publish!
+        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build
+
+      # ── 3. Pack & Ship ────────────────────────────────────────────────
       - name: Pack Ytdlp.NET
         run: dotnet pack src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --output ./nupkg
 
