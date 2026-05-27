@@ -27,10 +27,10 @@ jobs:
 
     # ── 2. Build both projects explicitly ─────────────────────────────
     - name: Build Library
-      run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release 
+      run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --no-restore
 
     - name: Build Tests
-      run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release
+      run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-restore
 
     # ── 3. Run Unit Tests explicitly ──────────────────────────────────
     - name: Run Unit Tests
