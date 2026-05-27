@@ -43,7 +43,6 @@ public class YtdlpIntegrationTests
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
         await using var ytdlp = CreateIntegrationClient();
-
         var version = await ytdlp.VersionAsync();
 
         version.Should().NotBeNullOrWhiteSpace();
