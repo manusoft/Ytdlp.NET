@@ -24,14 +24,14 @@ internal partial class Program
         await TestUpdateAsync(baseYtdlp);
 
         //await TestGetFormatsAsync(baseYtdlp);
-        //await TestGetMetadataAsync(baseYtdlp);
+        await TestGetMetadataAsync(baseYtdlp);
         //await TestGetMetedataRawAsync(baseYtdlp);
-        //await TestGetDeepMetadataAsync(baseYtdlp);
+        await TestGetDeepMetadataAsync(baseYtdlp);
         //await TestGetDeepMetadataRawAsync(baseYtdlp);
         //await TestGetLiteMetadataAsync(baseYtdlp);
         //await TestGetTitleAsync(baseYtdlp);
 
-        await TestDownloadVideoAsync(baseYtdlp);
+        //await TestDownloadVideoAsync(baseYtdlp);
         //await TestDownloadAudioAsync(baseYtdlp);
         // await TestBatchDownloadAsync(baseYtdlp);
         //await TestSponsorBlockAsync(baseYtdlp);
@@ -113,7 +113,7 @@ internal partial class Program
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token, timeoutCts.Token);
         var url1 = "https://www.youtube.com/watch?v=983bBbJx0Mk&list=RD983bBbJx0Mk&start_radio=1&pp=ygUFc29uZ3OgBwE%3D"; //playlist
         var url2 = "https://www.youtube.com/watch?v=ZGnQH0LN_98"; // video
-        var metadata = await ytdlp.GetMetadataAsync(url2, linkedCts.Token);
+        var metadata = await ytdlp.GetMetadataAsync(url1, linkedCts.Token);
         stopwatch.Stop(); // stop timer
 
         Console.WriteLine($"Detailed metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
@@ -137,6 +137,14 @@ internal partial class Program
             PrintFormats("All available formats", metadata.Formats);
             //PrintFormats("Selected / requested formats", metadata.RequestedFormats);
         }
+        else if(metadata.Type == "playlist" && metadata.Entries != null)
+        {
+            Console.WriteLine($"\nPlaylist contains {metadata.Entries.Count} entries. Showing first 3:");
+            foreach (var entry in metadata.Entries.Take(3))
+            {
+                Console.WriteLine($"  - {entry.Title} (ID: {entry.Id}, URL: {entry.WebpageUrl})");
+            }
+        }
     }
 
     private static async Task TestGetMetedataRawAsync(Ytdlp ytdlp)
@@ -159,8 +167,9 @@ internal partial class Program
     {
         var stopwatch = Stopwatch.StartNew();
         Console.WriteLine("\nTest 6: Fetching deep metedata...");
-        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
-        var metadata = await ytdlp.GetDeepMetadataAsync(url);
+        var url1 = "https://www.youtube.com/watch?v=983bBbJx0Mk&list=RD983bBbJx0Mk&start_radio=1&pp=ygUFc29uZ3OgBwE%3D"; //playlist
+        var url2 = "https://www.youtube.com/watch?v=ZGnQH0LN_98"; // video
+        var metadata = await ytdlp.GetDeepMetadataAsync(url2);
         stopwatch.Stop(); // stop timer
         Console.WriteLine($"Deep metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
         if (metadata != null)
@@ -173,6 +182,9 @@ internal partial class Program
             Console.WriteLine($"View Count: {metadata.ViewCount}");
             Console.WriteLine($"Like Count: {metadata.LikeCount}");
             // And more fields as needed...
+
+            if(metadata.Type == "playlist" && metadata.Entries != null)
+                Console.WriteLine($"Playlist contains {metadata.Entries.Count} entries");
         }
     }
 
