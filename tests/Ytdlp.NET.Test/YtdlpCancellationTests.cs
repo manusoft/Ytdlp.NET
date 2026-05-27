@@ -8,7 +8,7 @@ namespace ManuHub.Ytdlp.NET.Test;
 /// These tests do NOT require yt-dlp.exe to be installed — the cancellation
 /// should be observed before any process is started (or very quickly after).
 /// </summary>
-public class YtdlpCancellationTests : IDisposable
+public class YtdlpCancellationTests 
 {
     private readonly string _fullFakePath;
 
@@ -34,12 +34,6 @@ public class YtdlpCancellationTests : IDisposable
                 // ignore the error because the file is being taken care of.
             }
         }
-    }
-
-    public void Dispose()
-    {
-        // Clean up the dummy file after all tests in this class finish
-        //try { File.Delete(_fullFakePath); } catch { }
     }
 
     [Fact]
