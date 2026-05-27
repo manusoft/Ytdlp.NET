@@ -7,7 +7,7 @@ namespace ManuHub.Ytdlp.NET.Test;
 /// error, and that subscriptions on a shared base instance don't bleed into
 /// branched instances.
 /// </summary>
-public class YtdlpEventTests : IDisposable
+public class YtdlpEventTests 
 {
 
     private readonly string _fullFakePath;
@@ -36,11 +36,6 @@ public class YtdlpEventTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        // Clean up the dummy file after all tests in this class finish
-        //try { File.Delete(_fullFakePath); } catch { }
-    }
 
     [Fact]
     public void OnProgressDownload_CanSubscribe()

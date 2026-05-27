@@ -7,7 +7,7 @@ namespace ManuHub.Ytdlp.NET.Test;
 /// Verifies that all documented formats are present so a rename or removal
 /// is caught immediately.
 /// </summary>
-public class AudioFormatTests : IDisposable
+public class AudioFormatTests 
 {
     private readonly string _fullFakePath;
 
@@ -33,12 +33,6 @@ public class AudioFormatTests : IDisposable
                 // ignore the error because the file is being taken care of.
             }
         }
-    }
-
-    public void Dispose()
-    {
-        // Clean up the dummy file after all tests in this class finish
-        //try { File.Delete(_fullFakePath); } catch { }
     }
 
     [Theory]

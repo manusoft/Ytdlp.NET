@@ -9,37 +9,13 @@ namespace ManuHub.Ytdlp.NET.Test;
 /// set the YTDLP_INTEGRATION_TESTS environment variable to "1" to enable them.
 /// </summary>
 [Collection("Integration")]
-public class YtdlpIntegrationTests : IDisposable
+public class YtdlpIntegrationTests 
 {
     private static readonly bool RunIntegration =
         Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     // A short, stable, public-domain video suitable for testing
     private const string TestVideoUrl = "https://www.youtube.com/watch?v=BaW_jenozKc";
-
-
-    private readonly string _fullFakePath;
-
-    public YtdlpIntegrationTests()
-    {
-        // 1. Get the directory and combine cross-platform paths
-        string toolsDir = Path.Combine(AppContext.BaseDirectory, "tools");
-        string exeName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
-        _fullFakePath = Path.Combine(toolsDir, exeName);
-        // 2. Ensure the directory and a dummy file exist so ValidatePath passes
-        Directory.CreateDirectory(toolsDir);
-        if (!File.Exists(_fullFakePath))
-        {
-            File.WriteAllText(_fullFakePath, "");
-        }
-    }
-
-    public void Dispose()
-    {
-        // Clean up the dummy file after all tests in this class finish
-        //try { File.Delete(_fullFakePath); } catch { }
-    }
-
 
     
     // ── VersionAsync ──────────────────────────────────────────────────────
@@ -49,7 +25,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         var version = await ytdlp.VersionAsync();
 
@@ -64,7 +40,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         var metadata = await ytdlp.GetMetadataAsync(TestVideoUrl);
 
@@ -79,7 +55,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         // An invalid URL should either return null or throw a meaningful exception,
         // not hang or crash the host process.
@@ -100,7 +76,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         var formats = await ytdlp.GetFormatsAsync(TestVideoUrl);
 
@@ -115,7 +91,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         var formatId = await ytdlp.GetBestVideoFormatIdAsync(TestVideoUrl, maxHeight: 720);
 
@@ -127,7 +103,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         var formatId = await ytdlp.GetBestAudioFormatIdAsync(TestVideoUrl);
 
@@ -141,7 +117,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = new Ytdlp("yt-dlp");
 
         var lite = await ytdlp.GetMetadataLiteAsync(
             TestVideoUrl,
@@ -164,7 +140,7 @@ public class YtdlpIntegrationTests : IDisposable
 
         try
         {
-            await using var ytdlp = new Ytdlp(_fullFakePath)
+            await using var ytdlp = new Ytdlp("yt-dlp")
                 .WithSimulate()
                 .WithFormat("best")
                 .WithOutputFolder(outputDir);
@@ -187,7 +163,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath)
+        await using var ytdlp = new Ytdlp("yt-dlp")
             .WithSimulate()
             .WithFormat("best")
             .WithOutputFolder(Path.GetTempPath());
