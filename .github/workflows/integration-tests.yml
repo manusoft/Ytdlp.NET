@@ -25,10 +25,10 @@ jobs:
 
     # ── THIS IS WHAT INSTALLS YT-DLP ──────────────────────────────────
     - name: Set up yt-dlp
-      uses: yt-dlp/setup-ytdlp@v1
+      uses: AnimMouse/setup-yt-dlp@v3
       with:
-        # Optional: Defaults to 'latest', ensures you test against what your users are using
-        version: 'latest' 
+        # AnimMouse action automatically downloads and sets up ffmpeg for you too!
+        ffmpeg: true
 
     # ── Verify the installation works in the logs ────────────────────
     - name: Check yt-dlp Version
