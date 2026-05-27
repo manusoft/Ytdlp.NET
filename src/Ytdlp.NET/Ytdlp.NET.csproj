@@ -7,7 +7,7 @@
 		<PackageId>Ytdlp.NET</PackageId>
 		<AssemblyName>Ytdlp.NET</AssemblyName>
 		<RootNamespace>ManuHub.Ytdlp.NET</RootNamespace>
-		<Version>3.2.0</Version>
+		<Version>3.2.1</Version>
 		<Authors>ManuHub Manojbabu</Authors>
 		<PackageDescription>A .NET wrapper for yt-dlp, providing a fluent API and supporting thousands of websites with concurrent downloads, SponsorBlock, and improved format parsing</PackageDescription>
 		<Copyright>© 2025-2026 ManuHub. Allrights researved</Copyright>
@@ -22,38 +22,15 @@
 		<PackageReleaseNotes>
 			Ytdlp.NET v3.2 ✨ Minor update.
 
-			- Complete rewrite using an immutable, fluent API (`WithXxx()` methods).
-			- Added `IAsyncDisposable` support for proper async cleanup of processes.
-			- Thread-safe design: safe to run multiple instances in parallel.
-			- Rich event system: OnProgressDownload, OnProgressMessage, OnCompleteDownload,
-			OnPostProcessingComplete, OnErrorMessage, OnCommandCompleted.
-			- Improved cancellation handling for both downloads and metadata probing.
-			- Enhanced probe methods: GetMetadataAsync, GetAvailableFormatsAsync,
-			GetBestVideoFormatIdAsync, GetBestAudioFormatIdAsync.
-			- Better output templates, FFmpeg/Deno integration, and safe custom command support.
-
 			🛠 Improvements in this update
-			- Better internal DownloadRunner and ProbeRunner for heavy JSON output and cancellation safety.
-			- Safer process killing and stream handling to prevent potential hangs.
-
-			🚀 New Features
-			- Fully chainable fluent API for downloads, audio extraction, subtitles, post-processing and more.
-			- Batch download support (sequential or parallel execution).
-			- Real-time progress tracking via events.
-			- Automatic resource cleanup with `await using`.
-			- Cross-platform (Windows, macOS, Linux).
-
-			⚠️ Breaking Change
-			- Improve progress parsing and cancellation handling, which may require adjustments in event handling and cancellation token usage.
-			- All old command methods (SetFormat, SetOutputFolder, etc.) have been removed.
-			- Only the new fluent `WithXxx()` style remains.
-			- Namespace changed to `ManuHub.Ytdlp.NET`.
-			- Always use a fresh instance per download for parallel scenarios.
-			- Use `await using` for proper async disposal.
+			- Add Metadata extensions include Metadata.Flatten() for easier access to nested metadata properties.
+			- Fix progress parsing for better accuracy and reliability.
+			- Add GetDeepMetadataAsync() for accessing all metadata details in a single call.
+			- Add GetDeepMetadataRawAsync() for raw JSON metadata access.
 
 			🛠 Notes
 			- Companion packages recommended: ManuHub.Ytdlp, ManuHub.FFmpeg, ManuHub.FFprobe, ManuHub.Deno.
-			- All examples and documentation updated for v3.0.
+			- All examples and documentation updated for v3.2.
 			- This release greatly improves reliability, cancellation, and maintainability.
 
 			See the repository for the full migration guide.

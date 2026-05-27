@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
-internal class Program
+internal partial class Program
 {
     private static async Task Main(string[] args)
     {
@@ -24,16 +24,16 @@ internal class Program
         await TestUpdateAsync(baseYtdlp);
 
         //await TestGetFormatsAsync(baseYtdlp);
-        await TestGetMetadataAsync(baseYtdlp);
-        await TestGetMetedataRawAsync(baseYtdlp);
-        await TestGetDeepMetadataAsync(baseYtdlp);
-        await TestGetDeepMetadataRawAsync(baseYtdlp);
+        //await TestGetMetadataAsync(baseYtdlp);
+        //await TestGetMetedataRawAsync(baseYtdlp);
+        //await TestGetDeepMetadataAsync(baseYtdlp);
+        //await TestGetDeepMetadataRawAsync(baseYtdlp);
         //await TestGetLiteMetadataAsync(baseYtdlp);
         //await TestGetTitleAsync(baseYtdlp);
 
-        //await TestDownloadVideoAsync(baseYtdlp);
+        await TestDownloadVideoAsync(baseYtdlp);
         //await TestDownloadAudioAsync(baseYtdlp);
-        //await TestBatchDownloadAsync(baseYtdlp);
+        // await TestBatchDownloadAsync(baseYtdlp);
         //await TestSponsorBlockAsync(baseYtdlp);
         //await TestConcurrentFragmentsAsync(baseYtdlp);
         //await TestCancellationAsync(baseYtdlp);
@@ -212,7 +212,6 @@ internal class Program
         }
     }
 
-    // Test 6: Download a video with progress events
     private static async Task TestDownloadVideoAsync(Ytdlp ytdlpBase)
     {
         Console.WriteLine("\nTest 9: Downloading a video...");
@@ -274,7 +273,6 @@ internal class Program
         await ytdlp.DownloadAsync(url);
     }
 
-    // Test 8: Batch download (concurrent)
     private static async Task TestBatchDownloadAsync(Ytdlp baseYtdlp)
     {
         Console.WriteLine("\nTest 11: Batch download (3 concurrent)...");
@@ -289,10 +287,12 @@ internal class Program
              .WithFormat("best[height<=480]")  // Lower quality for speed
              .WithOutputFolder("./downloads/batch");
 
+        ytdlp.OnProgressDownload += (sender, args) =>
+            Console.WriteLine($"Progress: {args.Percent:F2}% - {args.Speed} - ETA {args.ETA} - Size {args.Size}");
+
         await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
     }
 
-    // Test 9: SponsorBlock removal
     private static async Task TestSponsorBlockAsync(Ytdlp ytdlpBase)
     {
         Console.WriteLine("\nTest 12: Download with SponsorBlock removal...");
@@ -306,7 +306,6 @@ internal class Program
         await ytdlp.DownloadAsync(url);
     }
 
-    // Test 10: Concurrent fragments (faster download)
     private static async Task TestConcurrentFragmentsAsync(Ytdlp ytdlpBase)
     {
         Console.WriteLine("\nTest 13: Download with concurrent fragments...");
@@ -324,7 +323,6 @@ internal class Program
         await ytdlp.DownloadAsync(url);
     }
 
-    // Test 11: Cancellation support
     private static async Task TestCancellationAsync(Ytdlp ytdlp)
     {
         Console.WriteLine("\nTest 14: Testing cancellation (will cancel after 10 seconds)...");
@@ -362,7 +360,6 @@ internal class Program
         }
     }
 
-    // Test 12: Get Title Test
     private static async Task TestGetTitleAsync(Ytdlp ytdlp)
     {
         Console.WriteLine("\nTest 15: Get Title Test");
@@ -419,40 +416,6 @@ internal class Program
 
         if (formats.Count > 15)
             Console.WriteLine($"  ... and {formats.Count - 15} more formats");
-    }
-
-    internal static class ConsoleProgress
-    {
-        private static int _lastPercent = -1;
-
-        public static void Update(double percent, string? extraInfo = null)
-        {
-            int current = (int)Math.Round(percent);
-            if (current == _lastPercent && extraInfo == null) return;
-
-            _lastPercent = current;
-
-            // Build bar: [=====     ] 50%
-            int barWidth = 30;
-            int filled = (int)(barWidth * percent / 100);
-            string bar = new string('=', filled) + new string(' ', barWidth - filled);
-
-            string line = $"\r[{bar}] {current,3}%  {extraInfo ?? ""}";
-
-            Console.Write(line.PadRight(Console.BufferWidth - 1));
-        }
-
-        public static void Clear()
-        {
-            _lastPercent = -1;
-            Console.Write("\r" + new string(' ', Console.BufferWidth - 1) + "\r");
-        }
-
-        public static void Complete(string message = "Done!")
-        {
-            Console.WriteLine($"\r{message.PadRight(Console.BufferWidth - 1)}");
-            _lastPercent = -1;
-        }
     }
 
     static string ConvertToRegex(string line)
