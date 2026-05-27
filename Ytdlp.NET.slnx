@@ -15,7 +15,6 @@
     <Project Path="src/Ytdlp.NET/Ytdlp.NET.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Ytdlp.NET.ParseTest/Ytdlp.NET.ParseTest.csproj" />
     <Project Path="tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj" />
   </Folder>
 </Solution>
