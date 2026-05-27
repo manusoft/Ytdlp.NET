@@ -9,7 +9,7 @@ namespace ManuHub.YtdlpNET.Test;
 /// that the resulting argument list contains the expected flags/values.
 /// No yt-dlp process is ever launched here.
 /// </summary>
-public class YtdlpBuilderTests : IDisposable
+public class YtdlpBuilderTests 
 {
     private readonly string _fullFakePath;
 
@@ -35,12 +35,6 @@ public class YtdlpBuilderTests : IDisposable
                 // ignore the error because the file is being taken care of.
             }
         }
-    }
-
-    public void Dispose()
-    {
-        // Clean up the dummy file after all tests in this class finish
-        //try { File.Delete(_fullFakePath); } catch { }
     }
 
     // ── Construction ──────────────────────────────────────────────────────

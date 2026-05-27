@@ -9,39 +9,32 @@ namespace ManuHub.Ytdlp.NET.Test;
 /// set the YTDLP_INTEGRATION_TESTS environment variable to "1" to enable them.
 /// </summary>
 [Collection("Integration")]
-public class YtdlpIntegrationTests : IDisposable
+public class YtdlpIntegrationTests 
 {
+    // Cross-platform binary name selection
+    private readonly string binaryName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+
     private static readonly bool RunIntegration =
         Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     // A short, stable, public-domain video suitable for testing
-    private const string TestVideoUrl = "https://www.youtube.com/watch?v=BaW_jenozKc";
+    private const string TestVideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-
-    private readonly string _fullFakePath;
-
-    public YtdlpIntegrationTests()
+    /// <summary>
+    /// Helper to instantiate Ytdlp with anti-bot arguments for reliable CI/CD runs.
+    /// </summary>
+    private Ytdlp CreateIntegrationClient()
     {
-        // 1. Get the directory and combine cross-platform paths
-        string toolsDir = Path.Combine(AppContext.BaseDirectory, "tools");
-        string exeName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
-        _fullFakePath = Path.Combine(toolsDir, exeName);
-        // 2. Ensure the directory and a dummy file exist so ValidatePath passes
-        Directory.CreateDirectory(toolsDir);
-        if (!File.Exists(_fullFakePath))
-        {
-            File.WriteAllText(_fullFakePath, "");
-        }
+        var client = new Ytdlp(binaryName)
+            .AddOption("--impersonate", "chrome")
+            .AddOption("--extractor-args", "youtube:client=ios");
+
+        // Pipe stderr errors directly out to the xUnit test runner console output
+        client.OnErrorMessage += (s, msg) => Console.WriteLine($"[yt-dlp StdErr]: {msg}");
+
+        return client;
     }
 
-    public void Dispose()
-    {
-        // Clean up the dummy file after all tests in this class finish
-        //try { File.Delete(_fullFakePath); } catch { }
-    }
-
-
-    
     // ── VersionAsync ──────────────────────────────────────────────────────
 
     [SkippableFact]
@@ -49,12 +42,11 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
-
+        await using var ytdlp = CreateIntegrationClient();
         var version = await ytdlp.VersionAsync();
 
         version.Should().NotBeNullOrWhiteSpace();
-        version.Should().MatchRegex(@"^\d{4}\.\d{2}\.\d{2}"); // e.g. 2025.05.21
+        version.Should().MatchRegex(@"^\d{4}\.\d{2}\.\d{2}"); // e.g. 2026.03.17
     }
 
     // ── GetMetadataAsync ──────────────────────────────────────────────────
@@ -64,11 +56,11 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = CreateIntegrationClient();
 
         var metadata = await ytdlp.GetMetadataAsync(TestVideoUrl);
 
-        metadata.Should().NotBeNull();
+        metadata.Should().NotBeNull("YouTube metadata extraction failed. Check console standard error logs above.");
         metadata!.Title.Should().NotBeNullOrWhiteSpace();
         metadata.Duration.Should().BeGreaterThan(0);
         metadata.Id.Should().NotBeNullOrWhiteSpace();
@@ -79,14 +71,11 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = CreateIntegrationClient();
 
-        // An invalid URL should either return null or throw a meaningful exception,
-        // not hang or crash the host process.
         var act = async () =>
         {
             var result = await ytdlp.GetMetadataAsync("https://not-a-real-site.invalid/video");
-            // null is acceptable
         };
 
         await act.Should().NotThrowAsync<AccessViolationException>();
@@ -100,11 +89,11 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = CreateIntegrationClient();
 
         var formats = await ytdlp.GetFormatsAsync(TestVideoUrl);
 
-        formats.Should().NotBeNullOrEmpty();
+        formats.Should().NotBeNullOrEmpty("YouTube format listing extraction returned an empty set.");
         formats!.Should().AllSatisfy(f => f.Id.Should().NotBeNullOrWhiteSpace());
     }
 
@@ -115,7 +104,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = CreateIntegrationClient();
 
         var formatId = await ytdlp.GetBestVideoFormatIdAsync(TestVideoUrl, maxHeight: 720);
 
@@ -127,7 +116,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = CreateIntegrationClient();
 
         var formatId = await ytdlp.GetBestAudioFormatIdAsync(TestVideoUrl);
 
@@ -141,13 +130,13 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        await using var ytdlp = CreateIntegrationClient();
 
         var lite = await ytdlp.GetMetadataLiteAsync(
             TestVideoUrl,
             fields: new[] { "title", "duration" });
 
-        lite.Should().NotBeNull();
+        lite.Should().NotBeNull("Lite metadata extraction parsing failed.");
         lite!["title"].Should().NotBeNullOrWhiteSpace();
         lite["duration"].Should().NotBeNullOrWhiteSpace();
     }
@@ -164,7 +153,7 @@ public class YtdlpIntegrationTests : IDisposable
 
         try
         {
-            await using var ytdlp = new Ytdlp(_fullFakePath)
+            await using var ytdlp = CreateIntegrationClient()
                 .WithSimulate()
                 .WithFormat("best")
                 .WithOutputFolder(outputDir);
@@ -176,7 +165,7 @@ public class YtdlpIntegrationTests : IDisposable
         }
         finally
         {
-            Directory.Delete(outputDir, recursive: true);
+            try { Directory.Delete(outputDir, recursive: true); } catch { }
         }
     }
 
@@ -187,7 +176,7 @@ public class YtdlpIntegrationTests : IDisposable
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp(_fullFakePath)
+        await using var ytdlp = CreateIntegrationClient()
             .WithSimulate()
             .WithFormat("best")
             .WithOutputFolder(Path.GetTempPath());
