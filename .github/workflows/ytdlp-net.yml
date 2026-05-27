@@ -7,17 +7,32 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
+  build-and-test:
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v4
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-    - name: Restore dependencies
+        
+    # ── 1. Restore both projects explicitly ───────────────────────────
+    - name: Restore Library dependencies
       run: dotnet restore src/Ytdlp.NET/Ytdlp.NET.csproj
-    - name: Build
-      run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release
+
+    - name: Restore Test dependencies
+      run: dotnet restore tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj
+
+    # ── 2. Build both projects explicitly ─────────────────────────────
+    - name: Build Library
+      run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --no-restore
+
+    - name: Build Tests
+      run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-restore
+
+    # ── 3. Run Unit Tests explicitly ──────────────────────────────────
+    - name: Run Unit Tests
+      # Points directly to your test project, using the pre-compiled Release build
+      run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build --verbosity normal
