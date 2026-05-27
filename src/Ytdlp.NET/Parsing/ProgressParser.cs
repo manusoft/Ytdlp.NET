@@ -106,15 +106,15 @@ public sealed class ProgressParser
 
     private void HandleDownloadProgress(Match match)
     {
-        if (_isDownloadCompleted) return;
-
         string percentString = match.Groups["percent"].Value;
         string sizeString = match.Groups["total"].Value;
         string speedString = match.Groups["speed"].Value;
         string etaString = match.Groups["eta"].Value;
 
-        if (!double.TryParse(percentString.Replace("%", ""), out double percent))
-            percent = 0;
+        var isParsed = double.TryParse(percentString.Replace("%", ""), out double percent);
+
+        if (!isParsed) percent = 0;
+        if (!isParsed || percent >= 100) return;
 
         var args = new DownloadProgressEventArgs
         {
@@ -136,16 +136,16 @@ public sealed class ProgressParser
 
     private void HandleDownloadProgressWithFrag(Match match)
     {
-        if (_isDownloadCompleted) return;
-
         string percentString = match.Groups["percent"].Value;
         string sizeString = match.Groups["size"].Value;
         string speedString = match.Groups["speed"].Value;
         string etaString = match.Groups["eta"].Value;
         string fragString = match.Groups["frag"].Value;
 
-        if (!double.TryParse(percentString.Replace("%", ""), out double percent))
-            percent = 0;
+        var isParsed = double.TryParse(percentString.Replace("%", ""), out double percent);
+
+        if (!isParsed) percent = 0;
+        if (!isParsed || percent >= 100) return;
 
         var args = new DownloadProgressEventArgs
         {
@@ -167,9 +167,9 @@ public sealed class ProgressParser
         }
     }
 
-    private bool IsFinalFragment(string frag)
+    private static bool IsFinalFragment(string frag)
     {
-        if (string.IsNullOrEmpty(frag) || !frag.Contains("/")) return true;
+        if (string.IsNullOrEmpty(frag) || !frag.Contains('/')) return true;
 
         var parts = frag.Split('/');
         if (parts.Length != 2) return false;

@@ -2,7 +2,7 @@
 
 namespace ManuHub.Ytdlp.NET;
 
-public class Metadata
+public record class Metadata
 {
     /// <summary>
     /// Video identifier
@@ -313,7 +313,7 @@ public class FragmentMetadata
     public double Duration { get; set; }
 }
 
-public class Entry
+public record class Entry
 {
     [JsonPropertyName("type")]
     public string? Type { get; set; } // "playlist", "season", "video"
@@ -356,6 +356,12 @@ public class Entry
 
     [JsonPropertyName("view_count")]
     public float? ViewCount { get; set; }
+
+    [JsonPropertyName("webpage_url")]
+    public string? WebpageUrl { get; set; }  // playlist/video
+
+    [JsonPropertyName("original_url")]
+    public string? OriginalUrl { get; set; }  // playlist/video
 
     [JsonPropertyName("entries")]
     public List<Entry>? Entries { get; set; }   // deep playlist / season / episode support

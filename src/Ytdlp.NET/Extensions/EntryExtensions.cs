@@ -1,4 +1,6 @@
-﻿namespace ManuHub.Ytdlp.NET.Extensions;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace ManuHub.Ytdlp.NET.Extensions;
 
 public static class EntryExtensions
 {
@@ -6,7 +8,7 @@ public static class EntryExtensions
     {
         yield return entry;
 
-        if (entry.Entries == null || entry.Entries.Count == 0)
+        if (!entry.Entries.HasChildren())
             yield break;
 
         foreach (var child in entry.Entries)
@@ -17,4 +19,7 @@ public static class EntryExtensions
             }
         }
     }
+
+    public static bool HasChildren([NotNullWhen(true)]this List<Entry>? entries)
+        => entries != null && entries.Count > 0;
 }
