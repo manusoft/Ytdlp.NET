@@ -11,6 +11,9 @@ namespace ManuHub.Ytdlp.NET.Test;
 [Collection("Integration")]
 public class YtdlpIntegrationTests 
 {
+    // Cross-platform binary name selection
+    private string binaryName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+
     private static readonly bool RunIntegration =
         Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
@@ -25,7 +28,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         var version = await ytdlp.VersionAsync();
 
@@ -40,7 +43,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         var metadata = await ytdlp.GetMetadataAsync(TestVideoUrl);
 
@@ -55,7 +58,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         // An invalid URL should either return null or throw a meaningful exception,
         // not hang or crash the host process.
@@ -76,7 +79,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         var formats = await ytdlp.GetFormatsAsync(TestVideoUrl);
 
@@ -91,7 +94,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         var formatId = await ytdlp.GetBestVideoFormatIdAsync(TestVideoUrl, maxHeight: 720);
 
@@ -103,7 +106,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         var formatId = await ytdlp.GetBestAudioFormatIdAsync(TestVideoUrl);
 
@@ -117,7 +120,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp");
+        await using var ytdlp = new Ytdlp(binaryName);
 
         var lite = await ytdlp.GetMetadataLiteAsync(
             TestVideoUrl,
@@ -140,7 +143,7 @@ public class YtdlpIntegrationTests
 
         try
         {
-            await using var ytdlp = new Ytdlp("yt-dlp")
+            await using var ytdlp = new Ytdlp(binaryName)
                 .WithSimulate()
                 .WithFormat("best")
                 .WithOutputFolder(outputDir);
@@ -163,7 +166,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = new Ytdlp("yt-dlp")
+        await using var ytdlp = new Ytdlp(binaryName)
             .WithSimulate()
             .WithFormat("best")
             .WithOutputFolder(Path.GetTempPath());
