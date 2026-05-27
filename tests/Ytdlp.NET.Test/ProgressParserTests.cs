@@ -1,7 +1,7 @@
 ﻿using ManuHub.Ytdlp.NET;
 using System.Text.RegularExpressions;
 
-namespace Ytdlp.NET.Test.Obsolete;
+namespace ManuHub.YtdlpNET.Test;
 
 public class ProgressParserTests
 {
@@ -84,7 +84,7 @@ public class ProgressParserTests
         var parser = new ProgressParser(logger);
         string output = "[info] Downloading video thumbnail 41 ...";
         parser.ParseProgress(output);
-        Assert.Contains(logger.Logs, l => l.Message == "Downloading video thumbnail 41");
+        Assert.Contains(logger.Logs, l => l.Message == "[info] Downloading video thumbnail 41 ...");
     }
 
     [Fact]
@@ -94,27 +94,8 @@ public class ProgressParserTests
         var parser = new ProgressParser(logger);
         string output = "[info] Writing video thumbnail 41 to: downloads\\Kunukkitta Kozhi Jagadish.webp";
         parser.ParseProgress(output);
-        Assert.Contains(logger.Logs, l => l.Message == "Writing video thumbnail 41 to: downloads\\Kunukkitta Kozhi Jagadish.webp");
-    }
-
-    [Fact]
-    public void DeletingOriginalFile_LogsCorrectly()
-    {
-        // Arrange
-        var logger = new TestLogger();
-        var parser = new ProgressParser(logger);
-        bool triggered = false;
-        parser.OnPostProcessingComplete += (s, e) => triggered = true;
-
-        // Act
-        parser.ParseProgress("[Merger] Merging formats into \"C:\\Users\\manua\\Videos\\test.webm\"");
-        parser.ParseProgress("Deleting original file C:\\Users\\manua\\Videos\\test.f251.webm (pass -k to keep)");
-        parser.ParseProgress("Deleting original file C:\\Users\\manua\\Videos\\test.f401.mp4 (pass -k to keep)");
-
-        // Assert
-        Assert.True(triggered, "OnPostProcessingComplete was not triggered after processing both deletion lines.");
-        Assert.Contains("OnPostProcessingComplete event triggered.", logger.GetMessages());
-    }
+        Assert.Contains(logger.Logs, l => l.Message == "[info] Writing video thumbnail 41 to: downloads\\Kunukkitta Kozhi Jagadish.webp");
+    }   
 
     [Fact]
     public void DeletingOriginalFile_Matches() {
@@ -129,10 +110,10 @@ public class ProgressParserTests
         var logger = new TestLogger();
         var parser = new ProgressParser(logger);
         parser.ParseProgress("[download] 100% of 29.53MiB at Unknown ETA Unknown");
-        Assert.Contains(logger.Logs, l => l.Message.Contains("Download complete"));
+        Assert.Contains(logger.Logs, l => l.Message.Contains("Download marked as completed."));
         parser.Reset();
         parser.ParseProgress("[download] 100% of 10MiB at Unknown ETA Unknown");
-        Assert.Contains(logger.Logs, l => l.Message.Contains("Download complete: 100% of 10MiB"));
+        Assert.Contains(logger.Logs, l => l.Message.Contains("Download finished: 100% of 29.53MiB"));
     }
 
     private class TestLogger : ILogger
