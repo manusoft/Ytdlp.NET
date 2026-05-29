@@ -1,4 +1,4 @@
-name: Release - NuGet Publish
+name: Release - Ytdlp.NET
 
 on:
   push:
@@ -14,43 +14,82 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # ───────────────────────────────
+      # 1. Checkout
+      # ───────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # ───────────────────────────────
+      # 2. Setup .NET
+      # ───────────────────────────────
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore Library
+      # ───────────────────────────────
+      # 3. Restore
+      # ───────────────────────────────
+      - name: Restore Library dependencies
         run: dotnet restore src/Ytdlp.NET/Ytdlp.NET.csproj
 
-      - name: Restore Tests
+      - name: Restore Test dependencies
         run: dotnet restore tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj
 
-      - name: Build Library
+      # ───────────────────────────────
+      # 4. Build
+      # ───────────────────────────────
+      - name: Build (Release)
         run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --no-restore
 
       - name: Build Tests
         run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-restore
 
-      - name: Run Tests
-        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build
+      # ───────────────────────────────
+      # 5. Run Tests (GATE)
+      # ───────────────────────────────
+      - name: Run Unit Tests
+        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build --verbosity normal
 
-      # 🔥 VERSIONING FROM TAG
-      - name: Set version from tag
+      # ───────────────────────────────
+      # 6. Extract version from tag
+      # ───────────────────────────────
+      - name: Get version from tag
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
-          $version = $tag.Replace("v","")
-          echo "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $version = $tag -replace '^v',''
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Pack
-        run: dotnet pack src/Ytdlp.NET/Ytdlp.NET.csproj `
-          -c Release `
-          -p:PackageVersion=${{ env.PACKAGE_VERSION }} `
-          --output ./nupkg
+      # ───────────────────────────────
+      # 7. Pack NuGet
+      # ───────────────────────────────
+      - name: Pack NuGet package
+        run: |
+          dotnet pack src/Ytdlp.NET/Ytdlp.NET.csproj `
+            -c Release `
+            -p:PackageVersion=${{ env.VERSION }} `
+            --output ./nupkg
 
-      - name: Publish NuGet
+      # ───────────────────────────────
+      # 8. Create GitHub Release (AUTO NOTES)
+      # ───────────────────────────────
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ytdlp.NET ${{ github.ref_name }}
+          generate_release_notes: true
+          files: ./nupkg/*.nupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ───────────────────────────────
+      # 9. Publish to NuGet.org
+      # ───────────────────────────────
+      - name: Publish to NuGet.org
         shell: pwsh
         run: |
           $pkg = Get-ChildItem "./nupkg" -Filter "*.nupkg" | Select-Object -First 1
@@ -58,4 +97,17 @@ jobs:
           dotnet nuget push $pkg.FullName `
             --source "https://api.nuget.org/v3/index.json" `
             --api-key "${{ secrets.NUGET_KEY }}" `
+            --skip-duplicate
+
+      # ───────────────────────────────
+      # 10. Publish to GitHub Packages
+      # ───────────────────────────────
+      - name: Publish to GitHub Packages
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem "./nupkg" -Filter "*.nupkg" | Select-Object -First 1
+
+          dotnet nuget push $pkg.FullName `
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" `
+            --api-key "${{ secrets.GITHUB_TOKEN }}" `
             --skip-duplicate
