@@ -7,6 +7,7 @@ on:
 
 jobs:
   integration:
+    name: Run Integration Tests
     runs-on: windows-latest
 
     steps:

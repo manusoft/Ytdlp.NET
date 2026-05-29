@@ -6,6 +6,7 @@ on:
 
 jobs:
   validate:
+    name: Validate PR
     runs-on: windows-latest
 
     steps:
