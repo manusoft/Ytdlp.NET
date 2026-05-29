@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<RootNamespace>YtdlpNET.Console</RootNamespace>
+	<RootNamespace>YtdlpNetConsoleApp</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
