@@ -1,4 +1,4 @@
-# ![Static Badge](https://img.shields.io/badge/ytdlp.NET-red) ![NuGet Version](https://img.shields.io/nuget/v/ytdlp.net) ![NuGet Downloads](https://img.shields.io/nuget/dt/ytdlp.net)
+![Static Badge](https://img.shields.io/badge/ytdlp.NET-red) ![NuGet Version](https://img.shields.io/nuget/v/ytdlp.net) ![NuGet Downloads](https://img.shields.io/nuget/dt/ytdlp.net)
 
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=manusoft/yt-dlp-wrapper)
 
