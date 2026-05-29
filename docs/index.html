@@ -1,0 +1,187 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ytdlp.NET - Modern .NET Wrapper for yt-dlp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .hero-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e2937 100%);
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+
+    <!-- Hero -->
+    <section class="hero-bg relative flex min-h-screen items-center overflow-hidden">
+        <div class="bg-[radial-gradient(at_top_right,#3b82f6_0%,transparent_50%)] absolute inset-0"></div>
+
+        <div class="relative z-10 mx-auto max-w-7xl px-6 py-24">
+            <div class="flex flex-col items-center gap-16 lg:flex-row">
+
+                <div class="lg:w-1/2">
+                    <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-slate-800/50 px-4 py-2">
+                        <span class="text-emerald-400">●</span>
+                        <span class="text-sm font-medium">v3.2 Now Available</span>
+                    </div>
+
+                    <h1 class="title-font mb-6 text-7xl font-bold leading-tight lg:text-8xl">
+                        Ytdlp.<span class="text-blue-500">NET</span>
+                    </h1>
+
+                    <p class="mb-8 text-2xl text-slate-400">
+                        A fluent, strongly-typed, async .NET wrapper for <span class="font-mono text-amber-400">yt-dlp</span>
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <a href="https://www.nuget.org/packages/Ytdlp.NET"
+                           target="_blank"
+                           class="flex items-center gap-3 rounded-2xl bg-white px-8 py-4 text-lg font-semibold text-slate-900 transition hover:bg-amber-400">
+                            <i class="fa-brands fa-nuget"></i>
+                            Install via NuGet
+                        </a>
+
+                        <a href="https://github.com/manusoft/Ytdlp.NET"
+                           target="_blank"
+                           class="flex items-center gap-3 rounded-2xl border border-slate-600 px-8 py-4 text-lg font-semibold transition hover:border-slate-400">
+                            <i class="fa-brands fa-github"></i>
+                            View on GitHub
+                        </a>
+                    </div>
+
+                    <div class="mt-10 flex gap-8 text-sm">
+                        <div>
+                            <span class="block text-3xl font-bold text-emerald-400">1000+</span>
+                            <span class="text-slate-400">Supported Sites</span>
+                        </div>
+                        <div>
+                            <span class="block text-3xl font-bold text-emerald-400">Async</span>
+                            <span class="text-slate-400">Event-Driven</span>
+                        </div>
+                        <div>
+                            <span class="block text-3xl font-bold text-emerald-400">Fluent</span>
+                            <span class="text-slate-400">Immutable API</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:w-1/2">
+                    <img src="https://github.com/user-attachments/assets/39e09415-fa0c-4991-976f-8966e9c50c5b"
+                         alt="ClipMate App"
+                         class="rounded-3xl border border-slate-700 shadow-2xl" />
+                </div>
+            </div>
+        </div>
+
+        <div class="-translate-x-1/2 absolute bottom-10 left-1/2 animate-bounce">
+            <i class="fa-solid fa-chevron-down text-4xl text-slate-500"></i>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="bg-slate-900 py-24">
+        <div class="mx-auto max-w-7xl px-6">
+            <h2 class="title-font mb-16 text-center text-5xl font-bold">Why Developers Love Ytdlp.NET</h2>
+
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
+                    <i class="fa-solid fa-wand-magic-sparkles mb-6 text-4xl text-blue-500"></i>
+                    <h3 class="mb-3 text-2xl font-semibold">Fluent & Beautiful API</h3>
+                    <p class="text-slate-400">Chain methods like `.WithFormat("best")`, `.WithOutputTemplate()`, `.ExtractAudio()` — clean and intuitive.</p>
+                </div>
+
+                <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
+                    <i class="fa-solid fa-bolt mb-6 text-4xl text-amber-500"></i>
+                    <h3 class="mb-3 text-2xl font-semibold">High Performance</h3>
+                    <p class="text-slate-400">Fully asynchronous, real-time progress events, batch downloads, and proper cancellation support.</p>
+                </div>
+
+                <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
+                    <i class="fa-solid fa-shield-halved mb-6 text-4xl text-emerald-500"></i>
+                    <h3 class="mb-3 text-2xl font-semibold">Immutable & Thread-Safe</h3>
+                    <p class="text-slate-400">Every configuration returns a new instance. Safe for concurrent usage.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Example -->
+    <section class="bg-black py-24">
+        <div class="mx-auto max-w-5xl px-6">
+            <h2 class="mb-8 text-center text-4xl font-bold">Simple. Powerful. Modern.</h2>
+
+            <div class="overflow-auto rounded-3xl border border-slate-800 bg-slate-950 p-8 font-mono text-sm">
+                <pre class="text-emerald-300">await using var ytdlp = new Ytdlp("tools/yt-dlp.exe")
+    .WithUrl("https://youtube.com/watch?v=...")
+    .WithFormat("bestvideo+bestaudio")
+    .WithOutputTemplate("%(title)s.%(ext)s")
+    .ExtractAudio()
+    .WithAudioFormat("mp3")
+    .OnProgress(p => Console.WriteLine($"Progress: {p.Percent}%"))
+    .OnComplete(() => Console.WriteLine("Done!"));</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Apps -->
+    <section class="bg-slate-900 py-24">
+        <div class="mx-auto max-w-7xl px-6">
+            <h2 class="title-font mb-16 text-center text-5xl font-bold">Real-World Apps Built With It</h2>
+
+            <div class="grid gap-12 md:grid-cols-2">
+                <div class="text-center">
+                    <img src="https://github.com/user-attachments/assets/39e09415-fa0c-4991-976f-8966e9c50c5b"
+                         class="mx-auto mb-6 rounded-3xl shadow-2xl" alt="ClipMate" />
+                    <h3 class="mb-2 text-2xl font-semibold">ClipMate</h3>
+                    <p class="mb-4 text-slate-400">Beautiful MAUI .NET Video Downloader</p>
+                    <a href="https://apps.microsoft.com/detail/9NTP1DH4CQ4X"
+                       class="inline-flex items-center gap-2 text-blue-400 hover:underline">
+                        Download from Microsoft Store →
+                    </a>
+                </div>
+
+                <div class="text-center">
+                    <img src="https://github.com/user-attachments/assets/1b977927-ea26-4220-bd41-9f64d6716058"
+                         class="mx-auto mb-6 rounded-3xl shadow-2xl" alt="Video Downloader" />
+                    <h3 class="mb-2 text-2xl font-semibold">Video Downloader</h3>
+                    <p class="mb-4 text-slate-400">.NET Desktop Application</p>
+                    <a href="https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/gui-app.zip"
+                       class="inline-flex items-center gap-2 text-blue-400 hover:underline">
+                        Download GUI App →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-black py-16">
+        <div class="mx-auto max-w-7xl px-6 text-center">
+            <p class="text-slate-400">Made with ❤️ for the .NET community</p>
+            <div class="mt-6 flex justify-center gap-8 text-2xl">
+                <a href="https://github.com/manusoft/Ytdlp.NET" class="transition hover:text-white"><i class="fa-brands fa-github"></i></a>
+                <a href="https://www.nuget.org/packages/Ytdlp.NET" class="transition hover:text-white"><i class="fa-brands fa-nuget"></i></a>
+            </div>
+            <p class="mt-10 text-xs text-slate-500">© 2026 manusoft • Ytdlp.NET</p>
+        </div>
+    </footer>
+
+</body>
+</html>
