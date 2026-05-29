@@ -1,462 +1,200 @@
 ﻿using ManuHub.Ytdlp.NET;
-using System.Diagnostics;
 using System.Text;
-using System.Text.RegularExpressions;
+using YtdlpNetConsoleApp.Helpers;
+using YtdlpNetConsoleApp.Pages;
 
-internal partial class Program
+namespace YtdlpNetConsoleApp;
+
+internal class Program
 {
-    private static async Task Main(string[] args)
+    private static Ytdlp? _ytdlp;
+
+    static async Task Main(string[] args)
     {
-        // Must be the FIRST line — before any Console.WriteLine
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
 
-        Console.Clear();
-        Console.WriteLine("Ytdlp.NET Wrapper v3.2 Demo Console App");
-        Console.WriteLine("----------------------------------------");
+        Console.Title = "Ytdlp.NET Interactive Demo";
 
-        // Initialize the wrapper (assuming yt-dlp is in PATH or specify path)
-        await using var baseYtdlp = new Ytdlp(ytdlpPath: $"tools\\yt-dlp.exe", logger: new ConsoleLogger())
-            .WithFFmpegLocation("tools");
-
-        // Run all demos/tests sequentially
-        await TestGetVersionAsync(baseYtdlp);
-        await TestUpdateAsync(baseYtdlp);
-
-        //await TestGetFormatsAsync(baseYtdlp);
-        await TestGetMetadataAsync(baseYtdlp);
-        //await TestGetMetedataRawAsync(baseYtdlp);
-        await TestGetDeepMetadataAsync(baseYtdlp);
-        //await TestGetDeepMetadataRawAsync(baseYtdlp);
-        //await TestGetLiteMetadataAsync(baseYtdlp);
-        //await TestGetTitleAsync(baseYtdlp);
-
-        //await TestDownloadVideoAsync(baseYtdlp);
-        //await TestDownloadAudioAsync(baseYtdlp);
-        // await TestBatchDownloadAsync(baseYtdlp);
-        //await TestSponsorBlockAsync(baseYtdlp);
-        //await TestConcurrentFragmentsAsync(baseYtdlp);
-        //await TestCancellationAsync(baseYtdlp);
-
-        var lists = await baseYtdlp.ExtractorsAsync();
-
-        Console.WriteLine("\nAll tests completed. Press any key to exit...");
-        Console.ReadKey();
-    }
-
-    // Custom logger to output to console
-    private class ConsoleLogger : ILogger
-    {
-        public void Log(LogType type, string message)
+        try
         {
-            Console.ForegroundColor = type switch
+            ConsoleTheme.ShowSplash();
+
+            await InitializeAsync();
+
+            while (true)
             {
-                LogType.Error => ConsoleColor.Red,
-                LogType.Warning => ConsoleColor.Yellow,
-                LogType.Debug => ConsoleColor.Gray,
-                _ => ConsoleColor.White
-            };
-            Console.WriteLine($"[{type}] {message}");
-            Console.ResetColor();
-        }
-    }
+                Console.Clear();
 
-    private static async Task TestGetVersionAsync(Ytdlp ytdlp)
-    {
-        Console.WriteLine("\nTest 1:Getting yt-dlp version...");
-        var version = await ytdlp.VersionAsync();
-        Console.WriteLine($"Version: {version}");
-    }
+                ConsoleTheme.WriteBanner();
 
-    private static async Task TestUpdateAsync(Ytdlp ytdlp)
-    {
-        Console.WriteLine("\nTest 2:Checking yt-dlp update...");
-        var version = await ytdlp.UpdateAsync(UpdateChannel.Stable);
-        Console.WriteLine($"Status: {version}");
-    }
+                var choice = MenuRenderer.ShowMainMenu();
 
-    private static async Task TestGetFormatsAsync(Ytdlp ytdlp)
-    {
-        var stopwatch = Stopwatch.StartNew();
+                switch (choice)
+                {
+                    case "1":
+                        await SystemInfoPage.ShowAsync(_ytdlp!);
+                        break;
 
-        Console.WriteLine("\nTest 3:Fetching available formats...");
-        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
-        var formats = await ytdlp.GetFormatsAsync(url);
+                    case "2":
+                        await MetadataPage.ShowAsync(_ytdlp!);
+                        break;
 
-        stopwatch.Stop(); // stop timer
-        Console.WriteLine($"Available formats took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
+                    case "3":
+                        await FormatsPage.ShowAsync(_ytdlp!);
+                        break;
 
-        Console.WriteLine($"Found {formats.Count} formats:");
+                    case "4":
+                        await DownloadVideoPage.ShowAsync(_ytdlp!);
+                        break;
 
-        foreach (var f in formats)
-        {
-            Console.WriteLine(f.ToString());  // Uses Format's ToString override
-        }
+                    case "5":
+                        await DownloadAudioPage.ShowAsync(_ytdlp!);
+                        break;
 
-        // Example: Find best 1080p
-        var best1080p = formats
-            .Where(f => f.IsVideo && (f.Height ?? 0) == 1080)
-            .OrderByDescending(f => f.Fps ?? 0)
-            .FirstOrDefault();
+                    case "6":
+                        await BatchDownloadPage.ShowAsync(_ytdlp!);
+                        break;
 
-        if (best1080p != null)
-            Console.WriteLine($"\nBest 1080p: ID {best1080p.Id}, {best1080p.VideoCodec}, ~{best1080p.ApproxFileSizeBytes / 1024 / 1024} MiB");
-    }
+                    case "7":
+                        await SponsorBlockPage.ShowAsync(_ytdlp!);
+                        break;
 
-    private static async Task TestGetMetadataAsync(Ytdlp ytdlp)
-    {
-        var stopwatch = Stopwatch.StartNew();
+                    case "8":
+                        await BenchmarkPage.ShowAsync(_ytdlp!);
+                        break;
 
-        Console.WriteLine("\nTest 4:Fetching detailed metedata...");
-        var token = new CancellationTokenSource().Token; // In real use, you might want to cancel if it takes too long
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token, timeoutCts.Token);
-        var url1 = "https://www.youtube.com/watch?v=983bBbJx0Mk&list=RD983bBbJx0Mk&start_radio=1&pp=ygUFc29uZ3OgBwE%3D"; //playlist
-        var url2 = "https://www.youtube.com/watch?v=ZGnQH0LN_98"; // video
-        var metadata = await ytdlp.GetMetadataAsync(url1, linkedCts.Token);
-        stopwatch.Stop(); // stop timer
+                    case "9":
+                        await ExtractorPage.ShowAsync(_ytdlp!);
+                        break;
 
-        Console.WriteLine($"Detailed metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
-
-        if (metadata == null)
-        {
-            Console.WriteLine("No metadata returned.");
-            return;
-        }
-
-        // Basic info
-        Console.WriteLine($"Type        : {metadata.Type}");
-        Console.WriteLine($"ID          : {metadata.Id}");
-        Console.WriteLine($"Title       : {metadata.Title}");
-        Console.WriteLine($"Description : {(metadata.Description?.Length > 120 ? metadata.Description.Substring(0, 120) + "..." : metadata.Description)}");
-        Console.WriteLine($"Thumbnail   : {metadata.Thumbnail}");
-
-        if (metadata.Type == "video")
-        {
-            // Show formats (both full list and requested/selected)
-            PrintFormats("All available formats", metadata.Formats);
-            //PrintFormats("Selected / requested formats", metadata.RequestedFormats);
-        }
-        else if(metadata.Type == "playlist" && metadata.Entries != null)
-        {
-            Console.WriteLine($"\nPlaylist contains {metadata.Entries.Count} entries. Showing first 3:");
-            foreach (var entry in metadata.Entries.Take(3))
-            {
-                Console.WriteLine($"  - {entry.Title} (ID: {entry.Id}, URL: {entry.WebpageUrl})");
+                    case "0":
+                        return;
+                }
             }
-        }
-    }
-
-    private static async Task TestGetMetedataRawAsync(Ytdlp ytdlp)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        Console.WriteLine("\nTest 5: Fetching raw metedata...");
-        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
-        var rawJson = await ytdlp.GetMetadataRawAsync(url);
-        stopwatch.Stop(); // stop timer
-        Console.WriteLine($"Raw metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
-        if (!string.IsNullOrEmpty(rawJson))
-        {
-            Console.WriteLine($"Raw JSON length: {rawJson.Length} characters");
-            // Optionally print the raw JSON (commented out for brevity)
-            // Console.WriteLine(rawJson);
-        }
-    }
-
-    private static async Task TestGetDeepMetadataAsync(Ytdlp ytdlp)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        Console.WriteLine("\nTest 6: Fetching deep metedata...");
-        var url1 = "https://www.youtube.com/watch?v=983bBbJx0Mk&list=RD983bBbJx0Mk&start_radio=1&pp=ygUFc29uZ3OgBwE%3D"; //playlist
-        var url2 = "https://www.youtube.com/watch?v=ZGnQH0LN_98"; // video
-        var metadata = await ytdlp.GetDeepMetadataAsync(url2);
-        stopwatch.Stop(); // stop timer
-        Console.WriteLine($"Deep metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
-        if (metadata != null)
-        {
-            Console.WriteLine($"Type: {metadata.Type}");
-            Console.WriteLine($"ID: {metadata.Id}");
-            Console.WriteLine($"Title: {metadata.Title}");
-            Console.WriteLine($"Uploader: {metadata.Uploader}");
-            Console.WriteLine($"Upload Date: {metadata.UploadDate}");
-            Console.WriteLine($"View Count: {metadata.ViewCount}");
-            Console.WriteLine($"Like Count: {metadata.LikeCount}");
-            // And more fields as needed...
-
-            if(metadata.Type == "playlist" && metadata.Entries != null)
-                Console.WriteLine($"Playlist contains {metadata.Entries.Count} entries");
-        }
-    }
-
-    private static async Task TestGetDeepMetadataRawAsync(Ytdlp ytdlp)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        Console.WriteLine("\nTest 7: Fetching deep raw metedata...");
-        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
-        var rawJson = await ytdlp.GetDeepMetadataRawAsync(url);
-        stopwatch.Stop(); // stop timer
-        Console.WriteLine($"Deep raw metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
-        if (!string.IsNullOrEmpty(rawJson))
-        {
-            Console.WriteLine($"Deep Raw JSON length: {rawJson.Length} characters");
-            // Optionally print the raw JSON (commented out for brevity)
-            // Console.WriteLine(rawJson);
-        }
-    }
-
-    private static async Task TestGetLiteMetadataAsync(Ytdlp ytdlp)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        Console.WriteLine("\nTest 8: Fetching lite metedata...");
-
-        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
-
-        var fields = new[] { "id", "thumbnail" };
-        var data = await ytdlp.GetMetadataLiteAsync(url, fields);
-
-        stopwatch.Stop(); // stop timer
-        Console.WriteLine($"Simple metedata took {stopwatch.Elapsed.TotalSeconds:F3} seconds");
-
-        if (data != null)
-        {
-            Console.WriteLine($"Id: {data["id"]}");
-            Console.WriteLine($"Thumbnail: {data["thumbnail"]}");
-        }
-    }
-
-    private static async Task TestDownloadVideoAsync(Ytdlp ytdlpBase)
-    {
-        Console.WriteLine("\nTest 9: Downloading a video...");
-        var url = "https://www.youtube.com/watch?v=2vTkipUlhik"; //"https://www.dailymotion.com/video/xa3ron2"; 
-
-        var ytdlp = ytdlpBase
-            .WithFormat("ba/b")
-            //.WithExtractAudio(AudioFormat.Mp3)
-            .WithConcurrentFragments(8)
-            .WithHomeFolder("./downloads")
-            .WithTempFolder("./downloads/temp")
-            .WithOutputTemplate("%(title)s.%(ext)s")
-            .WithEmbedMetadata()
-            .WithEmbedThumbnail()
-            .WithRemuxVideo("mp4");
-
-        // Subscribe to events
-        ytdlp.OnCommandCompleted += (sender, args) =>
-        {
-            if (args.Success)
-                Console.WriteLine("Process completed successfully.");
-            else if (args.Message.Contains("cancelled", StringComparison.OrdinalIgnoreCase))
-                Console.WriteLine("Process was cancelled.");
-            else
-                Console.WriteLine($"Process failed: {args.Message}");
-        };
-
-        ytdlp.OnOutputMessage += (s, msg) =>
-            Console.WriteLine(msg);
-
-        ytdlp.OnErrorMessage += (sender, msg) =>
-            Console.WriteLine(msg);
-
-        ytdlp.OnProgressDownload += (sender, args) =>
-            Console.WriteLine($"Progress: {args.Percent:F2}% - {args.Speed} - ETA {args.ETA} - Size {args.Size}");
-
-        ytdlp.OnCompleteDownload += (sender, message) =>
-            Console.WriteLine($"Download complete: {message}");
-
-        ytdlp.OnPostProcessingStart += (sender, message) =>
-            Console.WriteLine($"Post-processing started: {message}");
-
-        ytdlp.OnPostProcessingComplete += (sender, message) =>
-            Console.WriteLine($"Post-processing done: {message}");
-
-       await ytdlp.DownloadAsync(url);
-    }
-
-    private static async Task TestDownloadAudioAsync(Ytdlp ytdlpBase)
-    {
-        Console.WriteLine("\nTest 10: Extracting audio...");
-        var url = "https://www.youtube.com/watch?v=ZGnQH0LN_98";
-
-        var ytdlp = ytdlpBase
-            .WithExtractAudio(AudioFormat.Mp3)
-            .WithFormat("ba")
-            .WithOutputFolder("./downloads/audio");
-
-        await ytdlp.DownloadAsync(url);
-    }
-
-    private static async Task TestBatchDownloadAsync(Ytdlp baseYtdlp)
-    {
-        Console.WriteLine("\nTest 11: Batch download (3 concurrent)...");
-        var urls = new List<string>
-            {
-                "https://www.youtube.com/watch?v=ZGnQH0LN_98",
-                "https://www.youtube.com/watch?v=983bBbJx0Mk",
-                "https://www.youtube.com/watch?v=oDSEGkT6J-0"
-            };
-
-        var ytdlp = baseYtdlp
-             .WithFormat("best[height<=480]")  // Lower quality for speed
-             .WithOutputFolder("./downloads/batch");
-
-        ytdlp.OnProgressDownload += (sender, args) =>
-            Console.WriteLine($"Progress: {args.Percent:F2}% - {args.Speed} - ETA {args.ETA} - Size {args.Size}");
-
-        await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
-    }
-
-    private static async Task TestSponsorBlockAsync(Ytdlp ytdlpBase)
-    {
-        Console.WriteLine("\nTest 12: Download with SponsorBlock removal...");
-        var url = "https://www.youtube.com/watch?v=oDSEGkT6J-0";
-
-        var ytdlp = ytdlpBase
-            .WithFormat("best")
-            .WithSponsorblockRemove("all")  // Removes sponsor, intro, etc.
-            .WithOutputFolder("./downloads/sponsorblock");
-
-        await ytdlp.DownloadAsync(url);
-    }
-
-    private static async Task TestConcurrentFragmentsAsync(Ytdlp ytdlpBase)
-    {
-        Console.WriteLine("\nTest 13: Download with concurrent fragments...");
-        var url = "https://www.youtube.com/watch?v=oDSEGkT6J-0";
-
-        var ytdlp = ytdlpBase
-            .WithConcurrentFragments(8)  // 8 parallel fragments
-            .WithFormat("b")
-            .WithOutputTemplate("%(title)s.%(ext)s")
-            .WithOutputFolder("./downloads/concurrent");
-
-        ytdlp.OnProgressDownload += (sender, args) =>
-           Console.WriteLine($"Progress: {args.Percent:F2}% - {args.Speed} - ETA {args.ETA} - FRA {args.Fragments}");
-
-        await ytdlp.DownloadAsync(url);
-    }
-
-    private static async Task TestCancellationAsync(Ytdlp ytdlp)
-    {
-        Console.WriteLine("\nTest 14: Testing cancellation (will cancel after 10 seconds)...");
-        var url = "https://www.youtube.com/watch?v=zGlwuHqGVIA";  // A longer video
-
-        var cts = new CancellationTokenSource();
-
-        var downloadTask = ytdlp
-            .WithFormat("b")
-            .WithOutputTemplate("%(title)s.%(ext)s")
-            .WithOutputFolder("./downloads/cancel")
-            .DownloadAsync(url, cts.Token);
-
-        ytdlp.OnCommandCompleted += (sender, args) =>
-        {
-            if (args.Success)
-                Console.WriteLine("Download completed successfully.");
-            else if (args.Message.Contains("cancelled", StringComparison.OrdinalIgnoreCase))
-                Console.WriteLine("Download was cancelled.");
-            else
-                Console.WriteLine($"Download failed: {args.Message}");
-        };
-
-        // Simulate cancel after 20 seconds
-        await Task.Delay(20000);
-        cts.Cancel();
-
-        try
-        {
-            await downloadTask;
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Download cancelled successfully.");
-        }
-    }
-
-    private static async Task TestGetTitleAsync(Ytdlp ytdlp)
-    {
-        Console.WriteLine("\nTest 15: Get Title Test");
-        var url = "https://www.youtube.com/watch?v=zGlwuHqGVIA";
-
-        try
-        {
-            var downloadTask = ytdlp
-                .WithSimulate()
-                .WithOutputTemplate("%(title)s.%(ext)s")
-                .WithOutputFolder("./downloads/cancel")
-                .AddFlag("--get-title")
-                .DownloadAsync(url);
-
-            await downloadTask;
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(ex);
+            Console.ResetColor();
+
+            Console.ReadKey();
         }
     }
 
-    // Helper to format seconds into mm:ss or hh:mm:ss
-    private static void PrintFormats(string title, List<FormatMetadata>? formats)
+    private static async Task InitializeAsync()
     {
-        if (formats == null || formats.Count == 0)
+        ConsoleTheme.WriteSection("Initializing Environment");
+
+        var toolsPath = Path.Combine(AppContext.BaseDirectory, "tools");
+
+        var checks = new List<(string Name, string Path, bool Required)>
         {
-            Console.WriteLine($"\n{title}: (none)");
+            ("yt-dlp",  Path.Combine(toolsPath, "yt-dlp.exe"),  true),
+            ("ffmpeg",  Path.Combine(toolsPath, "ffmpeg.exe"),  true),
+            ("ffprobe", Path.Combine(toolsPath, "ffprobe.exe"), false),
+            ("deno",    Path.Combine(toolsPath, "deno.exe"),    false),
+        };
+
+        Console.WriteLine("Checking dependencies...\n");
+
+        bool allRequiredOk = true;
+
+        foreach (var (name, path, required) in checks)
+        {
+            bool exists = File.Exists(path);
+
+            if (exists)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"✔ {name,-10} OK");
+            }
+            else
+            {
+                if (required)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"✖ {name,-10} MISSING (REQUIRED)");
+                    allRequiredOk = false;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"⚠ {name,-10} missing (optional)");
+                }
+            }
+
+            Console.ResetColor();
+        }
+
+        Console.WriteLine();
+
+        if (!allRequiredOk)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Fatal: Required dependencies are missing.");
+            Console.WriteLine("Place missing files inside /tools folder and restart.");
+            Console.ResetColor();
+
+            Console.ReadKey();
+            Environment.Exit(1);
             return;
         }
 
-        Console.WriteLine($"\n{title} ({formats.Count}):");
+        // Initialize Ytdlp only if dependencies are OK
+        _ytdlp = new Ytdlp(ytdlpPath: Path.Combine(toolsPath, "yt-dlp.exe"), logger: new DemoLogger())
+            .WithFFmpegLocation(toolsPath);
 
-        Console.WriteLine("  ID       NOTE              EXT   RESOLUTION   FPS   VCODEC     ACODEC    PROTOCOL   SIZE/APPROX");
-        Console.WriteLine("  ──────────────────────────────────────────────────────────────────────────────────────────────");
+        Console.WriteLine("Checking yt-dlp version...\n");
 
-        foreach (var f in formats.Take(15)) // limit output – there can be 50–100+ formats
+        try
         {
-            string size = f.Filesize.HasValue ? $"{f.Filesize / 1024 / 1024} MiB" :
-                          f.FilesizeApprox.HasValue ? $"~{f.FilesizeApprox / 1024 / 1024} MiB" : "-";
+            var version = await _ytdlp.VersionAsync();
 
-            Console.WriteLine(
-                $"  {f.FormatId,-8} " +
-                $"{(f.FormatNote ?? "-"),-17} " +
-                $"{f.Ext,-5} " +
-                $"{(f.Resolution ?? "-"),-12} " +
-                $"{f.Fps?.ToString("0.#") ?? "-",5} " +
-                $"{(f.Vcodec ?? "-"),-10} " +
-                $"{(f.Acodec ?? "-"),-9} " +
-                $"{(f.Protocol ?? "-"),-10} " +
-                $"{size,-12}"
-            );
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"✔ yt-dlp version: {version}");
+            Console.ResetColor();
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("✖ Failed to execute yt-dlp");
+            Console.WriteLine(ex.Message);
+            Console.ResetColor();
+
+            Console.ReadKey();
+            Environment.Exit(1);
+            return;
         }
 
-        if (formats.Count > 15)
-            Console.WriteLine($"  ... and {formats.Count - 15} more formats");
+        // Ensure folders exist
+        var folders = new[]
+        {
+            "downloads",
+            "downloads/audio",
+            "downloads/batch",
+            "downloads/sponsorblock",
+            "downloads/temp"
+        };
+
+        Console.WriteLine("\nChecking folders...");
+
+        foreach (var folder in folders)
+        {
+            Directory.CreateDirectory(folder);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"✔ {folder}");
+            Console.ResetColor();
+        }
+
+        Console.WriteLine("\nEnvironment ready.\n");
+
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("Press any key to continue...");
+        Console.ResetColor();
+
+        Console.ReadKey();
     }
-
-    static string ConvertToRegex(string line)
-    {
-        if (string.IsNullOrWhiteSpace(line))
-            return "// Empty line";
-
-        // Escape special regex characters
-        string escaped = Regex.Escape(line);
-
-        // Replace variable parts with capture groups
-        escaped = Regex.Replace(escaped, @"\\\[([^\\\]]+)\\\]", @"\\[(?<processor>$1)\\]"); // [ProcessorName]
-        escaped = Regex.Replace(escaped, @"(\d+\.\d+)%", @"(?<percent>\d+\.\d+)%");
-        escaped = Regex.Replace(escaped, @"of\s+~?\s*([\d\.]+\s*[A-Za-z]+B)", @"of ~?(?<size>[\d\.]+\s*[A-Za-z]+B)");
-        escaped = Regex.Replace(escaped, @"at\s+([\d\.]+\s*[A-Za-z]+/s)", @"at (?<speed>[\d\.]+\s*[A-Za-z]+/s)");
-        escaped = Regex.Replace(escaped, @"ETA\s+([\d:]+)", @"ETA (?<eta>[\d:]+)");
-        escaped = Regex.Replace(escaped, @"frag\s*(\d+/\d+)", @"frag (?<frag>\d+/\d+)");
-        escaped = Regex.Replace(escaped, @"(\d+/\d+)", @"(?<item>\d+)/(?<total>\d+)"); // for playlists etc.
-
-        // Common paths and filenames
-        escaped = Regex.Replace(escaped, @"(""[^""]+"")", @"(?<path>$1)");
-        escaped = Regex.Replace(escaped, @"'([^']+)'", @"(?<path>'$1')");
-
-        // Make it more flexible
-        escaped = escaped.Replace(@"\[download\]", @"\[download\]");
-        escaped = escaped.Replace(@"\[info\]", @"\[info\]");
-
-        // Add ^ and $ for full line match (recommended for yt-dlp)
-        return $"^{escaped}$";
-    }
-
 }
