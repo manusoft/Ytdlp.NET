@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ytdlp.NET - Modern .NET Wrapper for yt-dlp</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
@@ -42,8 +43,8 @@
                         <span class="text-sm font-medium">v3.2 Now Available</span>
                     </div>
 
-                    <h1 class="title-font mb-6 text-7xl font-bold leading-tight lg:text-8xl">
-                        Ytdlp.<span class="text-blue-500">NET</span>
+                    <h1 class="title-font mb-6 text-7xl font-bold leading-tight text-red-500 lg:text-8xl">
+                        Ytdlp<span class="text-white">.</span><span class="text-blue-500">NET</span>
                     </h1>
 
                     <p class="mb-8 text-2xl text-slate-400">
@@ -104,7 +105,7 @@
                 <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
                     <i class="fa-solid fa-wand-magic-sparkles mb-6 text-4xl text-blue-500"></i>
                     <h3 class="mb-3 text-2xl font-semibold">Fluent & Beautiful API</h3>
-                    <p class="text-slate-400">Chain methods like `.WithFormat("best")`, `.WithOutputTemplate()`, `.ExtractAudio()` — clean and intuitive.</p>
+                    <p class="text-slate-400">Chain methods like <span class="text-orange-400">.WithFormat("best")</span>, <span class="text-orange-400">.WithExtractAudio(AudioFormat.Mp3)</span> — clean and intuitive.</p>
                 </div>
 
                 <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
@@ -129,13 +130,12 @@
 
             <div class="overflow-auto rounded-3xl border border-slate-800 bg-slate-950 p-8 font-mono text-sm">
                 <pre class="text-emerald-300">await using var ytdlp = new Ytdlp("tools/yt-dlp.exe")
-    .WithUrl("https://youtube.com/watch?v=...")
-    .WithFormat("bestvideo+bestaudio")
+    .WithFormat("bv+ba/b")
     .WithOutputTemplate("%(title)s.%(ext)s")
-    .ExtractAudio()
-    .WithAudioFormat("mp3")
-    .OnProgress(p => Console.WriteLine($"Progress: {p.Percent}%"))
-    .OnComplete(() => Console.WriteLine("Done!"));</pre>
+    .WithOutputFolder("./downloads")
+    .WithConcurrentFragments(8)
+    .WithEmbedMetadata()
+    .WithEmbedThumbnail();</pre>
             </div>
         </div>
     </section>
@@ -179,7 +179,7 @@
                 <a href="https://github.com/manusoft/Ytdlp.NET" class="transition hover:text-white"><i class="fa-brands fa-github"></i></a>
                 <a href="https://www.nuget.org/packages/Ytdlp.NET" class="transition hover:text-white"><i class="fa-brands fa-nuget"></i></a>
             </div>
-            <p class="mt-10 text-xs text-slate-500">© 2026 manusoft • Ytdlp.NET</p>
+            <p class="mt-10 text-xs text-slate-500">© 2026 ManuHub • Ytdlp.NET</p>
         </div>
     </footer>
 
