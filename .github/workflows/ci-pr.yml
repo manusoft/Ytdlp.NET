@@ -1,0 +1,32 @@
+name: CI - PR Validation
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  validate:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore Library dependencies
+        run: dotnet restore src/Ytdlp.NET/Ytdlp.NET.csproj
+
+      - name: Restore Test dependencies
+        run: dotnet restore tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj
+
+      - name: Build Library
+        run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --no-restore
+
+      - name: Build Tests
+        run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-restore
+
+      - name: Unit Tests
+        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build --verbosity normal

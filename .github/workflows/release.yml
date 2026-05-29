@@ -1,0 +1,61 @@
+name: Release - NuGet Publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore Library
+        run: dotnet restore src/Ytdlp.NET/Ytdlp.NET.csproj
+
+      - name: Restore Tests
+        run: dotnet restore tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj
+
+      - name: Build Library
+        run: dotnet build src/Ytdlp.NET/Ytdlp.NET.csproj -c Release --no-restore
+
+      - name: Build Tests
+        run: dotnet build tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-restore
+
+      - name: Run Tests
+        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build
+
+      # 🔥 VERSIONING FROM TAG
+      - name: Set version from tag
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.Replace("v","")
+          echo "PACKAGE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Pack
+        run: dotnet pack src/Ytdlp.NET/Ytdlp.NET.csproj `
+          -c Release `
+          -p:PackageVersion=${{ env.PACKAGE_VERSION }} `
+          --output ./nupkg
+
+      - name: Publish NuGet
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem "./nupkg" -Filter "*.nupkg" | Select-Object -First 1
+
+          dotnet nuget push $pkg.FullName `
+            --source "https://api.nuget.org/v3/index.json" `
+            --api-key "${{ secrets.NUGET_KEY }}" `
+            --skip-duplicate
