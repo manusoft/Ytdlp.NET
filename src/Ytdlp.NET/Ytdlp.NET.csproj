@@ -7,12 +7,12 @@
 		<PackageId>Ytdlp.NET</PackageId>
 		<AssemblyName>Ytdlp.NET</AssemblyName>
 		<RootNamespace>ManuHub.Ytdlp.NET</RootNamespace>
-		<Version>3.2.1</Version>
+		<Version>3.0.0</Version>
 		<Authors>ManuHub Manojbabu</Authors>
 		<PackageDescription>A .NET wrapper for yt-dlp, providing a fluent API and supporting thousands of websites with concurrent downloads, SponsorBlock, and improved format parsing</PackageDescription>
 		<Copyright>© 2025-2026 ManuHub. Allrights researved</Copyright>
 		<PackageTags>yt-dlp youtube downloader video audio subtitles thumbnails fluent-api progress-tracking csharp dotnet sponsorblock concurrent</PackageTags>
-		<PackageProjectUrl>https://github.com/manusoft/Ytdlp.NET</PackageProjectUrl>
+		<PackageProjectUrl>https://manusoft.github.io/Ytdlp.NET</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/manusoft/Ytdlp.NET</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -20,17 +20,11 @@
 		<PackageIcon>icon.png</PackageIcon>
 		<Icon>icon.png</Icon>
 		<PackageReleaseNotes>
-			Ytdlp.NET v3.2 ✨ Minor update.
-
-			🛠 Improvements in this update
-			- Add Metadata extensions include Metadata.Flatten() for easier access to nested metadata properties.
-			- Fix progress parsing for better accuracy and reliability.
-			- Add GetDeepMetadataAsync() for accessing all metadata details in a single call.
-			- Add GetDeepMetadataRawAsync() for raw JSON metadata access.
-
+			Ytdlp.NET ✨ update
+			
 			🛠 Notes
 			- Companion packages recommended: ManuHub.Ytdlp, ManuHub.FFmpeg, ManuHub.FFprobe, ManuHub.Deno.
-			- All examples and documentation updated for v3.2.
+			- All examples and documentation updated.
 			- This release greatly improves reliability, cancellation, and maintainability.
 
 			See the repository for the full migration guide.
