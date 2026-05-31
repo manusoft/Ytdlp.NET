@@ -13,6 +13,7 @@ internal static class MenuRenderer
         WriteItem("7", "SponsorBlock");
         WriteItem("8", "Benchmarks");
         WriteItem("9", "Extractors List");
+        WriteItem("10", "Subtitle List");
         WriteItem("0", "Exit");
 
         Console.WriteLine();

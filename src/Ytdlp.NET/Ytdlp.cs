@@ -906,17 +906,44 @@ public sealed class Ytdlp : IAsyncDisposable
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             throw new ArgumentException("Username and password cannot be empty.");
-        return this
-            .AddOption("--username", username)
-            .AddOption("--password", password);
+        return this.AddOption("--username", username).AddOption("--password", password);
     }
 
     /// <summary>
     /// Two-factor authentication code
     /// </summary>
     /// <param name="code">Two-factor Code</param>
-    /// <returns></returns>
     public Ytdlp WithTwoFactor(string code) => AddOption("--twofactor", code);
+
+    /// <summary>
+    /// Video-specific password
+    /// </summary>
+    /// <param name="password"></param>
+    /// <returns></returns>
+    public Ytdlp WithVideoPassword(string password) => AddOption("--video-password", password);
+
+    /// <summary>
+    /// Adobe Pass authentication. MSO is the name of the TV provider, e.g. "comcast", "cox", "verizon".
+    /// </summary>
+    /// <param name="mso"></param>
+    /// <param name="username"></param>
+    /// <param name="password"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public Ytdlp WithAdobePassAuthentication(string mso, string username, string password)
+    {
+        if (string.IsNullOrWhiteSpace(mso) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            throw new ArgumentException("MSO, username, and password are required for Adobe Pass.");
+
+        // Store these in your internal state to be passed during the execution phase
+        return this.AddOption("--ap-mso", mso)
+                   .AddOption("--ap-username", username)
+                   .AddOption("--ap-password", password);
+
+        // TODO: Implement the logic to handle Adobe Pass authentication during the execution phase,
+        // as it may require additional steps such as fetching tokens or handling redirects.
+        // Pass --ap-password as '-' tells yt-dlp to read from stdin
+    }
 
     #endregion
 
@@ -1414,7 +1441,7 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
     /// <param name="bufferKb">Buffer size in KB.</param>
     /// <returns>List of extractor names</returns>
-    public async Task<List<string>> ExtractorsAsync(CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<List<string>> GetExtractorsAsync(CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
         try
         {
@@ -1442,6 +1469,45 @@ public sealed class Ytdlp : IAsyncDisposable
         catch (Exception ex)
         {
             _logger.Log(LogType.Warning, $"Extrators fetch failed: {ex.Message}");
+            return new List<string>();
+        }
+    }
+
+    /// <summary>
+    /// List all supported MSOs for Adobe Pass authentication and exit
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
+    /// <param name="bufferKb">Buffer size in KB.</param>
+    /// <returns>List of Adobe Pass MSOs</returns>
+    public async Task<List<string>> GetAdobePassListAsync(CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    {
+        try
+        {
+            List<string> list = new();
+            var result = await Probe().RunAsync("--ap-list-mso", ct, tuneProcess, bufferKb);
+
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                _logger.Log(LogType.Warning, "Empty adobe pass list.");
+                return list;
+            }
+
+            var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            foreach (var line in lines)
+                list.Add(line);
+
+            return list;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Log(LogType.Warning, "Adobe Pass list fetch cancelled.");
+            return new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.Log(LogType.Warning, $"Adobe Pass list fetch failed: {ex.Message}");
             return new List<string>();
         }
     }
@@ -1499,7 +1565,7 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <exception cref="ArgumentException"></exception>
     public async Task<string?> GetMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
-       var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
+        var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
         if (string.IsNullOrWhiteSpace(json))
         {
             _logger.Log(LogType.Warning, "Empty JSON output.");
@@ -1589,7 +1655,7 @@ public sealed class Ytdlp : IAsyncDisposable
             if (ct.IsCancellationRequested)
                 Debug.WriteLine("Cancellation requested before starting process.");
 
-            var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);                  
+            var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
 
             return json;
         }
@@ -1813,6 +1879,27 @@ public sealed class Ytdlp : IAsyncDisposable
             .FirstOrDefault();
 
         return best?.FormatId ?? "bestvideo";
+    }
+
+    /// <summary>
+    /// Probes the specified URL to retrieve a list of available subtitle tracks.
+    /// </summary>
+    /// <param name="url">The video URL to probe for subtitle tracks.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> to cancel the underlying yt-dlp process.</param>
+    /// <returns>A list of available subtitle tracks.</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<List<SubtitleTrack>> GetSubtitlesAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("Video URL cannot be empty.", nameof(url));
+
+        // --list-subs lists available subtitles
+        var output = await Probe().RunAsync($"--list-subs {Quote(url)}", ct, tuneProcess, bufferKb);
+
+        if (string.IsNullOrWhiteSpace(output))
+            return new List<SubtitleTrack>();
+
+        return ParseSubtitles(output);
     }
 
     /// <summary>
@@ -2095,6 +2182,51 @@ public sealed class Ytdlp : IAsyncDisposable
 
         _logger.Log(LogType.Info, $"Parsed {formats.Count} formats");
         return formats;
+    }
+
+    private List<SubtitleTrack> ParseSubtitles(string output)
+    {
+        var subtitles = new List<SubtitleTrack>();
+        var lines = output.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+        var rowRegex = new System.Text.RegularExpressions.Regex(@"^(\S+)\s+(.+?)\s{2,}([a-z0-9, ]+)$");
+
+        bool foundStartPoint = false;
+        bool foundHeader = false;
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+
+            // 1. Look for the specific trigger point
+            if (trimmed.Contains("[info] Available subtitles for"))
+            {
+                foundStartPoint = true;
+                continue;
+            }
+
+            // 2. We only start parsing rows after the trigger AND the header
+            if (foundStartPoint && trimmed.StartsWith("Language"))
+            {
+                foundHeader = true;
+                continue;
+            }
+
+            if (foundHeader)
+            {
+                var match = rowRegex.Match(trimmed);
+                if (match.Success)
+                {
+                    subtitles.Add(new SubtitleTrack
+                    {
+                        LanguageCode = match.Groups[1].Value,
+                        Name = match.Groups[2].Value.Trim(),
+                        Formats = match.Groups[3].Value.Split(',').Select(f => f.Trim()).ToList()
+                    });
+                }
+            }
+        }
+        return subtitles;
     }
 
     #endregion
