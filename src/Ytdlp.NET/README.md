@@ -92,7 +92,7 @@ foreach (var root in metadata.Entries ?? [])
 
 ---
 
-## 🚀 New in v3.3
+## 🚀 New in this release
 
 * Add more WithXxx() methods for advanced options.
 * New **GetAdobePassListAsync()** for Adobe Pass mso listing.
@@ -301,7 +301,7 @@ await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 ```
 ---
 
-## Fluent Methods (v3.0)
+## Fluent Methods
 
 ### General Options
 * `.WithIgnoreErrors()`

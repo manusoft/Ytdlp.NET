@@ -41,7 +41,7 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ---
 
-# 🚀 New in v3.3
+# 🚀 New in this version
 
 * New **GetAdobePassListAsync()** for Adobe Pass mso listing.
 * New **GetSubtitlesAsync()** for subtitle extraction.
@@ -517,15 +517,13 @@ Open issues or PRs on GitHub.
 
 MIT License
 
-See:
-
-[https://github.com/manusoft/yt-dlp-wrapper/blob/master/LICENSE.txt](https://github.com/manusoft/yt-dlp-wrapper/blob/master/LICENSE.txt)
+See: [https://github.com/manusoft/yt-dlp-wrapper/blob/master/LICENSE.txt](https://github.com/manusoft/yt-dlp-wrapper/blob/master/LICENSE.txt)
 
 ---
 
 # 👨‍💻 Author
 
-**Manoj Babu**
+**Manoj Babu**, 
 ManuHub
 
 ## 👥 Contributors
