@@ -22,7 +22,7 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ![Screenshot 2025-01-23 153252](https://github.com/user-attachments/assets/1b977927-ea26-4220-bd41-9f64d6716058)
 
-[Download the latest App](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/gui-app.zip)
+[Download the latest App](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/video-downloader-app-v2.0.7z)
 
 ---
 
@@ -41,13 +41,21 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ---
 
-# 🚀 New in v3.2
+# 🚀 New in v3.3
 
-* New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
-* New `GetDeepMetadataRawAsync()` for raw JSON metadata.
-* New `Metadata.Flatten()` method to simplify nested metadata structures.
-* Improved progress download events for batch downloads with better tracking.
-* Improved `Metadata` model with more fields and better parsing.
+* New **GetAdobePassListAsync()** for Adobe Pass mso listing.
+* New **GetSubtitlesAsync()** for subtitle extraction.
+* New **Traverse()** method for easy iteration over nested playlist entries.
+* New **GetDeepMetadataAsync()** method for comprehensive metadata extraction.
+* New **GetDeepMetadataRawAsync()** for raw JSON metadata.
+* Improved **Metadata** model with more fields and better parsing.
+* Improved **UpdateAsync** with specific version support.
+* Full support for **IAsyncDisposable** with **await using**.
+* Immutable builder (**WithXxx**) for safe instance reuse.
+* Updated examples for event-driven downloads.
+* Simplified metadata fetching & format selection.
+* High-performance probe methods with optional buffer size.
+* Improved cancellation & error handling.
 
 ---
 
@@ -156,6 +164,18 @@ string bestAudio = await ytdlp.GetBestAudioFormatIdAsync(url);
 await ytdlp
     .WithFormat($"{bestVideo}+{bestAudio}/best")
     .DownloadAsync(url);
+```
+
+---
+
+# 📄 Get Subtitles
+```csharp
+await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var subtitles = await ytdlp.GetSubtitlesAsync("https://www.youtube.com/watch?v=abc123");
+foreach (var sub in subtitles)
+{
+    Console.WriteLine($"Language: {sub.Language}, Format: {sub.Format}, Url: {sub.Url}");
+}
 ```
 
 ---

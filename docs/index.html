@@ -40,7 +40,7 @@
                 <div class="lg:w-1/2">
                     <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-slate-800/50 px-4 py-2">
                         <span class="text-emerald-400">●</span>
-                        <span class="text-sm font-medium">v3.2 Now Available</span>
+                        <span class="text-sm font-medium">v3.3 Now Available</span>
                     </div>
 
                     <h1 class="title-font mb-6 text-7xl font-bold leading-tight text-red-500 lg:text-8xl">
@@ -135,7 +135,12 @@
     .WithOutputFolder("./downloads")
     .WithConcurrentFragments(8)
     .WithEmbedMetadata()
-    .WithEmbedThumbnail();</pre>
+    .WithEmbedThumbnail();
+
+ytdlp.OnProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.OnCompleteDownload += (s, msg) => Console.WriteLine($"Download complete: {msg}");
+
+await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
             </div>
         </div>
     </section>
@@ -162,7 +167,7 @@
                          class="mx-auto mb-6 rounded-3xl shadow-2xl" alt="Video Downloader" />
                     <h3 class="mb-2 text-2xl font-semibold">Video Downloader</h3>
                     <p class="mb-4 text-slate-400">.NET Desktop Application</p>
-                    <a href="https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/gui-app.zip"
+                    <a href="https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/video-downloader-app-v2.0.7z"
                        class="inline-flex items-center gap-2 text-blue-400 hover:underline">
                         Download GUI App →
                     </a>

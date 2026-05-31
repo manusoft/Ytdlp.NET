@@ -36,6 +36,18 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
 ---
 
+## 📄 Get Subtitles
+Ytdlp.NET now supports fetching subtitles with `GetSubtitlesAsync()`:
+```csharp
+var subtitles = await ytdlp.GetSubtitlesAsync(url);
+```
+
+## 📄 Get Adobe Pass MSO List
+Ytdlp.NET now supports fetching the Adobe Pass MSO list with `GetAdobePassListAsync()`:
+```csharp
+var msoList = await ytdlp.GetAdobePassListAsync();
+```
+
 ## 🌲 Deep Metadata Support
 
 Ytdlp.NET now supports **deep playlist extraction** with full hierarchical structure support (seasons → episodes → nested playlists).
@@ -80,15 +92,18 @@ foreach (var root in metadata.Entries ?? [])
 
 ---
 
-## 🚀 New in v3.2
+## 🚀 New in v3.3
 
-* New 'Traverse()' method for easy iteration over nested playlist entries.
-* New `GetDeepMetadataAsync()` method for comprehensive metadata extraction.
-* New `GetDeepMetadataRawAsync()` for raw JSON metadata.
-* Improved `Metadata` model with more fields and better parsing.
-* Improved UpdateAsync with specific version support.
-* Full support for `IAsyncDisposable` with `await using`.
-* Immutable builder (`WithXxx`) for safe instance reuse.
+* Add more WithXxx() methods for advanced options.
+* New **GetAdobePassListAsync()** for Adobe Pass mso listing.
+* New **GetSubtitlesAsync()** for subtitle extraction.
+* New **Traverse()** method for easy iteration over nested playlist entries.
+* New **GetDeepMetadataAsync()** method for comprehensive metadata extraction.
+* New **GetDeepMetadataRawAsync()** for raw JSON metadata.
+* Improved **Metadata** model with more fields and better parsing.
+* Improved **UpdateAsync** with specific version support.
+* Full support for **IAsyncDisposable** with **await using**.
+* Immutable builder (**WithXxx**) for safe instance reuse.
 * Updated examples for event-driven downloads.
 * Simplified metadata fetching & format selection.
 * High-performance probe methods with optional buffer size.
@@ -111,20 +126,22 @@ foreach (var root in metadata.Entries ?? [])
 ---
 
 ## 🛠 Methods
-* `VersionAsync(CancellationToken ct)`
-* `UpdateAsync(UpdateChannel channel, string specificVersion, CancellationToken ct)`
-* `ExtractorsAsync(CancellationToken ct, int bufferKb)`
-* `GetMetadataAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetMetadataRawAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
-* `GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
-* `GetFormatsAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetMetadataLiteAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetMetadataLiteAsync(string url, IEnumerable<string> fields, CancellationToken ct, int bufferKb)`
-* `GetBestAudioFormatIdAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetBestVideoFormatIdAsync(string url, int maxHeight, CancellationToken ct, int bufferKb)`
-* `ExecuteAsync(string url, CancellationToken ct)`
-* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency, CancellationToken ct)`
+* `VersionAsync()`
+* `UpdateAsync(UpdateChannel channel, string specificVersion)`
+* `GetExtractorsAsync()`
+* `GetAdobePassListAsync()`
+* `GetSubtitlesAsync(string url)`
+* `GetMetadataAsync(string url)`
+* `GetMetadataRawAsync(string url)`
+* `GetDeepMetadataAsync(string url)`
+* `GetDeepMetadataRawAsync(string url)`
+* `GetFormatsAsync(string url)`
+* `GetMetadataLiteAsync(string url)`
+* `GetMetadataLiteAsync(string url, IEnumerable<string> fields)`
+* `GetBestAudioFormatIdAsync(string url)`
+* `GetBestVideoFormatIdAsync(string url, int maxHeight)`
+* `ExecuteAsync(string url)`
+* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency)`
 
 
 ## 🔧 Thread Safety & Disposal
@@ -245,6 +262,16 @@ await ytdlp
 
 ---
 
+## Get Subtitles
+```csharp
+await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var subtitles = await ytdlp.GetSubtitlesAsync("https://www.youtube.com/watch?v=abc123");
+foreach (var sub in subtitles)
+{
+    Console.WriteLine($"Language: {sub.Language}, Format: {sub.Format}, Url: {sub.Url}");
+}
+```
+
 ### Batch Downloads
 
 ```csharp
@@ -272,8 +299,6 @@ var urls = new[] { "https://youtu.be/vid1", "https://youtu.be/vid2" };
 
 await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 ```
-
-
 ---
 
 ## Fluent Methods (v3.0)
@@ -387,6 +412,8 @@ await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 ### Authentication Options
 * `.WithAuthentication(string username, string password)`
 * `.WithTwoFactor(string code)`
+* `.WithVideoPassword(string password)`
+* `.WithAdobePassAuthentication(string mso, string username, string password)`
 
 ### Post-Processing Options
 * `.WithExtractAudio(string format, int quality = 5)`

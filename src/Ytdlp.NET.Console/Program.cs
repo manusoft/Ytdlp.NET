@@ -68,6 +68,10 @@ internal class Program
                         await ExtractorPage.ShowAsync(_ytdlp!);
                         break;
 
+                    case "10":
+                        await SubtitlePage.ShowAsync(_ytdlp!);
+                        break;
+
                     case "0":
                         return;
                 }
