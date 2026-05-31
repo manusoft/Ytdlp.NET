@@ -22,7 +22,7 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ![Screenshot 2025-01-23 153252](https://github.com/user-attachments/assets/1b977927-ea26-4220-bd41-9f64d6716058)
 
-[Download the latest App](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/gui-app.zip)
+[Download the latest App](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/video-downloader-app-v2.0.7z)
 
 ---
 
