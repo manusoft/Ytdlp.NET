@@ -1399,7 +1399,7 @@ public sealed class Ytdlp : IAsyncDisposable
     {
         var output = await Probe().RunAsync("--version", ct);
         string version = output is null ? string.Empty : output.Trim();
-        _logger.Log(LogType.Info, $"yt-dlp version: {version}");
+        //_logger.Log(LogType.Info, $"yt-dlp version: {version}");
         return version;
     }
 
@@ -1448,11 +1448,7 @@ public sealed class Ytdlp : IAsyncDisposable
             List<string> list = new();
             var result = await Probe().RunAsync("--list-extractors", ct, tuneProcess, bufferKb);
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                _logger.Log(LogType.Warning, "Empty extractor list.");
-                return list;
-            }
+            if (string.IsNullOrWhiteSpace(result)) return list;
 
             var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -1466,9 +1462,8 @@ public sealed class Ytdlp : IAsyncDisposable
             _logger.Log(LogType.Warning, "Extractors fetch cancelled.");
             return new List<string>();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.Log(LogType.Warning, $"Extrators fetch failed: {ex.Message}");
             return new List<string>();
         }
     }
@@ -1487,11 +1482,7 @@ public sealed class Ytdlp : IAsyncDisposable
             List<string> list = new();
             var result = await Probe().RunAsync("--ap-list-mso", ct, tuneProcess, bufferKb);
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                _logger.Log(LogType.Warning, "Empty adobe pass list.");
-                return list;
-            }
+            if (string.IsNullOrWhiteSpace(result)) return list;
 
             var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -1505,9 +1496,8 @@ public sealed class Ytdlp : IAsyncDisposable
             _logger.Log(LogType.Warning, "Adobe Pass list fetch cancelled.");
             return new List<string>();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.Log(LogType.Warning, $"Adobe Pass list fetch failed: {ex.Message}");
             return new List<string>();
         }
     }
@@ -1527,11 +1517,7 @@ public sealed class Ytdlp : IAsyncDisposable
     public async Task<Metadata?> GetMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
         var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            _logger.Log(LogType.Warning, "Empty JSON output.");
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(json)) return null;
 
         try
         {
@@ -1565,13 +1551,7 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <exception cref="ArgumentException"></exception>
     public async Task<string?> GetMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
-        var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            _logger.Log(LogType.Warning, "Empty JSON output.");
-            return null;
-        }
-        return json;
+        return await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
     }
 
 
@@ -1589,11 +1569,7 @@ public sealed class Ytdlp : IAsyncDisposable
     public async Task<Metadata?> GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
         var json = await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            _logger.Log(LogType.Warning, "Empty JSON output.");
-            return null;
-        }
+        if (string.IsNullOrWhiteSpace(json)) return null;
 
         try
         {
@@ -1626,13 +1602,7 @@ public sealed class Ytdlp : IAsyncDisposable
     /// (non-flattened) metadata, or null if the output is empty.</returns>
     public async Task<string?> GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
     {
-        var json = await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            _logger.Log(LogType.Warning, "Empty JSON output.");
-            return null;
-        }
-        return json;
+        return await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
     }
 
     private async Task<string?> GetMetadataInternalAsync(string url, bool flat, CancellationToken ct, bool tuneProcess, int bufferKb)
@@ -1656,7 +1626,6 @@ public sealed class Ytdlp : IAsyncDisposable
                 Debug.WriteLine("Cancellation requested before starting process.");
 
             var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
-
             return json;
         }
         catch (OperationCanceledException)
@@ -1664,9 +1633,8 @@ public sealed class Ytdlp : IAsyncDisposable
             _logger.Log(LogType.Warning, "Metadata fetch cancelled.");
             return null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.Log(LogType.Warning, $"Metadata fetch failed: {ex.Message}");
             return null;
         }
     }
@@ -1691,10 +1659,7 @@ public sealed class Ytdlp : IAsyncDisposable
         var output = await Probe().RunAsync($"-F {Quote(url)}", ct, tuneProcess, bufferKb);
 
         if (string.IsNullOrWhiteSpace(output))
-        {
-            _logger.Log(LogType.Info, $"Empty format result.");
             return new List<Format>();
-        }
 
         return ParseFormats(output);
     }
@@ -1764,7 +1729,6 @@ public sealed class Ytdlp : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.Log(LogType.Warning, $"Failed to fetch simple metadata: {ex.Message}");
             return null;
         }
     }
@@ -1828,7 +1792,6 @@ public sealed class Ytdlp : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _logger.Log(LogType.Warning, $"Simple metadata failed: {ex.Message}");
             return null;
         }
     }
