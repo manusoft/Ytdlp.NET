@@ -16,37 +16,45 @@ internal static class MetadataPage
         if (string.IsNullOrWhiteSpace(url))
             return;
 
-        var metadata = await ytdlp.GetMetadataAsync(url);
-
-        if (metadata == null)
+        try
         {
-            Console.WriteLine("No metadata found.");
-            Console.ReadKey();
-            return;
-        }
+            var metadata = await ytdlp.GetMetadataAsync(url);
 
-        Console.WriteLine($"\nTitle   : {metadata.Title}");
-        Console.WriteLine($"ID      : {metadata.Id}");
-        Console.WriteLine($"Type    : {metadata.Type}");
-        Console.WriteLine($"Thumb   : {metadata.Thumbnail}");
-
-        if (metadata.Type == "video")
-        {
-            Console.WriteLine("\nFormats:");
-            TablePrinter.PrintMetadata(metadata.Formats ?? new List<FormatMetadata>());
-        }
-
-        if (metadata.Type == "playlist")
-        {
-            Console.WriteLine($"\nPlaylist entries: {metadata.Entries?.Count ?? 0}");
-
-            foreach (var e in metadata.Entries?.Take(5) ?? [])
+            if (metadata == null)
             {
-                Console.WriteLine($"- {e.Title}");
+                Console.WriteLine("No metadata found.");
+                return;
+            }
+
+            Console.WriteLine($"\nTitle   : {metadata.Title}");
+            Console.WriteLine($"ID      : {metadata.Id}");
+            Console.WriteLine($"Type    : {metadata.Type}");
+            Console.WriteLine($"Thumb   : {metadata.Thumbnail}");
+
+            if (metadata.Type == "video")
+            {
+                Console.WriteLine("\nFormats:");
+                TablePrinter.PrintMetadata(metadata.Formats ?? new List<FormatMetadata>());
+            }
+
+            if (metadata.Type == "playlist")
+            {
+                Console.WriteLine($"\nPlaylist entries: {metadata.Entries?.Count ?? 0}");
+
+                foreach (var e in metadata.Entries?.Take(5) ?? [])
+                {
+                    Console.WriteLine($"- {e.Title}");
+                }
             }
         }
-
-        Console.WriteLine("\nPress any key...");
-        Console.ReadKey();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            Console.WriteLine("\nPress any key...");
+            Console.ReadKey();
+        }
     }
 }
