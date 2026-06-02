@@ -44,3 +44,4 @@ internal static class BenchmarkPage
         Console.ReadKey();
     }
 }
+

@@ -1990,6 +1990,21 @@ public sealed class Ytdlp : IAsyncDisposable
         await Task.WhenAll(tasks);
     }
 
+    public async Task<List<string>> ProbeFlatPlaylistAsync(string playlistUrl, CancellationToken ct = default)
+    {
+        var jsonLines = new List<string>();
+        string args = $"-j --simulate --skip-download --flat-playlist --lazy-playlist --ignore-errors --quiet \"{playlistUrl}\"";
+
+        // Direct, stream-based assembly
+        var _runner = Runner();
+        await _runner.ExecuteAsync(args, onLineReceived: (line) =>
+        {
+            jsonLines.Add(line);
+        }, ct: ct);
+
+        return jsonLines;
+    }
+
     #endregion
 
     // ==================================================================================================================
@@ -1997,6 +2012,13 @@ public sealed class Ytdlp : IAsyncDisposable
     // ==================================================================================================================
 
     #region Helpers
+
+    private ProcessRunner Runner()
+    {
+        // Create isolated execution components
+        var factory = new ProcessFactory(_ytdlpPath);
+        return new ProcessRunner(factory, _logger);
+    }
 
     // Get probe runner
     private ProbeRunner Probe()
