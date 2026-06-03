@@ -105,7 +105,7 @@ public sealed partial class Ytdlp
 
     public Ytdlp(string ytdlpPath = "yt-dlp", ILogger? logger = null)
     {
-        _ytdlpPath = ValidatePath(ytdlpPath);
+        _ytdlpPath = ytdlpPath;
         _logger = logger ?? new DefaultLogger();
 
         // defaults
@@ -262,24 +262,6 @@ public sealed partial class Ytdlp
         args.Add(url);
 
         return args;
-    }
-
-    private static string ValidatePath(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-            throw new ArgumentException("yt-dlp path cannot be empty");
-
-        if (!File.Exists(path) && !IsExecutableInPath(path))
-            throw new FileNotFoundException($"yt-dlp executable not found: {path}");
-
-        return path;
-    }
-
-    private static bool IsExecutableInPath(string name)
-    {
-        return Environment.GetEnvironmentVariable("PATH")?
-            .Split(Path.PathSeparator)
-            .Any(p => File.Exists(Path.Combine(p, name))) ?? false;
     }
 
     private static string Quote(string? value)

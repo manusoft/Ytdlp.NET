@@ -1,11 +1,10 @@
-﻿using ManuHub.Ytdlp;
-using ManuHub.Ytdlp.Models;
+﻿using ManuHub.Ytdlp.NET;
 
 namespace VideoDownloader.Core;
 
 public sealed class YtdlpService
 {
-    private readonly YtdlpRootBuilder _root;
+    private readonly Ytdlp _root;
     private readonly ILogger _logger;
     private readonly string _path;
 
@@ -21,14 +20,14 @@ public sealed class YtdlpService
     {
         _path = path;
         _logger = logger;
-        _root = Ytdlp.Create(path, logger);
+        _root = new Ytdlp(path, logger);
     }
 
     public async Task<string> GetVersionAsync()
-        => await _root.General().VersionAsync() ?? "unknown";
+        => await _root.VersionAsync() ?? "unknown";
 
     public async Task<List<Format>> GetFormatsAsync(string url)
-        => await _root.Probe(url).GetFormatsDetailedAsync() ?? [];
+        => await _root.GetFormatsAsync(url) ?? [];
 
     public async Task DownloadAsync(
         string url,
@@ -39,18 +38,17 @@ public sealed class YtdlpService
     {
         try
         {
-            var command = _root.Download()
+            var ytdlp = _root
                .WithFormat(format)
                .WithConcurrentFragments(8)
                .WithOutputFolder(outputFolder)
                .WithFFmpegLocation(ffmpeg)
                .WithOutputTemplate(outputTemplate)
-               .WindowsFileNames()
-               .Build();
+               .WithWindowsFilenames();
 
-            Subscribe(command);
+            Subscribe(ytdlp);
 
-            await command.ExecuteAsync(url);
+            await ytdlp.DownloadAsync(url);
         }
         catch (Exception ex)
         {
@@ -58,20 +56,18 @@ public sealed class YtdlpService
         }
     }
 
-    private void Subscribe(YtdlpCommand command)
+    private void Subscribe(Ytdlp ytdlp)
     {
-        command.OnProgressMessage += (s, e) => ProgressMessage?.Invoke(e);
+        ytdlp.OnProgressMessage += (s, e) => ProgressMessage?.Invoke(e);
 
-        command.OnErrorMessage += (s, e) => ErrorMessage?.Invoke(e);
+        ytdlp.OnErrorMessage += (s, e) => ErrorMessage?.Invoke(e);
 
-        command.OnProgressDownload += (s, e) => Progress?.Invoke(e);
+        ytdlp.OnProgressDownload += (s, e) => Progress?.Invoke(e);
 
-        command.OnPostProcessingStarted += (s, e) => PostProcessStarted?.Invoke();
+        ytdlp.OnPostProcessingStart += (s, e) => PostProcessStarted?.Invoke();
 
-        command.OnPostProcessingCompleted += (s, e) =>  PostProcessCompleted?.Invoke();
+        ytdlp.OnPostProcessingComplete += (s, e) =>  PostProcessCompleted?.Invoke();
 
-        command.OnCompleteDownload += (s, e) => DownloadCompleted?.Invoke();
-
-        command.OnProcessCompleted += (s, e) =>  ProcessCompleted?.Invoke();
+        ytdlp.OnCompleteDownload += (s, e) => DownloadCompleted?.Invoke();
     }
 }

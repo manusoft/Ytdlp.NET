@@ -1,5 +1,4 @@
-using ManuHub.Ytdlp;
-using ManuHub.Ytdlp.Models;
+using ManuHub.Ytdlp.NET;
 using Microsoft.WindowsAPICodePack.Taskbar;
 using System.Reflection;
 using VideoDownloader.Core;
@@ -88,7 +87,7 @@ public partial class frmMain : Form
             comboQuality.Format += ComboQuality_Format;
 
             comboQuality.DataSource = formats
-                .Where(f => !f.HasStoryboard)
+                .Where(f => !f.IsStoryboard)
                 .ToList();
 
             comboQuality.ValueMember = "Id";
@@ -100,7 +99,7 @@ public partial class frmMain : Form
         if (e.ListItem is not Format f)
             return;
 
-        if (f.HasVideo)
+        if (f.IsVideo)
             e.Value = $"{f.Height}p • {f.Extension}";
         else
             e.Value = $"Audio • {f.Extension}";
@@ -118,7 +117,7 @@ public partial class frmMain : Form
             return;
         }
 
-        string fmt = format.HasVideo
+        string fmt = format.IsVideo
             ? $"{format.Id}+bestaudio"
             : format.Id;
 
