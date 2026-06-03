@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\feature\Ytdlp.NET.vNext\Ytdlp.NET.vNext.csproj" />
+    <ProjectReference Include="..\..\src\Ytdlp.NET\Ytdlp.NET.csproj" />
   </ItemGroup>
 
   <ItemGroup>

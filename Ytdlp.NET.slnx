@@ -2,16 +2,17 @@
   <Folder Name="/apps/">
     <Project Path="apps/ClipMate.Lite/ClipMate.Lite.csproj" />
   </Folder>
-  <Folder Name="/archives/">
-    <Project Path="archives/Ytdlp.Wrapper.Console/Ytdlp.Wrapper.Console.csproj" />
-    <Project Path="archives/Ytdlp.Wrapper/Ytdlp.Wrapper.csproj" />
+  <Folder Name="/archives/" />
+  <Folder Name="/archives/feature/">
+    <Project Path="archives/feature/Ytdlp.NET.vNext.Console/Ytdlp.NET.vNext.Console.csproj" />
+    <Project Path="archives/feature/Ytdlp.NET.vNext/Ytdlp.NET.vNext.csproj" />
+  </Folder>
+  <Folder Name="/archives/legacy/">
+    <Project Path="archives/legacy/Ytdlp.Wrapper.Console/Ytdlp.Wrapper.Console.csproj" />
+    <Project Path="archives/legacy/Ytdlp.Wrapper/Ytdlp.Wrapper.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Ytdlp.NET.Benchmarks/Ytdlp.NET.Benchmarks.csproj" Id="eae889a5-abe6-4a11-b11c-3279b2c9f55a" />
-  </Folder>
-  <Folder Name="/feature/">
-    <Project Path="feature/Ytdlp.NET.vNext.Console/Ytdlp.NET.vNext.Console.csproj" />
-    <Project Path="feature/Ytdlp.NET.vNext/Ytdlp.NET.vNext.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Ytdlp.NET.Console/Ytdlp.NET.Console.csproj" />

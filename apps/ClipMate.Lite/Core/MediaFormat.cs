@@ -1,4 +1,4 @@
-﻿using ManuHub.Ytdlp.Models;
+﻿using ManuHub.Ytdlp.NET;
 using System.Text.Json.Serialization;
 
 namespace VideoDownloader.Core;
