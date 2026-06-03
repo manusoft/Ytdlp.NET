@@ -2136,13 +2136,14 @@ public sealed class Ytdlp
     private static string EscapeArgument(string arg)
     {
         if (string.IsNullOrEmpty(arg)) return "\"\"";
-        if (arg.StartsWith("-")) return arg;  // flags never quoted
-        if (!arg.Contains(' ') &&
-            !arg.Contains('"') &&
-            !arg.Contains('\\') &&
-            !arg.Contains('\t')) return arg;  // clean value, no quoting needed
 
+        // Flags (starting with -) should never be quoted.
+        if (arg.StartsWith("-")) return arg;
+
+        // ALWAYS escape, even if it looks "clean". 
+        // This ensures consistency and prevents issues with hidden characters.
         string escaped = arg.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
         return $"\"{escaped}\"";
     }
 
