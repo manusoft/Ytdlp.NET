@@ -461,33 +461,4 @@ public class YtdlpBuilderTests
 
         configured.Should().NotBeSameAs(original);
     }
-
-    // ── IAsyncDisposable ──────────────────────────────────────────────────
-
-    [Fact]
-    public async Task DisposeAsync_CanBeCalledMultipleTimes_WithoutException()
-    {
-        var ytdlp = new Ytdlp.NET.Ytdlp(_fullFakePath);
-
-        // First disposal
-        await ytdlp.DisposeAsync();
-
-        // Second disposal should be safe (no ObjectDisposedException etc.)
-        var act = async () => await ytdlp.DisposeAsync();
-        await act.Should().NotThrowAsync();
-    }
-
-    [Fact]
-    public async Task AwaitUsing_DisposesCorrectly()
-    {
-        // Should not throw; tests IAsyncDisposable integration
-        var act = async () =>
-        {
-            await using var ytdlp = new Ytdlp.NET.Ytdlp(_fullFakePath)
-                .WithFormat("best")
-                .WithOutputFolder("./downloads");
-        };
-
-        await act.Should().NotThrowAsync();
-    }
 }

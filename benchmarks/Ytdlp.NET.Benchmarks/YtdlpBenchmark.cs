@@ -10,7 +10,6 @@ public class YtdlpBenchmark
 {
     private readonly ProcessFactory _factory;
     private readonly ProcessRunner _newRunner;
-    private readonly ProbeRunner _oldProbeRunner;   // old class
 
     private string toolsPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
@@ -20,13 +19,6 @@ public class YtdlpBenchmark
     {
         _factory = new ProcessFactory(Path.Combine(toolsPath, "yt-dlp.exe"));
         _newRunner = new ProcessRunner(_factory, new ConsoleLogger());
-        _oldProbeRunner = new ProbeRunner(_factory, new ConsoleLogger());
-    }
-
-    [Benchmark(Baseline = true)]
-    public async Task OldProbe_ReadToEndAsync()
-    {
-        await _oldProbeRunner.RunAsync($"-j --flat-playlist \"{TestUrl}\"");
     }
 
     [Benchmark]

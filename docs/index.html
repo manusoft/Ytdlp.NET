@@ -129,7 +129,7 @@
             <h2 class="mb-8 text-center text-4xl font-bold">Simple. Powerful. Modern.</h2>
 
             <div class="overflow-auto rounded-3xl border border-slate-800 bg-slate-950 p-8 font-mono text-sm">
-                <pre class="text-emerald-300">await using var ytdlp = new Ytdlp("tools/yt-dlp.exe")
+                <pre class="text-emerald-300">var ytdlp = new Ytdlp("tools/yt-dlp.exe")
     .WithFormat("bv+ba/b")
     .WithOutputTemplate("%(title)s.%(ext)s")
     .WithOutputFolder("./downloads")
