@@ -25,7 +25,7 @@ public class YtdlpBenchmark
     public async Task NewRunner_CaptureFullOutput()
     {
         await _newRunner.ExecuteAsync(
-            $"-j --flat-playlist \"{TestUrl}\"",
+            $"-j --simulate --flat-playlist \"{TestUrl}\"",
             captureFullOutput: true);
     }
 
@@ -34,7 +34,7 @@ public class YtdlpBenchmark
     {
         var list = new List<string>(500);
         await _newRunner.ExecuteAsync(
-            $"-j --flat-playlist \"{TestUrl}\"",
+            $"-j --simulate --flat-playlist \"{TestUrl}\"",
             onLineReceived: list.Add);
     }
 }

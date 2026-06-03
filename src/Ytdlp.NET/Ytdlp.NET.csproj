@@ -4,6 +4,7 @@
 		<TargetFrameworks>net10.0;net9.0;net8.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<NoWarn>CS0414;CS8602;CS8625</NoWarn>
 		<PackageId>Ytdlp.NET</PackageId>
 		<AssemblyName>Ytdlp.NET</AssemblyName>
 		<RootNamespace>ManuHub.Ytdlp.NET</RootNamespace>
