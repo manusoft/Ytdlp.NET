@@ -46,7 +46,14 @@ public sealed class ProbeRunner
                 if (!string.IsNullOrEmpty(e.Data))
                 {
                     OnErrorMessage?.Invoke(this, e.Data);
-                    _logger.Log(LogType.Warning, e.Data);
+                    if (e.Data.StartsWith("debug", StringComparison.OrdinalIgnoreCase))
+                        _logger.Log(LogType.Debug, e.Data);
+                    else if (e.Data.StartsWith("error", StringComparison.OrdinalIgnoreCase))
+                        _logger.Log(LogType.Error, e.Data);
+                    else if (e.Data.StartsWith("info", StringComparison.OrdinalIgnoreCase))
+                        _logger.Log(LogType.Info, e.Data);
+                    else
+                        _logger.Log(LogType.Warning, e.Data);
                 }
             };
 
@@ -122,4 +129,3 @@ public sealed class ProbeRunner
         }
     }
 }
-
