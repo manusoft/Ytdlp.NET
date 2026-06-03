@@ -20,8 +20,8 @@ public sealed class ProcessFactory
         if (string.IsNullOrWhiteSpace(ytdlpPath))
             throw new ArgumentException("yt-dlp path cannot be empty.", nameof(ytdlpPath));
 
-        if (!File.Exists(ytdlpPath))
-            throw new FileNotFoundException($"yt-dlp executable not found at: {ytdlpPath}", ytdlpPath);
+        if (!File.Exists(ytdlpPath) && !IsOnSystemPath(ytdlpPath))
+            throw new FileNotFoundException($"yt-dlp executable not found: {ytdlpPath}", ytdlpPath);
 
         _workingDirectory = workingDirectory ?? Environment.CurrentDirectory;
 
@@ -114,4 +114,9 @@ public sealed class ProcessFactory
             logger?.Log(LogType.Error, $"Failed to kill process tree: {ex.Message}");
         }
     }
+
+    private static bool IsOnSystemPath(string name) =>
+        Environment.GetEnvironmentVariable("PATH")?
+            .Split(Path.PathSeparator)
+            .Any(p => File.Exists(Path.Combine(p, name))) ?? false;
 }
