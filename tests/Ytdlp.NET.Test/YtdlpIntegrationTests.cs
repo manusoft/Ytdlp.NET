@@ -42,7 +42,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
         var version = await ytdlp.VersionAsync();
 
         version.Should().NotBeNullOrWhiteSpace();
@@ -56,7 +56,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
 
         var metadata = await ytdlp.GetMetadataAsync(TestVideoUrl);
 
@@ -71,7 +71,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
 
         var act = async () =>
         {
@@ -89,7 +89,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
 
         var formats = await ytdlp.GetFormatsAsync(TestVideoUrl);
 
@@ -104,7 +104,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
 
         var formatId = await ytdlp.GetBestVideoFormatIdAsync(TestVideoUrl, maxHeight: 720);
 
@@ -116,7 +116,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
 
         var formatId = await ytdlp.GetBestAudioFormatIdAsync(TestVideoUrl);
 
@@ -130,7 +130,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient();
+        var ytdlp = CreateIntegrationClient();
 
         var lite = await ytdlp.GetMetadataLiteAsync(
             TestVideoUrl,
@@ -153,7 +153,7 @@ public class YtdlpIntegrationTests
 
         try
         {
-            await using var ytdlp = CreateIntegrationClient()
+            var ytdlp = CreateIntegrationClient()
                 .WithSimulate()
                 .WithFormat("best")
                 .WithOutputFolder(outputDir);
@@ -176,7 +176,7 @@ public class YtdlpIntegrationTests
     {
         Skip.IfNot(RunIntegration, "Set YTDLP_INTEGRATION_TESTS=1 to run integration tests.");
 
-        await using var ytdlp = CreateIntegrationClient()
+        var ytdlp = CreateIntegrationClient()
             .WithSimulate()
             .WithFormat("best")
             .WithOutputFolder(Path.GetTempPath());

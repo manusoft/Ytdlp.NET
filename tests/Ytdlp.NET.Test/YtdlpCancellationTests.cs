@@ -39,7 +39,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task DownloadAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath)
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithFormat("best")
             .WithOutputFolder("./downloads");
 
@@ -54,7 +54,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetMetadataAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -67,7 +67,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetFormatsAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -82,7 +82,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetMetadataRawAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -95,7 +95,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetDeepMetadataAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -108,7 +108,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetDeepMetadataRawAsync_PreCancelledToken_ReturnsNull()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -121,7 +121,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetBestAudioFormatIdAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -134,7 +134,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task GetBestVideoFormatIdAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -147,7 +147,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task VersionAsync_PreCancelledToken_BehaviourTBD()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath);
+        var ytdlp = new Ytdlp(_fullFakePath);
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();
@@ -160,7 +160,7 @@ public class YtdlpCancellationTests
     [Fact]
     public async Task ExecuteBatchAsync_PreCancelledToken_ThrowsOperationCanceled()
     {
-        await using var ytdlp = new Ytdlp(_fullFakePath)
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithFormat("best")
             .WithOutputFolder("./downloads");
 

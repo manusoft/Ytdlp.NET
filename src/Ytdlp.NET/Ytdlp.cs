@@ -9,37 +9,72 @@ using System.Text.RegularExpressions;
 namespace ManuHub.Ytdlp.NET;
 
 /// <summary>
-/// Fluent wrapper for yt-dlp, providing methods to build commands, fetch metadata,
-/// and execute downloads with progress tracking and event support.
+/// Fluent, immutable wrapper for yt-dlp providing methods to build commands,
+/// fetch metadata, and execute downloads with progress tracking and event support.
 /// </summary>
 /// <remarks>
-/// <strong>THREAD-SAFE:</strong> Multiple threads can safely use the same <see cref="Ytdlp"/> instance concurrently.
-/// Each call to <see cref="DownloadAsync"/> creates isolated runners and parsers, preventing race conditions 
-/// and shared state issues.
-///
-/// Example of safe concurrent usage:
+/// <para>
+/// <strong>Immutable fluent builder:</strong>
+/// Every configuration method (e.g. <see cref="WithOutputFolder"/>, <see cref="WithFormat"/>,
+/// <see cref="WithExtractAudio"/>) returns a new <see cref="Ytdlp"/> instance.
+/// The original instance is never modified. This makes it safe to branch configurations
+/// from a shared base without any side effects:
+/// </para>
 /// <code>
-/// var ytdlp = new Ytdlp()
-///     .WithOutputFolder(@"D:\Downloads\YouTube")
-///     .WithFormat("best");
-///
-/// var tasks = urls.Select(url => ytdlp.ExecuteAsync(url));
-/// await Task.WhenAll(tasks);
+/// var base    = new Ytdlp("yt-dlp").WithOutputFolder(@"D:\Downloads");
+/// var audioOnly = base.WithExtractAudio(AudioFormat.Mp3);
+/// var videoHD   = base.With1080pOrBest().WithEmbedThumbnail();
+/// // base, audioOnly and videoHD are fully independent instances
 /// </code>
 ///
+/// <para>
+/// <strong>Thread-safe:</strong>
+/// A single <see cref="Ytdlp"/> instance can be shared across threads and called
+/// concurrently without synchronization. Each execution method creates its own
+/// isolated <see cref="ProcessRunner"/> and <see cref="ProgressParser"/> internally,
+/// with no shared mutable state between calls:
+/// </para>
+/// <code>
+/// var ytdlp = new Ytdlp("yt-dlp").WithOutputFolder(@"D:\Downloads").With1080pOrBest();
+///
+/// // All three run concurrently against the same configured instance — safe
+/// await Task.WhenAll(urls.Select(url => ytdlp.DownloadAsync(url, ct)));
+/// </code>
+///
+/// <para>
+/// <strong>No disposal required:</strong>
+/// <see cref="Ytdlp"/> holds no unmanaged resources and does not implement
+/// <see cref="IDisposable"/> or <see cref="IAsyncDisposable"/>. Instances are plain
+/// configuration objects — create them, share them freely, and let the GC collect
+/// them when they go out of scope. All internal runners and parsers are created
+/// per-call and cleaned up automatically after each execution.
+/// </para>
+///
+/// <para>
 /// <strong>Event forwarding:</strong>
-/// All progress and output events are forwarded from the internal runners and parsers. 
-/// Subscriptions are safe per execution and cleaned up automatically to prevent memory leaks.
+/// Progress, output, and error events are forwarded from the internal runners and
+/// parsers for each execution. Subscriptions are established before each call and
+/// unsubscribed in a <c>finally</c> block afterwards, preventing memory leaks even
+/// if the download is cancelled or throws.
+/// </para>
 ///
-/// <strong>Fluent builder:</strong> All configuration methods (e.g., <see cref="WithOutputFolder"/>, 
-/// <see cref="WithFormat"/>, <see cref="WithExtractAudio"/>) return a new instance. This preserves 
-/// immutability and thread-safety.
+/// <para>
+/// <strong>Typical usage:</strong>
+/// </para>
+/// <code>
+/// var ytdlp = new Ytdlp("yt-dlp")
+///     .WithOutputFolder(@"D:\Downloads")
+///     .With1080pOrBest()
+///     .WithEmbedMetadata()
+///     .WithEmbedChapters();
 ///
-/// <strong>Resource cleanup:</strong> Internal runners and parsers are disposed automatically after each 
-/// <see cref="DownloadAsync"/> call. For advanced scenarios, future versions may implement <see cref="IAsyncDisposable"/> 
-/// for global disposal of resources and cancellation support.
+/// ytdlp.OnProgressDownload += (_, e) => Console.WriteLine($"{e.Percent}%");
+/// ytdlp.OnErrorMessage     += (_, msg) => Console.WriteLine($"Error: {msg}");
+///
+/// await ytdlp.DownloadAsync("https://youtube.com/watch?v=xxx", ct);
+/// </code>
 /// </remarks>
-public sealed class Ytdlp : IAsyncDisposable
+public sealed class Ytdlp
 {
     // ==================================================================================================================
     // Immutable configuration fields events and flags and contructors
@@ -64,6 +99,16 @@ public sealed class Ytdlp : IAsyncDisposable
     private readonly ImmutableArray<(string Key, string Value)> _options;
     #endregion
 
+    #region Static JSON options for metadata parsing
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    #endregion
+
     #region Events
     public event EventHandler<DownloadProgressEventArgs>? OnProgressDownload;
     public event EventHandler<string>? OnProgressMessage;
@@ -73,21 +118,6 @@ public sealed class Ytdlp : IAsyncDisposable
     public event EventHandler<string>? OnPostProcessingComplete;
     public event EventHandler<CommandCompletedEventArgs>? OnCommandCompleted;
     public event EventHandler<string>? OnErrorMessage;
-    #endregion
-
-    #region Flag to prevent double disposal
-    private bool _disposed = false;
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        // Optionally, cancel running downloads (if you store CancellationTokens)
-        // e.g., _cts?.Cancel();
-
-        await Task.CompletedTask;
-    }
     #endregion
 
     #region Constructors
@@ -160,20 +190,17 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Ignore download and postprocessing errors. The download will be considered successful even if the postprocessing fails
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithIgnoreErrors() => AddFlag("--ignore-errors");
 
     /// <summary>
     /// IgAbort downloading of further videos if an error occurs 
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithAbortOnError() => AddFlag("--abort-on-error");
 
     /// <summary>
     /// Don't load any more configuration files except those given to <see cref="WithConfigLocations(string)"/>.
     /// For backward compatibility, if this option is found inside the system configuration file, the user configuration is not loaded.
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithIgnoreConfig() => AddFlag("--ignore-config");
 
     /// <summary>
@@ -181,7 +208,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Can be used multiple times and inside other configuration files.
     /// </summary>
     /// <param name="path"></param>
-    /// <returns></returns>
     public Ytdlp WithConfigLocations(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Config folder path required");
@@ -192,7 +218,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Path to an additional directory to search for plugins. This option can be used multiple times to add multiple directories.
     /// </summary>
     /// <param name="path"></param>
-    /// <returns></returns>
     public Ytdlp WithPluginDirs(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("plugin folder path required");
@@ -202,9 +227,7 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Clear plugin directories to search, including defaults and those provided by previous <see cref="WithPluginDirs(string)"/>
     /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    public Ytdlp WithNoPluginDirs(string path) => AddFlag("--no-plugin-dirs");
+    public Ytdlp WithNoPluginDirs() => AddFlag("--no-plugin-dirs");
 
     /// <summary>
     /// Additional JavaScript runtime to enable, with an optional location for the runtime (either the path to the binary or its containing directory).
@@ -214,9 +237,9 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </summary>
     /// <param name="runtime">Supported runtimes are deno, node, quickjs, bun</param>
     /// <param name="runtimePath"></param>
-    public Ytdlp WithJsRuntime(Runtime runtime, string path)
+    public Ytdlp WithJsRuntime(Runtime runtime, string runtimePath)
     {
-        var builder = $"{runtime}:{path}";
+        var builder = $"{runtime}:{runtimePath}";
         return AddOption("--js-runtime", builder);
     }
 
@@ -239,17 +262,15 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Wait for scheduled streams to become available.Pass the minimum number of seconds(or range) to wait between retries
     /// </summary>
     /// <param name="maxWait"></param>
-    /// <returns></returns>
     public Ytdlp WithWaitForVideo(TimeSpan? maxWait = null)
     {
         var opts = new List<(string Key, string? Value)>();
 
-        opts.Add(("--wait-for-video", "any"));   // "any" = wait indefinitely or until timeout
+        var waitValue = maxWait.HasValue && maxWait.Value.TotalSeconds > 0
+            ? maxWait.Value.TotalSeconds.ToString("F0")
+            : "any";   // "any" = wait indefinitely or until timeout
 
-        if (maxWait.HasValue && maxWait.Value.TotalSeconds > 0)
-        {
-            opts.Add(("--wait-for-video", maxWait.Value.TotalSeconds.ToString("F0")));
-        }
+        opts.Add(("--wait-for-video", waitValue));
 
         return new Ytdlp(this, extraOptions: opts!);
     }
@@ -304,7 +325,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// The default proxy specified by <see cref="WithProxy(string?)"/> (or none, if the option is not present) is used for the actual downloading
     /// </summary>
     /// <param name="url"></param>
-    /// <returns></returns>
     public Ytdlp WithGeoVerificationProxy(string url) => AddOption("--geo-verification-proxy", url);
 
     /// <summary>
@@ -312,7 +332,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// "never", an IP block in CIDR notation, or a two-letter ISO 3166-2 country code
     /// </summary>
     /// <param name="countryCode"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithGeoBypassCountry(string countryCode)
     {
@@ -330,7 +349,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// E.g. "1:3,7,-5::2" used on a playlist of size 15 will download the items at index 1,2,3,7,11,13,15
     /// </summary>
     /// <param name="items"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithPlaylistItems(string items)
     {
@@ -404,7 +422,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Generic video filter. Any "OUTPUT TEMPLATE" field can be compared with a number or a string using the operators defined in "Filtering Formats".
     /// </summary>
     /// <param name="filterExpression"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithMatchFilter(string filterExpression)
     {
@@ -417,13 +434,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Download only the video, if the URL refers to a video and a playlist
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithNoPlaylist() => AddFlag("--no-playlist");
 
     /// <summary>
     /// Download the playlist, if the URL refers to a video and a playlist
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithYesPlaylist() => AddFlag("--yes-playlist");
 
     /// <summary>
@@ -440,7 +455,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Download only videos not listed in the archive file. Record the IDs of all downloaded videos in it
     /// </summary>
     /// <param name="archivePath"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithDownloadArchive(string archivePath = "archive.txt")
     {
@@ -462,7 +476,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Stop the download process when encountering a file that is in the archive supplied with the <see cref="WithDownloadArchive(string)" /> option
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithBreakOnExisting() => AddFlag("--break-on-existing");
 
     #endregion
@@ -513,13 +526,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Skip unavailable fragments for DASH, hlsnative and ISM downloads (default)
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithSkipUnavailableFragments() => AddFlag("--skip-unavailable-fragments");
 
     /// <summary>
     /// Abort download if a fragment is unavailable
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithAbortOnUnavailableFragments() => AddFlag("--abort-on-unavailable-fragments");
 
     /// <summary>
@@ -536,7 +547,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Do not automatically adjust the buffer size
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithNoResizeBuffer() => AddFlag("--no-resize-buffer");
 
     /// <summary>
@@ -548,13 +558,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Use the mpegts container for HLS videos; allowing some players to play the video while downloading, 
     /// and reducing the chance of file corruption if download is interrupted. This is enabled by default for live streams
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithHlsUseMpegts() => AddFlag("--hls-use-mpegts");
 
     /// <summary>
     /// Do not use the mpegts container for HLS videos. This is default when not downloading live streams
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithNoHlsUseMpegts() => AddFlag("--no-hls-use-mpegts");
 
 
@@ -564,7 +572,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Needs ffmpeg. This option can be used multiple times to download multiple sections
     /// </summary>
     /// <param name="regex">e.g. "*10:15-inf", "intro"</param>
-    /// <returns></returns>
     public Ytdlp WithDownloadSections(string regex)
     {
         if (string.IsNullOrWhiteSpace(regex)) return this;
@@ -585,7 +592,7 @@ public sealed class Ytdlp : IAsyncDisposable
     public Ytdlp WithHomeFolder(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Home folder path required");
-        return new Ytdlp(this, homeFolder: Path.GetFullPath(path));
+        return new Ytdlp(this, homeFolder: Path.GetFullPath(path).Replace('\\', '/'));
     }
 
     /// <summary>
@@ -597,7 +604,7 @@ public sealed class Ytdlp : IAsyncDisposable
     public Ytdlp WithTempFolder(string? path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Temp folder path required");
-        return new Ytdlp(this, tempFolder: Path.GetFullPath(path));
+        return new Ytdlp(this, tempFolder: Path.GetFullPath(path).Replace('\\', '/'));
     }
 
     /// <summary>
@@ -608,7 +615,7 @@ public sealed class Ytdlp : IAsyncDisposable
     public Ytdlp WithOutputFolder(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Output folder path required");
-        return new Ytdlp(this, outputFolder: Path.GetFullPath(path));
+        return new Ytdlp(this, outputFolder: Path.GetFullPath(path).Replace('\\', '/'));
     }
 
     /// <summary>
@@ -651,13 +658,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Overwrite all video and metadata files. This option includes <see cref="WithNoContinue" />
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithForceOverwrites() => AddFlag("--force-overwrites");
 
     /// <summary>
     /// Do not resume partially downloaded fragments. If the file is not fragmented, restart download of the entire file
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithNoContinue() => AddFlag("--no-continue");
 
     /// <summary>
@@ -693,7 +698,7 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Retrieve video comments to be placed in the infojson. The comments are fetched even without this option if the extraction is known to be quick
     /// </summary>
-    public Ytdlp WriteComments() => AddFlag("--write-comments");
+    public Ytdlp WithWriteComments() => AddFlag("--write-comments");
 
     /// <summary>
     /// Do not retrieve video comments unless the extraction is known to be quick
@@ -740,7 +745,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Delete all filesystem cache files
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithRemoveCacheDir() => AddFlag("--rm-cache-dir");
 
     #endregion
@@ -751,7 +755,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Write thumbnail image to disk / Write all thumbnail image formats to disk
     /// </summary>
     /// <param name="allSizes"></param>
-    /// <returns></returns>
     public Ytdlp WithThumbnails(bool allSizes = false)
     {
         if (allSizes)
@@ -788,18 +791,37 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Do not download the video but write all related files (Alias: --no-download)
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithSkipDownload() => AddFlag("--skip-download");
 
     /// <summary>
     /// Print various debugging information
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithVerbose() => AddFlag("--verbose");
 
     #endregion
 
     #region Workgrounds
+
+    /// <summary>
+    /// Force the specified encoding (experimental)
+    /// </summary>
+    /// <param name="encoding"></param>
+    public Ytdlp WithEncoding(string encoding) => AddOption("--encoding", encoding);
+
+    /// <summary>
+    /// Explicitly allow HTTPS connection to servers that do not support RFC 5746 secure renegotiation
+    /// </summary>
+    public Ytdlp WithLegacyServerConnect() => AddFlag("--legacy-server-connect");
+
+    /// <summary>
+    /// Suppress HTTPS certificate validation
+    /// </summary>
+    public Ytdlp WithNoCheckCertificate() => AddFlag("--no-check-certificate");
+
+    /// <summary>
+    /// Use an unencrypted connection to retrieve information about the video (Currently supported only for YouTube)
+    /// </summary>
+    public Ytdlp WithPreferInsecure() => AddFlag("--prefer-insecure");
 
     /// <summary>
     /// Specify a custom HTTP header and its value. You can use this option multiple times
@@ -815,20 +837,33 @@ public sealed class Ytdlp : IAsyncDisposable
     }
 
     /// <summary>
+    /// Work around terminals that lack bidirectional text support. Requires bidiv or fribidi executable in PATH
+    /// </summary>
+    public Ytdlp WithBidiWorkaround() => AddFlag("--bidi-workaround");
+
+    /// <summary>
+    /// Number of seconds to sleep between requests during data extraction
+    /// </summary>
+    /// <param name="seconds"></param>
+    public Ytdlp WithSleepRequest(double seconds)
+    {
+        if (seconds <= 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        return AddOption("--sleep-request", seconds.ToString("F2", CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
     ///  Number of seconds to sleep between requests during data extraction, Maximum number of seconds to sleep. 
-    ///  Can only be used along with --min-sleep-interval
     /// </summary>
     /// <param name="seconds"></param>
     /// <param name="maxSeconds"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public Ytdlp WithSleepInterval(double seconds, double? maxSeconds = null)
     {
         if (seconds <= 0) throw new ArgumentOutOfRangeException(nameof(seconds));
-        var opts = new List<(string, string?)> { ("--sleep-requests", seconds.ToString("F2", CultureInfo.InvariantCulture)) };
+        var opts = new List<(string, string?)> { ("--sleep-interval", seconds.ToString("F2", CultureInfo.InvariantCulture)) };
         if (maxSeconds.HasValue && maxSeconds > seconds)
         {
-            opts.Add(("--max-sleep-requests", maxSeconds.Value.ToString("F2", CultureInfo.InvariantCulture)));
+            opts.Add(("--max-sleep-interval", maxSeconds.Value.ToString("F2", CultureInfo.InvariantCulture)));
         }
         return new Ytdlp(this, extraOptions: opts!);
     }
@@ -837,7 +872,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Number of seconds to sleep before each subtitle download
     /// </summary>
     /// <param name="seconds"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public Ytdlp WithSleepSubtitles(double seconds)
     {
@@ -859,7 +893,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Containers that may be used when merging formats, separated by "/", e.g. "mp4/mkv" Ignored if no merge is required.
     /// </summary>
     /// <param name="format">(currently supported: avi, flv, mkv, mov, mp4, webm)</param>
-    /// <returns></returns>
     public Ytdlp WithMergeOutputFormat(string format)
     {
         // Common values: mp4, mkv, webm, mov, avi, flv
@@ -901,6 +934,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </summary>
     /// <param name="username">Account ID</param>
     /// <param name="password">Account password</param>
+    /// <remarks>
+    /// <b>Security warning:</b> Credentials are passed as command-line arguments and are
+    /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
+    /// Prefer <see cref="WithCookiesFile"/> or <see cref="WithCookiesFromBrowser"/> where possible.
+    /// </remarks>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithAuthentication(string username, string password)
     {
@@ -918,8 +956,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <summary>
     /// Video-specific password
     /// </summary>
+    /// <remarks>
+    /// <b>Security warning:</b> Credentials are passed as command-line arguments and are
+    /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
+    /// </remarks>
     /// <param name="password"></param>
-    /// <returns></returns>
     public Ytdlp WithVideoPassword(string password) => AddOption("--video-password", password);
 
     /// <summary>
@@ -928,7 +969,10 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="mso"></param>
     /// <param name="username"></param>
     /// <param name="password"></param>
-    /// <returns></returns>
+    /// <remarks>
+    /// <b>Security warning:</b> Credentials are passed as command-line arguments and are
+    /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
+    /// </remarks>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithAdobePassAuthentication(string mso, string username, string password)
     {
@@ -1060,7 +1104,7 @@ public sealed class Ytdlp : IAsyncDisposable
     {
         if (string.IsNullOrWhiteSpace(field) || string.IsNullOrWhiteSpace(regex) || replacement == null)
             throw new ArgumentException("Metadata field, regex, and replacement cannot be empty.");
-        return AddFlag($"--replace-in-metadata {field} {regex} {replacement}");
+        return AddOption("--replace-in-metadata", $"{field} {regex} {replacement}");
     }
 
     /// <summary>
@@ -1076,14 +1120,13 @@ public sealed class Ytdlp : IAsyncDisposable
     public Ytdlp WithFFmpegLocation(string? ffmpegPath)
     {
         if (string.IsNullOrWhiteSpace(ffmpegPath)) return this;
-        return new Ytdlp(this, ffmpegLocation: ffmpegPath);
+        return new Ytdlp(this, ffmpegLocation: ffmpegPath.Replace('\\', '/'));
     }
 
     /// <summary>
     /// Convert the subtitles to another format
     /// </summary>
     /// <param name="format">(currently supported: ass, lrc, srt, vtt)</param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithConvertSubtitles(string format = "none")
     {
@@ -1097,7 +1140,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Convert the thumbnails to another format. You can specify multiple rules using similar WithRemuxVideo().
     /// </summary>
     /// <param name="format">(currently supported: jpg, png, webp)</param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithConvertThumbnails(string format = "jpg")
     {
@@ -1118,7 +1160,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// This option can be used multiple times to remove multiple sections"/>
     /// </summary>
     /// <param name="regex"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithRemoveChapters(string regex)
     {
@@ -1131,7 +1172,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Force keyframes at cuts when downloading/splitting/removing sections. 
     /// This is slow due to needing a re-encode, but the resulting video may have fewer artifacts around the cuts
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithForceKeyframesAtCuts() => AddFlag("--force-keyframes-at-cuts");
 
     /// <summary>
@@ -1140,7 +1180,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </summary>
     /// <param name="postProcessor"></param>
     /// <param name="postProcessorArgs"></param>
-    /// <returns></returns>
     public Ytdlp WithUsePostProcessor(PostProcessors postProcessor, string? postProcessorArgs = null)
     {
         if (!string.IsNullOrWhiteSpace(postProcessorArgs))
@@ -1158,7 +1197,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// You can prefix the category with a "-" to exclude it. E.g. SponsorBlockMark("all,-preview)
     /// </summary>
     /// <param name="categories"></param>
-    /// <returns></returns>
     public Ytdlp WithSponsorblockMark(string categories = "all") => AddOption("--sponsorblock-mark", categories);
 
     /// <summary>
@@ -1166,13 +1204,11 @@ public sealed class Ytdlp : IAsyncDisposable
     /// If a category is present in both mark and remove, remove takes precedence. Working and available categories are the same as for WithSponsorblockMark()
     /// </summary>
     /// <param name="categories"></param>
-    /// <returns></returns>
     public Ytdlp WithSponsorblockRemove(string categories = "all") => new Ytdlp(this, sponsorblockRemove: categories);
 
     /// <summary>
     /// Disable both WithSponsorblockMark() and WithSponsorblockRemove() options and do not use any sponsorblock features
     /// </summary>
-    /// <returns></returns>
     public Ytdlp WithNoSponsorblock() => AddFlag("--no-sponsorblock");
 
     #endregion
@@ -1200,6 +1236,13 @@ public sealed class Ytdlp : IAsyncDisposable
     #endregion
 
     #region Downloaders
+
+    /// <summary>
+    /// Use an external downloader for downloading videos. Supported downloaders are: aria2c, axel, curl, ffmpeg, httpie, httpx, pro aria2c, pro axel, pro curl, pro ffmpeg and pro httpie.
+    /// </summary>
+    /// <param name="downloaderName"></param>
+    /// <param name="downloaderArgs"></param>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithExternalDownloader(string downloaderName, string? downloaderArgs = null)
     {
         if (string.IsNullOrWhiteSpace(downloaderName))
@@ -1215,6 +1258,10 @@ public sealed class Ytdlp : IAsyncDisposable
         return new Ytdlp(this, extraOptions: opts!);
     }
 
+    /// <summary>
+    /// Use aria2c as the external downloader with the specified number of connections per download. This is a convenient wrapper around <see cref="WithExternalDownloader(string, string)"/>
+    /// </summary>
+    /// <param name="connections"></param>
     public Ytdlp WithAria2(int connections = 16)
     {
         return new Ytdlp(this, extraOptions: new[]
@@ -1224,8 +1271,17 @@ public sealed class Ytdlp : IAsyncDisposable
             });
     }
 
+    /// <summary>
+    /// Use the native HLS downloader (requires ffmpeg). This is usually faster than the default downloader for HLS streams and can be used as a workaround for certain extraction issues, but may cause compatibility issues with some sites
+    /// </summary>
+    /// <returns></returns>
     public Ytdlp WithHlsNative() => AddOption("--downloader", "hlsnative");
 
+    /// <summary>
+    /// Use ffmpeg as the external downloader with the specified extra arguments. This is a convenient wrapper around <see cref="WithExternalDownloader(string, string)"/>
+    /// </summary>
+    /// <param name="extraFfmpegArgs">Additional arguments to pass to ffmpeg. Can be null.</param>
+    /// <returns>A new instance of the Ytdlp class with ffmpeg as the external downloader and the specified extra arguments applied.</returns>
     public Ytdlp WithFfmpegAsLiveDownloader(string? extraFfmpegArgs = null) => WithExternalDownloader("ffmpeg", extraFfmpegArgs);
 
     #endregion
@@ -1236,7 +1292,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Playlist start index
     /// </summary>
     /// <param name="index"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public Ytdlp WithPlaylistStart(int index)
     {
@@ -1248,7 +1303,6 @@ public sealed class Ytdlp : IAsyncDisposable
     /// Playlist end index
     /// </summary>
     /// <param name="index"></param>
-    /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public Ytdlp WithPlaylistEnd(int index)
     {
@@ -1326,12 +1380,9 @@ public sealed class Ytdlp : IAsyncDisposable
 
     #region Bonus
 
-    public Ytdlp WithBestUpTo1440p() => new Ytdlp(this, format: "bestvideo[height<=?1440]+bestaudio/best");
-    public Ytdlp With1080pOrBest() => new Ytdlp(this, format: "bestvideo[height<=?1080]+bestaudio/best");
-
-    public Ytdlp WithBestUpTo1080p() => new Ytdlp(this, format: "bestvideo[height<=?1080]+bestaudio/best");
-
-    public Ytdlp With720pOrBest() => new Ytdlp(this, format: "bv*[height<=?720]+ba/best/best");
+    public Ytdlp With1440pOrBest() => new Ytdlp(this, format: "bv*[height<=?1440]+bestaudio/best");
+    public Ytdlp With1080pOrBest() => new Ytdlp(this, format: "bv*[height<=?1080]+bestaudio/best");
+    public Ytdlp With720pOrBest() => new Ytdlp(this, format: "bv*[height<=?720]+bestaudio/best");
 
     public Ytdlp WithMp4PostProcessingPreset()
         => this
@@ -1349,7 +1400,7 @@ public sealed class Ytdlp : IAsyncDisposable
     {
         if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height), "Height must be positive");
 
-        string formatSelector = $"bestvideo[height<={height}]+bestaudio/best";
+        string formatSelector = $"bv*[height<={height}]+bestaudio/best";
         return new Ytdlp(this, format: formatSelector);
     }
 
@@ -1357,15 +1408,14 @@ public sealed class Ytdlp : IAsyncDisposable
     {
         if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height), "Height must be positive");
 
-        string formatSelector = $"bestvideo[height<={height}]+bestaudio/best[height<={height}]/best";
+        string formatSelector = $"bv*[height<={height}]+bestaudio/best[height<={height}]/best";
         return new Ytdlp(this, format: formatSelector);
     }
 
-    public Ytdlp WithBestVideoPlusBestAudio() => new Ytdlp(this, format: "bestvideo+bestaudio/best");
-
+    public Ytdlp WithBestVideoPlusBestAudio() => new Ytdlp(this, format: "bv*+bestaudio/best");
     public Ytdlp WithBestAudioOnly() => new Ytdlp(this, format: "bestaudio");
 
-    public Ytdlp WithNo4k() => new Ytdlp(this, format: "bestvideo[height<=?2160]+bestaudio/best");
+    public Ytdlp WithNo4k() => new Ytdlp(this, format: "bv*[height<=?2160]+bestaudio/best");
 
     public Ytdlp WithBestM4aAudio() => new Ytdlp(this, format: "bestaudio[ext=m4a]/bestaudio/best");
     #endregion
@@ -1376,15 +1426,17 @@ public sealed class Ytdlp : IAsyncDisposable
 
     #region Execution & Utility Methods
 
+    // ── Probe-based public methods ────────────────────────────────────────────
+
     /// <summary>
     /// Command preview ofr debug operatons
     /// </summary>
-    /// <param name="url"></param>
-    /// <returns></returns>
+    /// <param name="url">The URL of the video to preview.</param>
+    /// <returns>A string representing the command that would be executed for the given URL.</returns>
     public string Preview(string url)
     {
         var argsList = BuildArguments(url);
-        return string.Join(" ", argsList.Select(Quote));
+        return string.Join(" ", argsList.Select(EscapeArgument));
     }
 
     /// <summary>
@@ -1397,10 +1449,8 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </returns>
     public async Task<string> VersionAsync(CancellationToken ct = default)
     {
-        var output = await Probe().RunAsync("--version", ct);
-        string version = output is null ? string.Empty : output.Trim();
-        //_logger.Log(LogType.Info, $"yt-dlp version: {version}");
-        return version;
+        var output = await RunProbeAsync("--version", ct);
+        return output?.Trim() ?? string.Empty;
     }
 
     /// <summary>
@@ -1420,9 +1470,8 @@ public sealed class Ytdlp : IAsyncDisposable
         if (!string.IsNullOrWhiteSpace(specificVersion))
             target += $"@{specificVersion.ToLowerInvariant()}";
 
-        var output = await Probe().RunAsync($"--update-to {target}", ct);
-        if (string.IsNullOrWhiteSpace(output))
-            return string.Empty;
+        var output = await RunProbeAsync($"--update-to {target}", ct);
+        if (string.IsNullOrWhiteSpace(output)) return string.Empty;
 
         // Analyze output for professional messages
         if (output.Contains("Updated", StringComparison.OrdinalIgnoreCase))
@@ -1439,31 +1488,21 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </summary>
     /// <param name="ct"></param>    
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">Buffer size in KB.</param>
     /// <returns>List of extractor names</returns>
-    public async Task<List<string>> GetExtractorsAsync(CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<List<string>> GetExtractorsAsync(CancellationToken ct = default, bool tuneProcess = true)
     {
         try
         {
-            List<string> list = new();
-            var result = await Probe().RunAsync("--list-extractors", ct, tuneProcess, bufferKb);
+            var result = await RunProbeAsync("--list-extractors", ct, tuneProcess);
+            if (string.IsNullOrWhiteSpace(result)) return new List<string>();
 
-            if (string.IsNullOrWhiteSpace(result)) return list;
-
-            var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            foreach (var line in lines)
-                list.Add(line);
-
-            return list;
+            return result
+               .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+               .ToList();
         }
         catch (OperationCanceledException)
         {
             _logger.Log(LogType.Warning, "Extractors fetch cancelled.");
-            return new List<string>();
-        }
-        catch (Exception)
-        {
             return new List<string>();
         }
     }
@@ -1473,31 +1512,21 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </summary>
     /// <param name="ct"></param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">Buffer size in KB.</param>
     /// <returns>List of Adobe Pass MSOs</returns>
-    public async Task<List<string>> GetAdobePassListAsync(CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<List<string>> GetAdobePassListAsync(CancellationToken ct = default, bool tuneProcess = true)
     {
         try
         {
-            List<string> list = new();
-            var result = await Probe().RunAsync("--ap-list-mso", ct, tuneProcess, bufferKb);
+            var result = await RunProbeAsync("--ap-list-mso", ct, tuneProcess);
+            if (string.IsNullOrWhiteSpace(result)) return new List<string>();
 
-            if (string.IsNullOrWhiteSpace(result)) return list;
-
-            var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            foreach (var line in lines)
-                list.Add(line);
-
-            return list;
+            return result
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
         }
         catch (OperationCanceledException)
         {
             _logger.Log(LogType.Warning, "Adobe Pass list fetch cancelled.");
-            return new List<string>();
-        }
-        catch (Exception)
-        {
             return new List<string>();
         }
     }
@@ -1508,31 +1537,23 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name = "url">The source URL(video or playlist) to probe.</param>
     /// <param name="ct">The <see cref="CancellationToken"/> to abort the process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">Buffer size in KB.</param>
     /// <returns>
     /// A <see cref="Metadata"/> object containing the parsed metadata output; 
     /// returns <see langword="null"/> if the process fails, returns empty, or is cancelled.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Metadata?> GetMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<Metadata?> GetMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
     {
-        var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
+        var json = await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess);
         if (string.IsNullOrWhiteSpace(json)) return null;
 
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                NumberHandling = JsonNumberHandling.AllowReadingFromString,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            var metadata = JsonSerializer.Deserialize<Metadata>(json, options);
-            return metadata;
+            return JsonSerializer.Deserialize<Metadata>(json, JsonOptions);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Log(LogType.Error, $"Metadata deserialize failed: {ex.Message}");
             return null;
         }
     }
@@ -1543,17 +1564,13 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The source URL (video or playlist) to probe.</param>
     /// <param name="ct">The <see cref="CancellationToken"/> to abort the process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size for the process output stream (default 256KB).</param>
     /// <returns>
     /// A raw JSON <see cref="string"/> containing the parsed metadata output; 
     /// returns <see langword="null"/> if the process fails, returns empty, or is cancelled.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<string?> GetMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
-    {
-        return await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess, bufferKb);
-    }
-
+    public async Task<string?> GetMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
+        => await GetMetadataInternalAsync(url, flat: true, ct, tuneProcess);
 
     /// <summary>
     /// Gets deep metadata for the specified URL by requesting non-flat JSON and deserializing it into a Metadata object.
@@ -1564,27 +1581,19 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The resource URL to retrieve metadata from.</param>
     /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <param name="tuneProcess">True to enable process tuning for metadata retrieval; otherwise false.</param>
-    /// <param name="bufferKb">Read buffer size in kilobytes used when retrieving metadata.</param>
     /// <returns>A Metadata instance if JSON is present and deserialization succeeds; otherwise null.</returns>
-    public async Task<Metadata?> GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<Metadata?> GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
     {
-        var json = await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
+        var json = await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess);
         if (string.IsNullOrWhiteSpace(json)) return null;
 
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                NumberHandling = JsonNumberHandling.AllowReadingFromString,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            var metadata = JsonSerializer.Deserialize<Metadata>(json, options);
-            return metadata;
+            return JsonSerializer.Deserialize<Metadata>(json, JsonOptions);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Log(LogType.Error, $"Deep metadata deserialize failed: {ex.Message}");
             return null;
         }
     }
@@ -1597,46 +1606,27 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The URL from which to retrieve metadata.</param>
     /// <param name="ct">A cancellation token to cancel the asynchronous operation.</param>
     /// <param name="tuneProcess">Whether to apply process tuning for the metadata retrieval.</param>
-    /// <param name="bufferKb">Read buffer size in kilobytes used during metadata retrieval.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is a JSON string containing deep
     /// (non-flattened) metadata, or null if the output is empty.</returns>
-    public async Task<string?> GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
-    {
-        return await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess, bufferKb);
-    }
+    public async Task<string?> GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
+        => await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess);
 
-    private async Task<string?> GetMetadataInternalAsync(string url, bool flat, CancellationToken ct, bool tuneProcess, int bufferKb)
+    private async Task<string?> GetMetadataInternalAsync(string url, bool flat, CancellationToken ct, bool tuneProcess)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL cannot be empty.", nameof(url));
 
-        try
-        {
-            var arguments =
-                "--dump-single-json " +
-                "--simulate " +
-                "--skip-download " +
-                (flat ? "--flat-playlist " : "") +   // ✅ KEY SWITCH
-                "--lazy-playlist " +
-                "--quiet " +
-                "--no-warnings " +
-                $"{Quote(url)}";
+        var arguments =
+            "--dump-single-json " +
+            "--simulate " +
+            "--skip-download " +
+            (flat ? "--flat-playlist " : "") +
+            "--lazy-playlist " +
+            "--quiet " +
+            "--no-warnings " +
+            $"{Quote(url)}";
 
-            if (ct.IsCancellationRequested)
-                Debug.WriteLine("Cancellation requested before starting process.");
-
-            var json = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
-            return json;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.Log(LogType.Warning, "Metadata fetch cancelled.");
-            return null;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        return await RunProbeAsync(arguments, ct, tuneProcess);
     }
 
     /// <summary>
@@ -1645,23 +1635,20 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The video or playlist URL to probe.</param>
     /// <param name="ct">The <see cref="CancellationToken"/> to abort the process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size in kilobytes for the process output stream (default 128KB).</param>
     /// <returns>
     /// A <see cref="List{Format}"/> containing all available streams; 
     /// returns an empty list or <see langword="null"/> if the probe fails or is cancelled.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<List<Format>> GetFormatsAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<List<Format>> GetFormatsAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("Video URL cannot be empty.", nameof(url));
 
-        var output = await Probe().RunAsync($"-F {Quote(url)}", ct, tuneProcess, bufferKb);
-
-        if (string.IsNullOrWhiteSpace(output))
-            return new List<Format>();
-
-        return ParseFormats(output);
+        var output = await RunProbeAsync($"-F {Quote(url)}", ct, tuneProcess);
+        return string.IsNullOrWhiteSpace(output)
+            ? new List<Format>()
+            : ParseFormats(output);
     }
 
     /// <summary>
@@ -1670,21 +1657,19 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The video or playlist URL to probe.</param>
     /// <param name="ct">The <see cref="CancellationToken"/> to abort the process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size in kilobytes for the process output stream (default 128KB).</param>
     /// <returns>
     /// A <see cref="MetadataLight"/> object if successful; 
     /// returns <see langword="null"/> if the process fails or is cancelled.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<MetadataLight?> GetMetadataLiteAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<MetadataLight?> GetMetadataLiteAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL cannot be empty.", nameof(url));
 
         try
         {
-            // Use a rare separator that is unlikely to appear in title/description
-            const string separator = "|||YTDLP.NET|||";
+            var separator = $"|||{Guid.NewGuid():N}|||";
 
             var fields = new[]
             {
@@ -1694,22 +1679,18 @@ public sealed class Ytdlp : IAsyncDisposable
                 "%(thumbnail)s",
                 "%(view_count)s",
                 "%(filesize,filesize_approx)s",
-                "%(description).500s"  // limit to first 500 chars to avoid huge output
+                "%(description).500s"
             };
 
-            var printArg = $"--print \"{string.Join(separator, fields)}\"";
+            var arguments =
+                $"--print \"{string.Join(separator, fields)}\" " +
+                $"--skip-download --no-playlist --quiet {Quote(url)}";
 
-            var arguments = $"{printArg} --skip-download --no-playlist --quiet {Quote(url)}";
-
-            var output = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
-
-            if (string.IsNullOrWhiteSpace(output))
-                return null;
+            var output = await RunProbeAsync(arguments, ct, tuneProcess);
+            if (string.IsNullOrWhiteSpace(output)) return null;
 
             var parts = output.Trim().Split(separator);
-
-            if (parts.Length < 6) // at least id, title, duration, thumbnail, views, size
-                return null;
+            if (parts.Length < 6) return null;
 
             return new MetadataLight
             {
@@ -1724,11 +1705,12 @@ public sealed class Ytdlp : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            _logger.Log(LogType.Warning, "Simple metadata fetch cancelled.");
+            _logger.Log(LogType.Warning, "Metadata lite fetch cancelled.");
             return null;
         }
         catch (Exception ex)
         {
+            _logger.Log(LogType.Error, $"Metadata lite failed: {ex.Message}");
             return null;
         }
     }
@@ -1740,58 +1722,53 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="fields">A collection of field names to extract (e.g., "title", "uploader").</param>
     /// <param name="ct">A <see cref="CancellationToken"/> to abort the yt-dlp process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size in kilobytes for the process output (default 128KB).</param>
     /// <returns>
     /// A <see cref="Dictionary{TKey, TValue}"/> containing the requested fields and their values; 
     /// returns <see langword="null"/> if the process fails, returns no data, or is cancelled.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Dictionary<string, string>?> GetMetadataLiteAsync(string url, IEnumerable<string> fields, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<Dictionary<string, string>?> GetMetadataLiteAsync(string url, IEnumerable<string> fields, CancellationToken ct = default, bool tuneProcess = true)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL cannot be empty.", nameof(url));
 
-        if (fields == null || !fields.Any())
+        var fieldList = fields?.ToList()
+            ?? throw new ArgumentNullException(nameof(fields));
+
+        if (fieldList.Count == 0)
             throw new ArgumentException("At least one field must be requested.", nameof(fields));
 
         try
         {
-            const string separator = "|||YTDLP.NET|||";
+            var separator = $"|||{Guid.NewGuid():N}|||";
+            var printFormat = string.Join(separator, fieldList.Select(f => $"%({f})s"));
+            var arguments =
+                $"--print \"{printFormat}\" " +
+                $"--skip-download --no-playlist --quiet {Quote(url)}";
 
-            // Build print format: %(id)s|||YTDLP.NET|||%(title)s|||YTDLP.NET|||...
-            var printParts = fields.Select(f => $"%({f})s");
-            var printFormat = string.Join(separator, printParts);
-
-            var arguments = $"--print \"{printFormat}\" --skip-download --no-playlist --quiet {Quote(url)}";
-
-            var rawOutput = await Probe().RunAsync(arguments, ct, tuneProcess, bufferKb);
-            if (string.IsNullOrWhiteSpace(rawOutput))
-                return null;
+            var rawOutput = await RunProbeAsync(arguments, ct, tuneProcess);
+            if (string.IsNullOrWhiteSpace(rawOutput)) return null;
 
             var parts = rawOutput.Trim().Split(separator);
+            if (parts.Length != fieldList.Count) return null;
 
-            // Should have exactly as many parts as requested fields
-            if (parts.Length != fields.Count())
-                return null;
+            var result = new Dictionary<string, string>(
+                fieldList.Count,
+                StringComparer.OrdinalIgnoreCase);
 
-            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            int index = 0;
-            foreach (var field in fields)
-            {
-                var value = parts[index++].Trim();
-                result[field] = value;
-            }
+            for (int i = 0; i < fieldList.Count; i++)
+                result[fieldList[i]] = parts[i].Trim();
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.Log(LogType.Warning, "Simple metadata fetch cancelled.");
+            _logger.Log(LogType.Warning, "Metadata lite (fields) fetch cancelled.");
             return null;
         }
         catch (Exception ex)
         {
+            _logger.Log(LogType.Error, $"Metadata lite (fields) failed: {ex.Message}");
             return null;
         }
     }
@@ -1802,15 +1779,14 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="url">The video or playlist URL to probe.</param>
     /// <param name="ct">The <see cref="CancellationToken"/> to abort the process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size in kilobytes for the process output stream (default 128KB).</param>
     /// <returns>
     /// A <see cref="string"/> representing the best audio format ID (e.g., "140"); 
     /// returns an empty string or throws if no suitable audio is found.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<string> GetBestAudioFormatIdAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<string> GetBestAudioFormatIdAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
     {
-        var meta = await GetMetadataAsync(url, ct, tuneProcess, bufferKb);
+        var meta = await GetMetadataAsync(url, ct, tuneProcess);
         var best = meta?.Formats?
             .Where(f => f.IsAudio && (f.Abr > 0 || f.Tbr > 0))
             .OrderByDescending(f => f.Abr ?? f.Tbr ?? 0)
@@ -1826,15 +1802,14 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <param name="maxHeight">The maximum vertical resolution allowed (default 1080p).</param>
     /// <param name="ct">A <see cref="CancellationToken"/> to cancel the underlying yt-dlp process.</param>
     /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
-    /// <param name="bufferKb">The buffer size in kilobytes for the process output (default 128KB).</param>
     /// <returns>
     /// A <see cref="string"/> representing the best video format ID (e.g., "137" or "248"); 
     /// returns an empty string or <see langword="null"/> if no suitable format is found.
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<string> GetBestVideoFormatIdAsync(string url, int maxHeight = 1080, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<string> GetBestVideoFormatIdAsync(string url, int maxHeight = 1080, CancellationToken ct = default, bool tuneProcess = true)
     {
-        var meta = await GetMetadataAsync(url, ct, tuneProcess, bufferKb);
+        var meta = await GetMetadataAsync(url, ct, tuneProcess);
         var best = meta?.Formats?
             .Where(f => !f.IsAudio && f.Height.HasValue && f.Height <= maxHeight)
             .OrderByDescending(f => f.Height)
@@ -1849,21 +1824,22 @@ public sealed class Ytdlp : IAsyncDisposable
     /// </summary>
     /// <param name="url">The video URL to probe for subtitle tracks.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> to cancel the underlying yt-dlp process.</param>
+    /// <param name="tuneProcess">Whether to tune the process for better performance (true by default). If false, the process will use the default buffer size and may have slower output processing.</param>
     /// <returns>A list of available subtitle tracks.</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<List<SubtitleTrack>> GetSubtitlesAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)
+    public async Task<List<SubtitleTrack>> GetSubtitlesAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
     {
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("Video URL cannot be empty.", nameof(url));
 
-        // --list-subs lists available subtitles
-        var output = await Probe().RunAsync($"--list-subs {Quote(url)}", ct, tuneProcess, bufferKb);
+        var output = await RunProbeAsync($"--list-subs {Quote(url)}", ct, tuneProcess);
 
-        if (string.IsNullOrWhiteSpace(output))
-            return new List<SubtitleTrack>();
-
-        return ParseSubtitles(output);
+        return string.IsNullOrWhiteSpace(output)
+            ? new List<SubtitleTrack>()
+            : ParseSubtitles(output);
     }
+
+    // ── Download ──────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Executes download processing for a URL.
@@ -1881,71 +1857,75 @@ public sealed class Ytdlp : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL required", nameof(url));
 
-        // Ensure directories exist if needed
         try
         {
-            if (!string.IsNullOrWhiteSpace(_outputFolder))
-                Directory.CreateDirectory(_outputFolder);
-
-            if (!string.IsNullOrWhiteSpace(_homeFolder))
-                Directory.CreateDirectory(_homeFolder);
-
-            if (!string.IsNullOrWhiteSpace(_tempFolder))
-                Directory.CreateDirectory(_tempFolder);
+            if (!string.IsNullOrWhiteSpace(_outputFolder)) Directory.CreateDirectory(_outputFolder);
+            if (!string.IsNullOrWhiteSpace(_homeFolder)) Directory.CreateDirectory(_homeFolder);
+            if (!string.IsNullOrWhiteSpace(_tempFolder)) Directory.CreateDirectory(_tempFolder);
         }
         catch (Exception ex)
         {
-            _logger.Log(LogType.Error, $"Failed to create necessary folders: {ex.Message}");
+            _logger.Log(LogType.Error, $"Failed to create required folders: {ex.Message}");
             throw new YtdlpException("Failed to create required folders", ex);
         }
 
         var argsList = BuildArguments(url);
-        var arguments = string.Join(" ", argsList.Select(Quote));
+        var arguments = string.Join(" ", argsList.Select(EscapeArgument));
 
         _logger.Log(LogType.Info, $"Executing: {_ytdlpPath} {arguments}");
 
-        // Create isolated execution components
-        var factory = new ProcessFactory(_ytdlpPath);
+        // Isolated per-call — safe for concurrent downloads on the same Ytdlp instance
         var progressParser = new ProgressParser(_logger);
-        var download = new DownloadRunner(factory, progressParser, _logger);
+        var runner = CreateRunner();
 
-        // Forward progress events
+        // ── Wire progress parser events → Ytdlp public events ─────────────────
         void OnProgressDownloadHandler(object? s, DownloadProgressEventArgs e) => OnProgressDownload?.Invoke(this, e);
         void OnProgressMessageHandler(object? s, string msg) => OnProgressMessage?.Invoke(this, msg);
-        void OnCompleteDownloadHanlder(object? s, string msg) => OnCompleteDownload?.Invoke(this, msg);
-        progressParser.OnProgressDownload += OnProgressDownloadHandler;
-        progressParser.OnProgressMessage += OnProgressMessageHandler;
-        progressParser.OnCompleteDownload += OnCompleteDownloadHanlder;
-
-        // Forward other events        
+        void OnCompleteDownloadHandler(object? s, string msg) => OnCompleteDownload?.Invoke(this, msg);
         void OnPostProcessingStartHandler(object? s, string msg) => OnPostProcessingStart?.Invoke(this, msg);
         void OnPostProcessingCompleteHandler(object? s, string msg) => OnPostProcessingComplete?.Invoke(this, msg);
+
+        progressParser.OnProgressDownload += OnProgressDownloadHandler;
+        progressParser.OnProgressMessage += OnProgressMessageHandler;
+        progressParser.OnCompleteDownload += OnCompleteDownloadHandler;
         progressParser.OnPostProcessingStart += OnPostProcessingStartHandler;
         progressParser.OnPostProcessingComplete += OnPostProcessingCompleteHandler;
 
-        // Process events
+        // ── Wire runner events → Ytdlp public events ──────────────────────────
         void OnOutputMessageHandler(object? s, string msg) => OnOutputMessage?.Invoke(this, msg);
         void OnErrorMessageHandler(object? s, string msg) => OnErrorMessage?.Invoke(this, msg);
         void OnCommandCompletedHandler(object? s, CommandCompletedEventArgs e) => OnCommandCompleted?.Invoke(this, e);
-        download.OnOutput += OnOutputMessageHandler;
-        download.OnError += OnErrorMessageHandler;
-        download.OnCommandCompleted += OnCommandCompletedHandler;
+
+        runner.OnErrorReceived += OnErrorMessageHandler;
+        runner.OnCommandCompleted += OnCommandCompletedHandler;
 
         try
         {
-            await download.RunAsync(arguments, ct, tuneProcess);
+            await runner.ExecuteAsync(
+                arguments,
+                onLineReceived: line =>
+                {
+                    // Feed each stdout line through the progress parser
+                    try { progressParser.ParseProgress(line); }
+                    catch (Exception ex) { _logger.Log(LogType.Error, $"Progress parse error: {ex.Message}"); }
+
+                    OnOutputMessageHandler(null, line);
+                },
+                ct: ct,
+                tuneProcess: tuneProcess,
+                captureFullOutput: false);
         }
         finally
         {
-            // Unsubscribe immediately after execution to prevent memory leaks
+            // Always unsubscribe — prevents memory leaks on cancel or exception
             progressParser.OnProgressDownload -= OnProgressDownloadHandler;
             progressParser.OnProgressMessage -= OnProgressMessageHandler;
-            progressParser.OnCompleteDownload -= OnCompleteDownloadHanlder;
+            progressParser.OnCompleteDownload -= OnCompleteDownloadHandler;
             progressParser.OnPostProcessingStart -= OnPostProcessingStartHandler;
             progressParser.OnPostProcessingComplete -= OnPostProcessingCompleteHandler;
-            download.OnOutput -= OnOutputMessageHandler;
-            download.OnError -= OnErrorMessageHandler;
-            download.OnCommandCompleted -= OnCommandCompletedHandler;
+
+            runner.OnErrorReceived -= OnErrorMessageHandler;
+            runner.OnCommandCompleted -= OnCommandCompletedHandler;
         }
     }
 
@@ -1962,24 +1942,25 @@ public sealed class Ytdlp : IAsyncDisposable
     /// <exception cref="YtdlpException"></exception>
     public async Task DownloadBatchAsync(IEnumerable<string> urls, int maxConcurrency = 3, CancellationToken ct = default, bool tuneProcess = true)
     {
-        if (urls == null || !urls.Any())
+        var urlList = urls?.ToList();
+        if (urlList == null || urlList.Count == 0)
         {
-            _logger.Log(LogType.Error, "No URLs provided for batch download");
-            throw new YtdlpException("No URLs provided for batch download");
+            _logger.Log(LogType.Error, "No URLs provided for batch download.");
+            throw new YtdlpException("No URLs provided for batch download.");
         }
 
-        using SemaphoreSlim throttler = new(maxConcurrency);
+        using var throttler = new SemaphoreSlim(maxConcurrency);
 
-        var tasks = urls.Select(async url =>
+        var tasks = urlList.Select(async url =>
         {
-            await throttler.WaitAsync();
+            await throttler.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                await DownloadAsync(url, ct, tuneProcess);
+                await DownloadAsync(url, ct, tuneProcess).ConfigureAwait(false);
             }
             catch (YtdlpException ex)
             {
-                _logger.Log(LogType.Error, $"Skipping URL {url} due to error: {ex.Message}");
+                _logger.Log(LogType.Error, $"Skipping {url}: {ex.Message}");
             }
             finally
             {
@@ -1987,23 +1968,10 @@ public sealed class Ytdlp : IAsyncDisposable
             }
         });
 
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    public async Task<List<string>> ProbeFlatPlaylistAsync(string playlistUrl, CancellationToken ct = default)
-    {
-        var jsonLines = new List<string>();
-        string args = $"-j --simulate --skip-download --flat-playlist --lazy-playlist --ignore-errors --quiet \"{playlistUrl}\"";
 
-        // Direct, stream-based assembly
-        var _runner = Runner();
-        await _runner.ExecuteAsync(args, onLineReceived: (line) =>
-        {
-            jsonLines.Add(line);
-        }, ct: ct);
-
-        return jsonLines;
-    }
 
     #endregion
 
@@ -2013,19 +1981,42 @@ public sealed class Ytdlp : IAsyncDisposable
 
     #region Helpers
 
-    private ProcessRunner Runner()
-    {
-        // Create isolated execution components
-        var factory = new ProcessFactory(_ytdlpPath);
-        return new ProcessRunner(factory, _logger);
-    }
+    /// <summary>
+    /// Creates an isolated <see cref="ProcessRunner"/> for a single execution.
+    /// Every call gets its own runner — no shared state between concurrent downloads.
+    /// </summary>
+    private ProcessRunner CreateRunner() => new ProcessRunner(new ProcessFactory(_ytdlpPath), _logger);
 
-    // Get probe runner
-    private ProbeRunner Probe()
+    /// <summary>
+    /// Executes any yt-dlp probe command (metadata, version, format list, etc.)
+    /// and returns the full captured stdout as a string.
+    /// Returns <see langword="null"/> if the process fails, is cancelled, or produces no output.
+    /// </summary>
+    private async Task<string?> RunProbeAsync(string arguments, CancellationToken ct = default, bool tuneProcess = true)
     {
-        // Create isolated execution components
-        var factory = new ProcessFactory(_ytdlpPath);
-        return new ProbeRunner(factory, _logger);
+        try
+        {
+            var result = await CreateRunner().ExecuteAsync(
+                arguments,
+                onLineReceived: null,
+                ct: ct,
+                tuneProcess: tuneProcess,
+                captureFullOutput: true);
+
+            return result.IsSuccess && !string.IsNullOrWhiteSpace(result.FullOutput)
+                ? result.FullOutput.Trim()
+                : null;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Log(LogType.Warning, "Probe cancelled.");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.Log(LogType.Error, $"Probe failed: {ex.Message}");
+            return null;
+        }
     }
 
     private List<string> BuildArguments(string url)
@@ -2043,14 +2034,14 @@ public sealed class Ytdlp : IAsyncDisposable
         if (!usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_tempFolder))
         {
             args.Add("--paths");
-            args.Add($"temp:{_tempFolder.Replace("\\", "/")}");
+            args.Add($"temp:{_tempFolder}");
         }
 
         // home folder only if NOT using absolute output
         if (!usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_homeFolder))
         {
             args.Add("--paths");
-            args.Add($"home:{_homeFolder.Replace("\\", "/")}");
+            args.Add($"home:{_homeFolder}");
         }
 
         // Output template
@@ -2060,9 +2051,7 @@ public sealed class Ytdlp : IAsyncDisposable
 
             if (usingAbsoluteOutput)
             {
-                var full = Path.Combine(_outputFolder!, _outputTemplate)
-                    .Replace("\\", "/");
-
+                var full = Path.Combine(_outputFolder!, _outputTemplate).Replace("\\", "/");
                 args.Add(full);
             }
             else
@@ -2136,6 +2125,25 @@ public sealed class Ytdlp : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(value)) return "\"\"";
         // Escape " and \
         string escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        return $"\"{escaped}\"";
+    }
+
+    /// <summary>
+    /// Escapes a single argument token for ProcessStartInfo.Arguments.
+    /// Flags (starting with "-") are never quoted.
+    /// Values containing spaces, quotes, or backslashes are wrapped in double-quotes.
+    /// </summary>
+    private static string EscapeArgument(string arg)
+    {
+        if (string.IsNullOrEmpty(arg)) return "\"\"";
+
+        // Flags (starting with -) should never be quoted.
+        if (arg.StartsWith("-")) return arg;
+
+        // ALWAYS escape, even if it looks "clean". 
+        // This ensures consistency and prevents issues with hidden characters.
+        string escaped = arg.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
         return $"\"{escaped}\"";
     }
 
