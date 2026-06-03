@@ -7,6 +7,9 @@ public sealed class ProcessRunner
     private readonly ProcessFactory _factory;
     private readonly ILogger _logger;
 
+    /// <summary>Pre-allocated capacity for JSON/metadata stdout capture.</summary>
+    private const int JsonOutputInitialCapacity = 128 * 1024;
+
     public event EventHandler<string>? OnErrorReceived;
     public event EventHandler<CommandCompletedEventArgs>? OnCommandCompleted;
 
@@ -17,17 +20,23 @@ public sealed class ProcessRunner
     }
 
     /// <summary>
-    /// The universal execution pipe for ALL yt-dlp operations (downloads, probes, format list, etc.)
+    /// The universal execution pipe for ALL yt-dlp operations.
+    /// Combines low-latency streaming callbacks with optional high-performance full output aggregation.
     /// </summary>
-    public async Task<ProcessResult> ExecuteAsync(string arguments,
-                                                  Action<string>? onLineReceived = null,
-                                                  CancellationToken ct = default,
-                                                  bool tuneProcess = true,
-                                                  bool captureFullOutput = false)
+    public async Task<ProcessResult> ExecuteAsync(
+        string arguments,
+        Action<string>? onLineReceived = null,
+        CancellationToken ct = default,
+        bool tuneProcess = true,
+        bool captureFullOutput = false)
     {
         using var process = _factory.Create(arguments);
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var outputBuilder = captureFullOutput ? new StringBuilder(capacity: 128 * 1024) : null; // Pre-allocate for large JSON
+
+        // Single writer (stdoutTask) + one final reader.
+        // Lock acts as a memory barrier at ToString() time; kept on AppendLine for safety.
+        var outputLock = new object();
+        var outputBuilder = captureFullOutput ? new StringBuilder(JsonOutputInitialCapacity) : null;
 
         int completed = 0;
         void Complete(bool success, string message)
@@ -38,66 +47,87 @@ public sealed class ProcessRunner
 
         try
         {
+            // Must be attached BEFORE Start() to avoid a race on fast-exiting processes.
             process.Exited += (_, _) => tcs.TrySetResult(true);
 
             if (!process.Start())
-                throw new YtdlpException("Failed to start yt-dlp.");
+                throw new YtdlpException("Failed to start yt-dlp core engine.");
 
             if (tuneProcess)
                 ProcessFactory.Tune(process);
 
-            // -----------------------------------------------------------------
-            // STDOUT Pump: Active high-speed background reader
-            // -----------------------------------------------------------------
+            // ── STDOUT pump ──────────────────────────────────────────────────────────────────
+            // ct is intentionally NOT passed to ReadLineAsync or Task.Run.
+            // Cancellation flows through SafeKill (below) → pipe closes → ReadLineAsync
+            // returns null (EOF) naturally. Passing ct here aborts the read mid-stream
+            // and silently drops the tail of stdout output.
+            // ────────────────────────────────────────────────────────────────────────────────
             var stdoutTask = Task.Run(async () =>
             {
                 using var reader = process.StandardOutput;
-                while (!ct.IsCancellationRequested)
+                string? line;
+                while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                 {
-                    // No Task.WhenAny needed. Pass token directly to avoid allocations.
-                    string? line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
-                    if (line == null) break;
-
                     onLineReceived?.Invoke(line);
-                    outputBuilder?.AppendLine(line);
-                }
-            }, ct);
 
-            // -----------------------------------------------------------------
-            // STDERR Pump: Active background error logging reader
-            // -----------------------------------------------------------------
-            var stderrTask = Task.Run(async () =>
-            {
-                using var reader = process.StandardError;
-                while (!ct.IsCancellationRequested)
-                {
-                    string? line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
-                    if (line == null) break;
-
-                    OnErrorReceived?.Invoke(this, line);
-                    _logger.Log(LogType.Error, line);
-                }
-            }, ct);
-
-            // -----------------------------------------------------------------
-            // Process Tree Cancellation Control
-            // -----------------------------------------------------------------
-            using var registration = ct.Register(() =>
-            {
-                if (!process.HasExited)
-                {
-                    _logger.Log(LogType.Info, "Cancellation requested -> Safe killing process tree");
-                    ProcessFactory.SafeKill(process, _logger);
+                    if (outputBuilder != null)
+                    {
+                        lock (outputLock)
+                            outputBuilder.AppendLine(line);
+                    }
                 }
             });
 
-            // Wait cleanly for streams to flush out and the process to finish
-            await Task.WhenAll(stdoutTask, stderrTask, tcs.Task).ConfigureAwait(false);
+            // ── STDERR pump ──────────────────────────────────────────────────────────────────
+            // Mirrors stdout exactly. Avoids BeginErrorReadLine + WaitForExitAsync race where
+            // the OS can return the process handle before the internal .NET event-pump thread
+            // finishes firing the last ErrorDataReceived callback, silently dropping stderr tail.
+            // ────────────────────────────────────────────────────────────────────────────────
+            var stderrTask = Task.Run(async () =>
+            {
+                using var reader = process.StandardError;
+                string? line;
+                while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
+                {
+                    OnErrorReceived?.Invoke(this, line);
+                    _logger.Log(LogType.Error, line);
+                }
+            });
 
-            if (!process.HasExited)
-                ProcessFactory.SafeKill(process, _logger);
+            // ── Cancellation ─────────────────────────────────────────────────────────────────
+            // Guard against ct.Register allocation when CancellationToken.None is passed.
+            // default(CancellationTokenRegistration) is the BCL sentinel: using-dispose is a no-op.
+            // ────────────────────────────────────────────────────────────────────────────────
+            using var registration = ct.CanBeCanceled
+                ? ct.Register(() =>
+                {
+                    if (process.HasExited) return;
+                    _logger.Log(LogType.Info, "Cancellation requested via token -> Safe killing process tree");
+                    ProcessFactory.SafeKill(process, _logger);
+                })
+                : default(CancellationTokenRegistration);
 
-            await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            // ── Drain ────────────────────────────────────────────────────────────────────────
+            // All three must complete:
+            //   tcs.Task   — process handle signalled (ExitCode is valid)
+            //   stdoutTask — stdout pipe drained to EOF
+            //   stderrTask — stderr pipe drained to EOF
+            // On cancellation, SafeKill closes the pipes; both pumps reach EOF and finish
+            // naturally, so WhenAll still resolves cleanly. Swallow OCE here — Complete()
+            // and the result path below handle the cancelled outcome correctly.
+            // ────────────────────────────────────────────────────────────────────────────────
+            try
+            {
+                await Task.WhenAll(tcs.Task, stdoutTask, stderrTask).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) { /* SafeKill fired; pipes closing; drain best-effort */ }
+
+            // ── Final OS handle flush ────────────────────────────────────────────────────────
+            // CancellationToken.None is intentional: the process is already dead at this point,
+            // and passing a cancelled ct would throw immediately, bypassing Complete() and
+            // the ProcessResult return below.
+            // ────────────────────────────────────────────────────────────────────────────────
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
 
             bool success = process.ExitCode == 0 && !ct.IsCancellationRequested;
             string message = success ? "Execution completed successfully"
@@ -106,11 +136,14 @@ public sealed class ProcessRunner
 
             Complete(success, message);
 
-            return new ProcessResult(
-                 success,
-                 process.ExitCode,
-                 message,
-                 outputBuilder?.ToString());
+            string? finalOutput = null;
+            if (outputBuilder != null)
+            {
+                lock (outputLock)
+                    finalOutput = outputBuilder.ToString();
+            }
+
+            return new ProcessResult(success, process.ExitCode, message, finalOutput);
         }
         catch (OperationCanceledException)
         {

@@ -68,7 +68,7 @@ internal static class MetadataPage
     {
         //Console.Clear();
 
-        ConsoleTheme.WriteSection("Metadata Explorer Latest Method");
+        ConsoleTheme.WriteSection("Metadata Explorer Using Latest Method");
 
         var url = ConsoleExtensions.ReadInput("Enter video/playlist URL");
 
