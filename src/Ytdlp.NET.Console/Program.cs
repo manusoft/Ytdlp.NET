@@ -150,6 +150,8 @@ internal class Program
         _ytdlp = new Ytdlp(ytdlpPath: Path.Combine(toolsPath, "yt-dlp.exe"), logger: new DemoLogger())
             .WithFFmpegLocation(toolsPath);
 
+        Console.WriteLine(_ytdlp.Preview("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
+
         Console.WriteLine("Checking yt-dlp version...\n");
 
         try
