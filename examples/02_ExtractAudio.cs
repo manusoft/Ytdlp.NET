@@ -6,7 +6,7 @@ class Program
 {
     static async Task Main()
     {
-        await using var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp()
             .WithFormat("bestaudio")
             .ExtractAudio("mp3")
             .WithOutputFolder("./audio")
@@ -16,6 +16,6 @@ class Program
         ytdlp.OnProgressDownload += (s, e) =>
             Console.Write($"\rProgress: {e.Percent:F1}%  ETA: {e.ETA}");
 
-        await ytdlp.ExecuteAsync("https://www.youtube.com/watch?v=VIDEO_ID");
+        await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=VIDEO_ID", CancellationToken.None);
     }
 }

@@ -8,11 +8,11 @@ class Program
     {
         var url = "https://www.youtube.com/watch?v=VIDEO_ID";
 
-        await using var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp()
             .RemoveSponsorBlock("all")
             .WithFormat("best")
             .WithOutputFolder("./sponsor-free");
 
-        await ytdlp.ExecuteAsync(url);
+        await ytdlp.DownloadAsync(url, CancellationToken.None);
     }
 }
