@@ -1,10 +1,6 @@
 ﻿using ManuHub.Ytdlp.NET.Core;
+using ManuHub.Ytdlp.NET.Models.Auth;
 using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 
 namespace ManuHub.Ytdlp.NET;
 
@@ -83,6 +79,8 @@ public sealed partial class Ytdlp
     private readonly string _ytdlpPath;
     private readonly ILogger _logger;
 
+    private readonly YtdlpAuth? _auth;
+    private readonly AdobePassAuth? _adobePass;
     private readonly string? _outputFolder;
     private readonly string? _homeFolder;
     private readonly string? _tempFolder;
@@ -93,13 +91,12 @@ public sealed partial class Ytdlp
     private readonly string? _proxy;
     private readonly string? _ffmpegLocation;
     private readonly string? _sponsorblockRemove;
-    private readonly int? _concurrentFragments;
+    private readonly int? _concurrentFragments;    
 
     private readonly ImmutableArray<string> _flags;
     private readonly ImmutableArray<(string Key, string Value)> _options;
     #endregion   
-
-    
+       
 
     #region Constructors
 
@@ -109,23 +106,27 @@ public sealed partial class Ytdlp
         _logger = logger ?? new DefaultLogger();
 
         // defaults
+        _auth = null; 
+        _adobePass = null; 
         _outputFolder = null;
         _tempFolder = null;
         _homeFolder = null;
         _outputTemplate = "%(title)s [%(id)s].%(ext)s";
         _format = "b";
-        _concurrentFragments = null;
-        _flags = ImmutableArray<string>.Empty;
-        _options = ImmutableArray<(string, string)>.Empty;
+        _concurrentFragments = null;       
         _cookiesFile = null;
         _cookiesFromBrowser = null;
         _proxy = null;
         _ffmpegLocation = null;
         _sponsorblockRemove = null;
+        _flags = ImmutableArray<string>.Empty;
+        _options = ImmutableArray<(string, string)>.Empty;
     }
 
     // Private copy constructor – every WithXxx() uses this
     private Ytdlp(Ytdlp other,
+        YtdlpAuth? auth = null,
+        AdobePassAuth? adobePass = null,
         string? outputFolder = null,
         string? homeFolder = null,
         string? tempFolder = null,
@@ -143,6 +144,8 @@ public sealed partial class Ytdlp
         _ytdlpPath = other._ytdlpPath;
         _logger = other._logger;
 
+        _auth = auth ?? other._auth;
+        _adobePass = adobePass ?? other._adobePass;
         _outputFolder = outputFolder ?? other._outputFolder;
         _homeFolder = homeFolder ?? other._homeFolder;
         _tempFolder = tempFolder ?? other._tempFolder;
@@ -190,6 +193,29 @@ public sealed partial class Ytdlp
         if (usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_tempFolder))
         {
             _logger.Log(LogType.Debug, "Temp folder ignored because absolute output template is used.");
+        }
+
+        // Authentication
+        if (_auth is not null)
+        {
+            args.Add("--username");
+            args.Add(_auth.Username);
+
+            args.Add("--password");
+            args.Add("-"); // tells yt-dlp to read from stdin
+        }
+
+        // Adobe Pass authentication
+        if (_adobePass is not null)
+        {
+            args.Add("--ap-mso");
+            args.Add(_adobePass.Mso);
+
+            args.Add("--ap-username");
+            args.Add(_adobePass.Username);
+
+            args.Add("--ap-password");
+            args.Add("-"); // tells yt-dlp to read from stdin
         }
 
         // temp folder
