@@ -44,6 +44,8 @@ internal static class DownloadVideoPage
 
         Console.WriteLine("\nStarting download...\n");
 
+        Console.WriteLine(ytdlp.Preview(url));
+
         await ytdlp.DownloadAsync(url);
 
         dashboard.Complete();
