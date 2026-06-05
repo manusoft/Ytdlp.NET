@@ -152,7 +152,7 @@ foreach (var root in metadata.Entries ?? [])
 ### **Sequential download example**:
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
     .WithFormat("best")
     .WithOutputFolder("./downloads");
 
@@ -169,7 +169,7 @@ var urls = new[] { "https://youtu.be/video1", "https://youtu.be/video2" };
 
 var tasks = urls.Select(async url =>
 {
-    await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
+    var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
         .WithFormat("best")
         .WithOutputFolder("./batch");
 
@@ -185,7 +185,7 @@ await Task.WhenAll(tasks);
 ### **Key points**:
 
 1. Always create a **new instance per download** for parallel operations.
-2. Always use `await using` for proper resource cleanup.
+2. No shared state between instances, so no need to worry about thread safety.
 3. Attach events **after the `WithXxx()` call**.
 
 ---
@@ -195,7 +195,7 @@ await Task.WhenAll(tasks);
 ### Download a Single Video
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
     .WithFormat("best")
     .WithOutputFolder("./downloads")
     .WithEmbedMetadata()
@@ -210,7 +210,7 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ### Extract Audio
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
     .WithExtractAudio(AudioFormat.Mp3, 5)
     .WithOutputFolder("./audio")
     .WithEmbedThumbnail()
@@ -224,7 +224,7 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ### Fetch Metadata
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 
 var metadata = await ytdlp.GetMetadataAsync("https://www.youtube.com/watch?v=abc123");
 
@@ -236,7 +236,7 @@ Console.WriteLine($"Title: {metadata?.Title}, Duration: {metadata?.Duration}");
 ### Fetch Formats
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 
 var formats = await ytdlp.GetFormatsAsync("https://www.youtube.com/watch?v=abc123");
 
@@ -249,7 +249,7 @@ foreach(var format in formats)
 ### Best Format Selection
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 
 string bestAudio = await ytdlp.GetBestAudioFormatIdAsync(url);
 string bestVideo = await ytdlp.GetBestVideoFormatIdAsync(url, maxHeight: 720);
@@ -264,7 +264,7 @@ await ytdlp
 
 ## Get Subtitles
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 var subtitles = await ytdlp.GetSubtitlesAsync("https://www.youtube.com/watch?v=abc123");
 foreach (var sub in subtitles)
 {
@@ -279,7 +279,7 @@ var urls = new[] { "https://youtu.be/vid1", "https://youtu.be/vid2" };
 
 var tasks = urls.Select(async url =>
 {
-    await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
         .WithFormat("best")
         .WithOutputFolder("./batch");
 
@@ -293,7 +293,7 @@ await Task.WhenAll(tasks);
 ```csharp
 var urls = new[] { "https://youtu.be/vid1", "https://youtu.be/vid2" };
 
- await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
         .WithFormat("best")
         .WithOutputFolder("./batch");
 
@@ -472,28 +472,15 @@ ytdlp.OnCommandCompleted += (s, e) => Console.WriteLine($"Command finished: {e.C
 
 ---
 
-# 🔄 Upgrade Guide (v2 → v3)
+# 🔄 Upgrade Guide (v3 → v4)
 
-v3 introduces a **new immutable fluent API**.
+v4 introduces a **new immutable fluent API**.
 
 Old mutable commands were removed.
 
 ---
 
-## ❌ Old API (v2)
-
-```csharp
-var ytdlp = new Ytdlp();
-
-await ytdlp
-    .SetFormat("best")
-    .SetOutputFolder("./downloads")
-    .ExecuteAsync(url);
-```
-
----
-
-## ✅ New API (v3)
+## ❌ Old API (v3)
 
 ```csharp
 await using var ytdlp = new Ytdlp()
@@ -505,18 +492,16 @@ await ytdlp.DownloadAsync(url);
 
 ---
 
-## Method changes
+## ✅ New API (v4)
 
-| v2                    | v3                     |
-| --------------------- | ---------------------- |
-| `SetFormat()`         | `WithFormat()`         |
-| `SetOutputFolder()`   | `WithOutputFolder()`   |
-| `SetTempFolder()`     | `WithTempFolder()`     |
-| `SetOutputTemplate()` | `WithOutputTemplate()` |
-| `SetFFMpegLocation()` | `WithFFmpegLocation()` |
-| `ExtractAudio()`      | `WithExtractAudio()`   |
-| `UseProxy()`          | `WithProxy()`          |
-| `AddCustomCommand()`  | `AddFlag(string flag)` or `AddOption(string key, string value)` |
+```csharp
+var ytdlp = new Ytdlp();
+
+await ytdlp
+    .SetFormat("best")
+    .SetOutputFolder("./downloads")
+    .ExecuteAsync(url);
+```
 
 ---
 
@@ -554,12 +539,13 @@ download.OnProgressDownload += ...
 
 ---
 
-### Proper disposal
+### Removed disposal of old instances
 
-Use **`await using`** for automatic cleanup.
+No need to dispose intermediate instances since they are immutable and stateless.
+So you can create a base instance and reuse it without worrying about disposal:
 
 ```csharp
-await using var ytdlp = new Ytdlp();
+var ytdlp = new Ytdlp();
 ```
 
 ---
@@ -569,7 +555,7 @@ await using var ytdlp = new Ytdlp();
 
 * All commands now start with `WithXxx()`.
 * Immutable: no shared state; safe for parallel usage.
-* Always `await using` for proper disposal.
+* No need to dispose intermediate instances.
 * Deprecated old methods removed.
 * Probe methods remain the same (`GetMetadataAsync`, `GetFormatsAsync`, `GetBestVideoFormatIdAsync`, etc.).
 
