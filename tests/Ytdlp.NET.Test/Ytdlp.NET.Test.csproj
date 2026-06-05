@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<RootNamespace>ManuHub.Ytdlp.NET.Test</RootNamespace>
     <IsPackable>false</IsPackable>
 	<IsTestProject>true</IsTestProject>
 	<NoWarn>CS8600;CS8602;CS8603</NoWarn>

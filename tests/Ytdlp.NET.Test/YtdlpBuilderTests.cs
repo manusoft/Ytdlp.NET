@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
-using ManuHub.Ytdlp.NET.Test;
 
-namespace ManuHub.YtdlpNET.Test;
+namespace ManuHub.Ytdlp.NET.Test;
 
 /// <summary>
 /// Tests the immutable fluent builder (WithXxx methods).
@@ -42,7 +41,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void Constructor_DefaultPath_DoesNotThrow()
     {
-        var act = () => new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var act = () => new Ytdlp(_fullFakePath);
 
         // Assert
         act.Should().NotThrow();
@@ -51,7 +50,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void Constructor_WithExePath_DoesNotThrow()
     {
-        var act = () => new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var act = () => new Ytdlp(_fullFakePath);
 
         act.Should().NotThrow();
     }
@@ -61,7 +60,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithFormat_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithFormat("best");
 
@@ -71,7 +70,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithOutputFolder_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithOutputFolder("./downloads");
 
@@ -81,7 +80,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithOutputTemplate_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithOutputTemplate("%(title)s.%(ext)s");
 
@@ -91,9 +90,9 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithExtractAudio_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
-        var configured = original.WithExtractAudio(Ytdlp.NET.AudioFormat.Mp3);
+        var configured = original.WithExtractAudio(AudioFormat.Mp3);
 
         configured.Should().NotBeSameAs(original);
     }
@@ -101,7 +100,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithEmbedMetadata_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithEmbedMetadata();
 
@@ -111,7 +110,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithEmbedThumbnail_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithEmbedThumbnail();
 
@@ -123,7 +122,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void ChainedCalls_EachStepIsIndependent()
     {
-        var base1 = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var base1 = new Ytdlp(_fullFakePath);
         var withFormat = base1.WithFormat("bestvideo+bestaudio");
         var withFolder = withFormat.WithOutputFolder("./downloads");
         var withTemplate = withFolder.WithOutputTemplate("%(title)s.%(ext)s");
@@ -138,7 +137,7 @@ public class YtdlpBuilderTests
     public void ParallelBranches_FromSameBase_AreIndependent()
     {
         // Two download jobs branching from the same configured base
-        var sharedBase = new Ytdlp.NET.Ytdlp(_fullFakePath)
+        var sharedBase = new Ytdlp(_fullFakePath)
             .WithFormat("best")
             .WithOutputFolder("./downloads");
 
@@ -155,7 +154,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void AddFlag_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.AddFlag("--no-check-certificate");
 
@@ -165,7 +164,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void AddOption_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.AddOption("--external-downloader", "aria2c");
 
@@ -177,7 +176,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithProxy_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithProxy("socks5://127.0.0.1:1080");
 
@@ -187,7 +186,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithForceIpv4_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithForceIpv4();
 
@@ -197,7 +196,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithGeoBypassCountry_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithGeoBypassCountry("US");
 
@@ -209,7 +208,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithNoPlaylist_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithNoPlaylist();
 
@@ -219,7 +218,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithYesPlaylist_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithYesPlaylist();
 
@@ -229,7 +228,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithMaxDownloads_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithMaxDownloads(5);
 
@@ -239,7 +238,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithAgeLimit_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithAgeLimit(18);
 
@@ -251,7 +250,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithConcurrentFragments_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithConcurrentFragments(4);
 
@@ -261,7 +260,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithRetries_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithRetries(3);
 
@@ -271,7 +270,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithLimitRate_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp (_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithLimitRate("1M");
 
@@ -283,7 +282,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithRemuxVideo_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithRemuxVideo("mp4");
 
@@ -293,7 +292,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithEmbedSubtitles_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithEmbedSubtitles();
 
@@ -303,7 +302,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithEmbedChapters_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithEmbedChapters();
 
@@ -313,7 +312,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithSplitChapters_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithSplitChapters();
 
@@ -325,7 +324,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithSponsorblockRemove_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithSponsorblockRemove("sponsor");
 
@@ -335,7 +334,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithNoSponsorblock_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithNoSponsorblock();
 
@@ -347,7 +346,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithAria2_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithAria2(connections: 8);
 
@@ -359,7 +358,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithQuiet_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithQuiet();
 
@@ -369,7 +368,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithVerbose_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithVerbose();
 
@@ -379,7 +378,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithSimulate_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithSimulate();
 
@@ -391,7 +390,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithSubtitles_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithSubtitles("en");
 
@@ -403,7 +402,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithRestrictFilenames_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithRestrictFilenames();
 
@@ -413,7 +412,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithNoOverwrites_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithNoOverwrites();
 
@@ -423,7 +422,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithCookiesFile_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithCookiesFile("cookies.txt");
 
@@ -433,7 +432,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithWriteInfoJson_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithWriteInfoJson();
 
@@ -443,7 +442,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithFFmpegLocation_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithFFmpegLocation(TestConstants.FakeFfmpegPath);
 
@@ -455,7 +454,7 @@ public class YtdlpBuilderTests
     [Fact]
     public void WithThumbnails_ReturnsNewInstance()
     {
-        var original = new Ytdlp.NET.Ytdlp(_fullFakePath);
+        var original = new Ytdlp(_fullFakePath);
 
         var configured = original.WithThumbnails();
 
