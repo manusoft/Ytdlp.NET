@@ -83,7 +83,9 @@ public sealed partial class Ytdlp
         try
         {
             await runner.ExecuteAsync(
-                arguments,
+                arguments: arguments,
+                auth: _auth,
+                adobePass: _adobePass,
                 onLineReceived: line =>
                 {
                     // Feed each stdout line through the progress parser

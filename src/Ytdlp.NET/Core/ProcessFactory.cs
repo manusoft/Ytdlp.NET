@@ -1,4 +1,5 @@
 ﻿using ManuHub.Ytdlp.NET.Extensions;
+using ManuHub.Ytdlp.NET.Helpers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -28,6 +29,8 @@ public sealed class ProcessFactory
         if (!Directory.Exists(_workingDirectory))
             throw new DirectoryNotFoundException($"Working directory not found: {_workingDirectory}");
 
+        ToolPermissionManager.EnsureExecutableIfFile(ytdlpPath);
+
         _ytdlpPath = ytdlpPath;
     }
 
@@ -43,10 +46,7 @@ public sealed class ProcessFactory
 
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            RedirectStandardInput = false, // Never redirect unless actively writing to stdin.
-                                           // Leaving it redirected with no writer causes yt-dlp
-                                           // (Python) to block on interactive prompts instead
-                                           // of defaulting to non-interactive behavior.
+            RedirectStandardInput = true, // For potential future use (e.g., username/password)
 
             UseShellExecute = false,
             CreateNoWindow = true,

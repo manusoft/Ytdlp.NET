@@ -3,7 +3,7 @@
 namespace ManuHub.Ytdlp.NET.Helpers;
 
 /// <summary>
-/// Ensures that the yt-dlp executable has the necessary permissions to run on Unix-like systems.
+/// Ensures that the tool executable has the necessary permissions to run on Unix-like systems.
 /// </summary>
 internal static class ToolPermissionManager
 {

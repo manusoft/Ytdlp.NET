@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using ManuHub.Ytdlp.NET.Models.Auth;
+using System.Diagnostics;
+using System.Text;
 
 namespace ManuHub.Ytdlp.NET.Core;
 
@@ -23,12 +25,13 @@ public sealed class ProcessRunner
     /// The universal execution pipe for ALL yt-dlp operations.
     /// Combines low-latency streaming callbacks with optional high-performance full output aggregation.
     /// </summary>
-    public async Task<ProcessResult> ExecuteAsync(
-        string arguments,
-        Action<string>? onLineReceived = null,
-        CancellationToken ct = default,
-        bool tuneProcess = true,
-        bool captureFullOutput = false)
+    public async Task<ProcessResult> ExecuteAsync(string arguments,
+                                                  YtdlpAuth? auth = null,
+                                                  AdobePassAuth? adobePass = null,
+                                                  Action<string>? onLineReceived = null,
+                                                  CancellationToken ct = default,
+                                                  bool tuneProcess = true,
+                                                  bool captureFullOutput = false)
     {
         using var process = _factory.Create(arguments);
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -52,6 +55,13 @@ public sealed class ProcessRunner
 
             if (!process.Start())
                 throw new YtdlpException("Failed to start yt-dlp core engine.");
+
+            // Inject auth immediately after process start to minimize the window where credentials are exposed in the OS process list.
+            if (auth is not null)
+                await WriteAuthAsync(process, auth);
+
+            if (adobePass is not null)
+                await WriteAdobePassAsync(process, adobePass);
 
             if (tuneProcess)
                 ProcessFactory.Tune(process);
@@ -158,6 +168,68 @@ public sealed class ProcessRunner
             throw new YtdlpException(msg, ex);
         }
     }
+
+    private static async Task WriteAuthAsync(Process process, YtdlpAuth auth)
+    {
+        if (process.HasExited)
+            return;
+
+        try
+        {
+            // yt-dlp expects username first, then password
+            if (!string.IsNullOrWhiteSpace(auth.Username))
+            {
+                await process.StandardInput
+                    .WriteLineAsync(auth.Username)
+                    .ConfigureAwait(false);
+            }
+
+            if (!string.IsNullOrWhiteSpace(auth.Password))
+            {
+                await process.StandardInput
+                    .WriteLineAsync(auth.Password)
+                    .ConfigureAwait(false);
+            }
+
+            await process.StandardInput.FlushAsync().ConfigureAwait(false);
+            process.StandardInput.Close();
+        }
+        catch
+        {
+            // Never break execution due to auth injection failure
+        }
+    }
+
+    private static async Task WriteAdobePassAsync(Process process, AdobePassAuth auth)
+    {
+        if (process.HasExited)
+            return;
+
+        try
+        {
+            await process.StandardInput
+                .WriteLineAsync(auth.Mso)
+                .ConfigureAwait(false);
+
+            await process.StandardInput
+                .WriteLineAsync(auth.Username)
+                .ConfigureAwait(false);
+
+            await process.StandardInput
+                .WriteLineAsync(auth.Password)
+                .ConfigureAwait(false);
+
+            await process.StandardInput.FlushAsync().ConfigureAwait(false);
+            process.StandardInput.Close();
+        }
+        catch
+        {
+            // Never break execution due to auth injection failure
+        }
+    }
 }
 
 public record ProcessResult(bool IsSuccess, int ExitCode, string Message, string? FullOutput = null);
+
+
+
