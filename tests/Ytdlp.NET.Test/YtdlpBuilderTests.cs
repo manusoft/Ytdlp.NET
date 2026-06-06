@@ -11,11 +11,20 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class YtdlpBuilderTests 
 {
     private readonly string _fullFakePath;
-    public static readonly string _fakeFfmpegPath = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
+    public readonly string _fakeFfmpegPath;
+    private static readonly bool RunIntegration = Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     public YtdlpBuilderTests()
     {
-        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+        _fullFakePath = RunIntegration
+             ? "yt-dlp.exe"
+             : Path.Combine(Path.GetTempPath(), $"yt-dlp-fake-{Guid.NewGuid():N}.exe");
+
+        _fakeFfmpegPath = RunIntegration 
+            ? "ffmpeg.exe" 
+            : Path.Combine(Path.GetTempPath(), $"ffmpeg-fake-{Guid.NewGuid():N}.exe");
+
+        if (RunIntegration) return;
 
         if (!File.Exists(_fullFakePath))
         {
@@ -27,6 +36,17 @@ public class YtdlpBuilderTests
             {
                 // If another parallel test class is writing to it right now, 
                 // ignore the error because the file is being taken care of.
+            }
+        }
+
+        if (!File.Exists(_fakeFfmpegPath))
+        {
+            try
+            {
+                File.WriteAllText(_fakeFfmpegPath,"");
+            }
+            catch (Exception)
+            {
             }
         }
     }

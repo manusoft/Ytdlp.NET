@@ -5,10 +5,16 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class ArgumentTests
 {
     private readonly string _fullFakePath;
+    private static readonly bool RunIntegration = Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     public ArgumentTests()
     {
-        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+
+        _fullFakePath = RunIntegration 
+            ? "yt-dlp.exe" 
+            : Path.Combine(Path.GetTempPath(), $"yt-dlp-fake-{Guid.NewGuid():N}.exe");
+
+        if (RunIntegration) return;
 
         if (!File.Exists(_fullFakePath))
         {

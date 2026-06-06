@@ -25,50 +25,23 @@ public sealed class ProcessFactory
     /// </summary>
     public ProcessFactory(string ytdlpPath, string? workingDirectory = null)
     {
-        Console.WriteLine($"[PF] Input path: {ytdlpPath}");
-        Console.WriteLine($"[PF] Current directory: {Environment.CurrentDirectory}");
-
-        if (File.Exists(ytdlpPath))
-        {
-            var full = Path.GetFullPath(ytdlpPath);
-            var fi = new FileInfo(full);
-
-            Console.WriteLine($"[PF] Full path: {full}");
-            Console.WriteLine($"[PF] Size: {fi.Length}");
-        }
-        else
-        {
-            Console.WriteLine($"[PF] File.Exists = false");
-        }
-
         if (string.IsNullOrWhiteSpace(ytdlpPath))
             throw new ArgumentException("yt-dlp path cannot be empty.", nameof(ytdlpPath));
 
-        if (!File.Exists(ytdlpPath) && !IsOnSystemPath(ytdlpPath))
-            throw new FileNotFoundException($"yt-dlp executable not found: {ytdlpPath}", ytdlpPath);
+        // 1. Resolve to absolute path OR PATH lookup
+        _ytdlpPath = ResolveYtDlp(ytdlpPath);
 
+        // 2. Validate working directory
         _workingDirectory = workingDirectory ?? Environment.CurrentDirectory;
 
         if (!Directory.Exists(_workingDirectory))
             throw new DirectoryNotFoundException($"Working directory not found: {_workingDirectory}");
 
-        ToolPermissionManager.EnsureExecutableIfFile(ytdlpPath);
+        // 3. Sanity check (protect against fake/corrupt binaries)
+        ValidateBinary(_ytdlpPath);
 
-        _ytdlpPath = ytdlpPath;
-        //if (string.IsNullOrWhiteSpace(ytdlpPath))
-        //    throw new ArgumentException("yt-dlp path cannot be empty.", nameof(ytdlpPath));
-
-        //if (!File.Exists(ytdlpPath) && !IsOnSystemPath(ytdlpPath))
-        //    throw new FileNotFoundException($"yt-dlp executable not found: {ytdlpPath}", ytdlpPath);
-
-        //_workingDirectory = workingDirectory ?? Environment.CurrentDirectory;
-
-        //if (!Directory.Exists(_workingDirectory))
-        //    throw new DirectoryNotFoundException($"Working directory not found: {_workingDirectory}");
-
-        //ToolPermissionManager.EnsureExecutableIfFile(ytdlpPath);
-
-        //_ytdlpPath = ytdlpPath;
+        // 4. Platform permission fix (safe no-op on Windows)
+        ToolPermissionManager.EnsureExecutableIfFile(_ytdlpPath);
     }
 
     /// <summary>
@@ -85,10 +58,6 @@ public sealed class ProcessFactory
     /// </remarks>
     public Process Create(string arguments)
     {
-        Console.WriteLine($"[PF] Launching: {_ytdlpPath}");
-        Console.WriteLine($"[PF] WorkingDir: {_workingDirectory}");
-
-
         if (string.IsNullOrWhiteSpace(arguments))
             throw new ArgumentException("Arguments cannot be empty.", nameof(arguments));
 
@@ -168,8 +137,50 @@ public sealed class ProcessFactory
         }
     }
 
-    private static bool IsOnSystemPath(string name) =>
-        Environment.GetEnvironmentVariable("PATH")?
-            .Split(Path.PathSeparator)
-            .Any(p => File.Exists(Path.Combine(p, name))) ?? false;
+    private static string ResolveYtDlp(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new FileNotFoundException("yt-dlp path is empty");
+
+        // 1. Absolute or local file
+        if (File.Exists(path))
+            return Path.GetFullPath(path);
+
+        // 2. Try PATH resolution (IMPORTANT for CI)
+        var fromPath = FindInPath(path);
+        if (fromPath != null)
+            return fromPath;
+
+        throw new FileNotFoundException($"yt-dlp not found: {path}");
+    }
+
+    private static string? FindInPath(string exe)
+    {
+        var paths = Environment.GetEnvironmentVariable("PATH")?
+            .Split(Path.PathSeparator);
+
+        if (paths == null)
+            return null;
+
+        foreach (var p in paths)
+        {
+            var full = Path.Combine(p, exe);
+            if (File.Exists(full))
+                return full;
+        }
+
+        return null;
+    }
+
+    private static void ValidateBinary(string path)
+    {
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"yt-dlp not found: {path}");
+
+        var fileInfo = new FileInfo(path);
+
+        // yt-dlp is NEVER tiny
+        if (fileInfo.Length < 1024)
+            throw new InvalidOperationException($"Invalid yt-dlp binary detected: {fileInfo.FullName} ({fileInfo.Length} bytes).");
+    }
 }

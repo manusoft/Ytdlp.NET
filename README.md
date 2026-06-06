@@ -37,7 +37,6 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 * Cross‑platform support
 * Strongly typed event system
 * Async execution
-* `IAsyncDisposable` support
 
 ---
 
@@ -59,24 +58,27 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ---
 
-### Highlights
+## ✨ Features
 
-* Improved UpdateAsync with specific version support
-* Immutable **fluent builder API**
-* `IAsyncDisposable` implemented
-* Thread‑safe usage
-* Simplified event handling
-* Improved metadata probing
-* Better cancellation support
-* Safer command building
+* **Fluent API**: Build yt-dlp commands with `WithXxx()` methods.
+* **Immutable & thread-safe**: Each method returns a new instance, safe for parallel usage.
+* **Progress & Events**: Real-time progress tracking and post-processing notifications.
+* **Format Listing**: Retrieve and parse available formats.
+* **Batch Downloads**: Sequential or parallel execution.
+* **Output Templates**: Flexible naming with yt-dlp placeholders.
+* **Custom Command Injection**: Add extra yt-dlp options safely.
+* **Cross-platform**: Windows, macOS, Linux (where yt-dlp is supported).
 
 ---
 
 # 🔧 Required Tools
 
-`yt-dlp` relies on external tools.
+## ⚠️ Important Notes
 
-Recommended folder structure:
+* **Namespace migrated**: `ManuHub.Ytdlp.NET` — update your `using` directives.
+* **External JS runtime**: yt-dlp requires an external JS runtime like **deno.exe** (from [denoland/deno](https://deno.land)) for YouTube downloads with JS challenges.
+* **Required tools**:
+
 
 ```
 tools/
@@ -86,91 +88,243 @@ tools/
 └─ deno.exe
 ```
 
-Example usage:
+- **Recommended:** Use companion NuGet packages:
+
+| Package | Description |
+|---------|-------------|
+| **ManuHub.Ytdlp** | Core yt-dlp wrapper with fluent API and event handling. |
+| **ManuHub.Deno** | Provides the required Deno runtime for yt-dlp for JavaScript challenges. |
+| **ManuHub.FFmpeg** | Provides the required FFmpeg executable for post-processing. |
+| **ManuHub.FFprobe** | Provides the required FFprobe executable for format probing. |
+
+Example path resolution in .NET:
 
 ```csharp
-var ytdlpPath = Path.Combine("tools", "yt-dlp.exe");
+var ytdlpPath = Path.Combine(AppContext.BaseDirectory, "tools", "yt-dlp.exe");
+var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 ```
 
 ---
 
-# 🔧 Basic Usage
+## 🚨 No Disposal Required:
 
-### Download a video
+> **Ytdlp** holds no unmanaged resources and does not implement **IDisposable** or **IAsyncDisposable**. Instances are plain configuration objects — create them, share them freely, and let the GC collect them when they go out of scope. All internal runners and parsers are created per-call and cleaned up automatically after each execution.
+
+## 🔐 Improved Secure Authentication Support
+Implemented secure authentication handling for various scenarios, including standard username/password and Adobe Pass authentication.
+
+- .WithAuthentication(string username, string password)
+- .WithAdobePassAuthentication(string mso, string username, string password)
+
+> It securely handles credentials by passing them via standard input to the yt-dlp process, avoiding exposure in command-line arguments or logs. The library ensures that sensitive information is not stored in memory longer than necessary and is properly disposed of after use.
+
+## 🌲 Deep Metadata Support
+
+Ytdlp.NET now supports **deep playlist extraction** with full hierarchical structure support (seasons → episodes → nested playlists).
+
+### 🔹 Flat Mode (default - no change)
 
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+var metadata = await ytdlp.GetMetadataAsync(url);
+```
+
+* Fast
+* Returns only top-level items
+* Fully backward compatible
+
+---
+
+### 🔹 Deep Mode (NEW)
+
+```csharp
+var metadata = await ytdlp.GetDeepMetadataAsync(url);
+```
+
+* Returns full hierarchy
+* Supports playlists → seasons → episodes
+* Slightly slower but complete data
+
+---
+
+## 🔁 Traverse Nested Entries
+
+Use this helper to read all items in deep mode:
+
+```csharp
+foreach (var root in metadata.Entries ?? [])
+{
+    foreach (var item in root.Traverse())
+    {
+        Console.WriteLine(item.Title);
+    }
+}
+```
+
+---
+
+## 🔧 Thread Safety
+
+* **Immutable & thread-safe**: Each `WithXxx()` call returns a new instance.
+
+### **Sequential download example**:
+
+```csharp
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
+    .WithFormat("best")
+    .WithOutputFolder("./downloads");
+
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Download complete: {msg}");
+
+await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
+```
+
+### **Parallel download example**:
+
+```csharp
+var urls = new[] { "https://youtu.be/video1", "https://youtu.be/video2" };
+
+var tasks = urls.Select(async url =>
+{
+    var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
+        .WithFormat("best")
+        .WithOutputFolder("./batch");
+
+    ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"[{url}] {e.Percent:F2}%");
+    ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"[{url}] Download complete: {msg}");
+
+    await ytdlp.DownloadAsync(url);
+});
+
+await Task.WhenAll(tasks);
+```
+
+### **Key points**:
+
+1. Always create a **new instance per download** for parallel operations.
+2. No shared state between instances, so no need to worry about thread safety.
+3. Attach events **after the `WithXxx()` call**.
+
+---
+
+
+## 📦 Basic Usage
+
+### Download a Single Video
+
+```csharp
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
     .WithFormat("best")
     .WithOutputFolder("./downloads")
-    .WithOutputTemplate("%(title)s.%(ext)s");
+    .WithEmbedMetadata()
+    .WithEmbedThumbnail();
 
-ytdlp.OnProgressDownload += (s, e) =>
-    Console.WriteLine($"{e.Percent:F1}% {e.Speed} ETA {e.ETA}");
+ytdlp.rogressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Download complete: {msg}");
 
-await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=VIDEO_ID");
+await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
+```
+
+### Extract Audio
+
+```csharp
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    .WithExtractAudio(AudioFormat.Mp3, 5)
+    .WithOutputFolder("./audio")
+    .WithEmbedThumbnail()
+    .WithEmbedMetadata();
+
+await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ```
 
 ---
 
-# 🎧 Extract audio
+## Download a Playlist
 
 ```csharp
-await using var ytdlp = new Ytdlp()
-    .WithExtractAudio("mp3")
-    .WithOutputFolder("./audio");
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    .WithFormat("best")
+    .WithOutputFolder("./playlists")
+    .WithPlaylistStart(1)
+    .WithPlaylistEnd(5)
+    .OutputTemplate("%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s");
 
-await ytdlp.DownloadAsync(url);
+await ytdlp.DownloadAsync("https://www.youtube.com/playlist?list=PL12345");
 ```
 
 ---
 
-# 📊 Monitor Progress
+# 📊 Monitor Progress & Events
 
 ```csharp
-ytdlp.OnProgressDownload += (s, e) =>
-{
+ytdlp.ProgressDownload += (s, e) =>
     Console.WriteLine($"{e.Percent:F1}%  {e.Speed}  ETA {e.ETA}");
-};
 
-ytdlp.OnCompleteDownload += (s, msg) =>
-{
+ytdlp.DownloadCompleted += (s, msg) =>
     Console.WriteLine($"Finished: {msg}");
-};
+
+ytdlp.ProgressMessage += (s, msg) => Console.WriteLine(msg);
+
+ytdlp.PostProcessingStarted += (s, msg) => 
+    Console.WriteLine($"Post-processing-start: {msg}")
+
+ytdlp.PostProcessingCompleted += (s, msg) => 
+    Console.WriteLine($"Post-processing-complete: {msg}");
+
+ytdlp.ErrorMessage += (s, err) => Console.WriteLine($"Error: {err}");
+
+ytdlp.OutputMessage += (s, msg) => Console.WriteLine(msg);
+
+ytdlp.CommandCompleted += (s, e) => 
+    Console.WriteLine($"Command finished: {e.Command}");
 ```
 
 ---
 
-# 📦 Fetch Metadata
+### Fetch Metadata
 
 ```csharp
-await using var ytdlp = new Ytdlp();
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 
-var metadata = await ytdlp.GetMetadataAsync(url);
+var metadata = await ytdlp.GetMetadataAsync("https://www.youtube.com/watch?v=abc123");
 
-Console.WriteLine(metadata?.Title);
-Console.WriteLine(metadata?.Duration);
+Console.WriteLine($"Title: {metadata?.Title}, Duration: {metadata?.Duration}");
 ```
 
 ---
 
-# 🎬 Auto‑Select Best Formats
+### Fetch Formats
 
 ```csharp
-await using var ytdlp = new Ytdlp();
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 
-string bestVideo = await ytdlp.GetBestVideoFormatIdAsync(url, 1080);
+var formats = await ytdlp.GetFormatsAsync("https://www.youtube.com/watch?v=abc123");
+
+foreach(var format in formats)
+    Console.WriteLine($"Id: {metadata?.Id}, Extension: {metadata?.Extension}");
+```
+
+---
+
+### Best Format Selection
+
+```csharp
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+
 string bestAudio = await ytdlp.GetBestAudioFormatIdAsync(url);
+string bestVideo = await ytdlp.GetBestVideoFormatIdAsync(url, maxHeight: 720);
 
 await ytdlp
     .WithFormat($"{bestVideo}+{bestAudio}/best")
+    .WithOutputFolder("./downloads")
     .DownloadAsync(url);
 ```
 
 ---
 
-# 📄 Get Subtitles
+## Get Subtitles
 ```csharp
-await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
 var subtitles = await ytdlp.GetSubtitlesAsync("https://www.youtube.com/watch?v=abc123");
 foreach (var sub in subtitles)
 {
@@ -180,18 +334,21 @@ foreach (var sub in subtitles)
 
 ---
 
-# ⚡ Parallel Downloads
+## Get Adobe Pass MSO List
+```csharp
+var msoList = await ytdlp.GetAdobePassListAsync();
+```
+
+---
+
+### Batch Downloads
 
 ```csharp
-var urls = new[]
-{
-    "https://youtu.be/video1",
-    "https://youtu.be/video2"
-};
+var urls = new[] { "https://youtu.be/vid1", "https://youtu.be/vid2" };
 
 var tasks = urls.Select(async url =>
 {
-    await using var ytdlp = new Ytdlp()
+    var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
         .WithFormat("best")
         .WithOutputFolder("./batch");
 
@@ -200,57 +357,55 @@ var tasks = urls.Select(async url =>
 
 await Task.WhenAll(tasks);
 ```
-
 **OR**
 
 ```csharp
 var urls = new[] { "https://youtu.be/vid1", "https://youtu.be/vid2" };
 
- await using var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
         .WithFormat("best")
         .WithOutputFolder("./batch");
 
 await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 ```
-
 ---
 
 # 📡 Events
 
-| Event                      | Description              |
-| -------------------------- | ------------------------ |
-| `OnProgressDownload`       | Download progress        |
-| `OnProgressMessage`        | Informational messages   |
-| `OnCompleteDownload`       | File finished            |
-| `OnPostProcessingStart`    | Post‑processing start    |
-| `OnPostProcessingComplete` | Post‑processing finished |
-| `OnOutputMessage`          | Raw output line          |
-| `OnErrorMessage`           | Error message            |
-| `OnCommandCompleted`       | Process finished         |
+| Event                     | Description              |
+| --------------------------| ------------------------ |
+| `ProgressDownload`        | Download progress        |
+| `ProgressMessage`         | Informational messages   |
+| `DownloadCompleted`       | File finished            |
+| `PostProcessingStarted`   | Post‑processing start    |
+| `PostProcessingCompleted` | Post‑processing finished |
+| `OutputMessage`           | Raw output line          |
+| `ErrorMessage`            | Error message            |
+| `CommandCompleted`        | Process finished         |
 
 ---
-
 
 ## 🛠 Methods
-* `VersionAsync(CancellationToken ct)`
-* `UpdateAsync(UpdateChannel channel, string specificVersion, CancellationToken ct)`
-* `ExtractorsAsync(CancellationToken ct, int bufferKb)`
-* `GetMetadataAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetMetadataRawAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetDeepMetadataAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
-* `GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true, int bufferKb = 256)`
-* `GetFormatsAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetMetadataLiteAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetMetadataLiteAsync(string url, IEnumerable<string> fields, CancellationToken ct, int bufferKb)`
-* `GetBestAudioFormatIdAsync(string url, CancellationToken ct, int bufferKb)`
-* `GetBestVideoFormatIdAsync(string url, int maxHeight, CancellationToken ct, int bufferKb)`
-* `ExecuteAsync(string url, CancellationToken ct)`
-* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency, CancellationToken ct)`
+* `VersionAsync()`
+* `UpdateAsync(UpdateChannel channel, string specificVersion)`
+* `GetExtractorsAsync()`
+* `GetAdobePassListAsync()`
+* `GetSubtitlesAsync(string url)`
+* `GetMetadataAsync(string url)`
+* `GetMetadataRawAsync(string url)`
+* `GetDeepMetadataAsync(string url)`
+* `GetDeepMetadataRawAsync(string url)`
+* `GetFormatsAsync(string url)`
+* `GetMetadataLiteAsync(string url)`
+* `GetMetadataLiteAsync(string url, IEnumerable<string> fields)`
+* `GetBestAudioFormatIdAsync(string url)`
+* `GetBestVideoFormatIdAsync(string url, int maxHeight)`
+* `ExecuteAsync(string url)`
+* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency)`
 
 ---
 
-
-# 🔧 Fluent API Methods
+## Fluent Methods
 
 ### General Options
 * `.WithIgnoreErrors()`
@@ -361,6 +516,8 @@ await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 ### Authentication Options
 * `.WithAuthentication(string username, string password)`
 * `.WithTwoFactor(string code)`
+* `.WithVideoPassword(string password)`
+* `.WithAdobePassAuthentication(string mso, string username, string password)`
 
 ### Post-Processing Options
 * `.WithExtractAudio(string format, int quality = 5)`
@@ -404,21 +561,20 @@ AND MORE ...
 
 ---
 
+# 🔄 Upgrade Guide (v3 → v4)
 
-# 🔄 Upgrade Guide (v2 → v3)
-
-v3 introduces a **new immutable fluent API**.
+v4 introduces a **new immutable fluent API**.
 
 Old mutable commands were removed.
 
 ---
 
-## ❌ Old API (v2)
+## ❌ Old API (v3)
 
 ```csharp
 var ytdlp = new Ytdlp();
 
-await ytdlp
+await using var ytdlp
     .SetFormat("best")
     .SetOutputFolder("./downloads")
     .ExecuteAsync(url);
@@ -426,30 +582,15 @@ await ytdlp
 
 ---
 
-## ✅ New API (v3)
+## ✅ New API (v4)
 
 ```csharp
-await using var ytdlp = new Ytdlp()
+var ytdlp = new Ytdlp()
     .WithFormat("best")
     .WithOutputFolder("./downloads");
 
 await ytdlp.DownloadAsync(url);
 ```
-
----
-
-## Method changes
-
-| v2                    | v3                     |
-| --------------------- | ---------------------- |
-| `SetFormat()`         | `WithFormat()`         |
-| `SetOutputFolder()`   | `WithOutputFolder()`   |
-| `SetTempFolder()`     | `WithTempFolder()`     |
-| `SetOutputTemplate()` | `WithOutputTemplate()` |
-| `SetFFMpegLocation()` | `WithFFmpegLocation()` |
-| `ExtractAudio()`      | `WithExtractAudio()`   |
-| `UseProxy()`          | `WithProxy()`          |
-| `AddCustomCommand()`  | `AddFlag(string flag)` or `AddOption(string key, string value)` |
 
 ---
 
@@ -482,26 +623,31 @@ Attach events **to the configured instance**.
 ```csharp
 var download = baseYtdlp.WithFormat("best");
 
-download.OnProgressDownload += ...
+download.ProgressDownload += ...
 ```
 
 ---
 
-### Proper disposal
+### No disposal required
 
-Use **`await using`** for automatic cleanup.
-
-```csharp
-await using var ytdlp = new Ytdlp();
-```
+**Ytdlp** holds no unmanaged resources and does not implement **IDisposable** or **IAsyncDisposable**.
 
 ---
 
 # 🧪 Example Apps
 
-* ClipMate MAUI downloader
-* Windows GUI downloader
+* ClipMate downloader
 * Console examples
+
+---
+
+### ✅ Notes
+
+* All commands now start with `WithXxx()`.
+* Immutable: no shared state; safe for parallel usage.
+* No need to dispose intermediate instances.
+* Deprecated old methods removed.
+* Probe methods remain the same (`GetMetadataAsync`, `GetFormatsAsync`, `GetBestVideoFormatIdAsync`, etc.).
 
 ---
 

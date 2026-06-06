@@ -3,9 +3,44 @@
 # Ytdlp.NET
 
 > **Ytdlp.NET** is a **fluent, strongly-typed .NET wrapper** around [`yt-dlp`](https://github.com/yt-dlp/yt-dlp). It provides a fully **async, event-driven interface** for downloading videos, extracting audio, retrieving metadata, and post-processing media from YouTube and hundreds of other platforms.
+   
+---
+
+--
+
+## ✨ Features
+
+* **Fluent API**: Build yt-dlp commands with `WithXxx()` methods.
+* **Immutable & thread-safe**: Each method returns a new instance, safe for parallel usage.
+* **Progress & Events**: Real-time progress tracking and post-processing notifications.
+* **Format Listing**: Retrieve and parse available formats.
+* **Batch Downloads**: Sequential or parallel execution.
+* **Output Templates**: Flexible naming with yt-dlp placeholders.
+* **Custom Command Injection**: Add extra yt-dlp options safely.
+* **Cross-platform**: Windows, macOS, Linux (where yt-dlp is supported).
 
 ---
 
+## 🚀 New in this release
+
+* Add more WithXxx() methods for advanced options.
+* New **GetAdobePassListAsync()** for Adobe Pass mso listing.
+* New **GetSubtitlesAsync()** for subtitle extraction.
+* New **Traverse()** method for easy iteration over nested playlist entries.
+* New **GetDeepMetadataAsync()** method for comprehensive metadata extraction.
+* New **GetDeepMetadataRawAsync()** for raw JSON metadata.
+* Improved **Metadata** model with more fields and better parsing.
+* Improved **UpdateAsync** with specific version support.
+* Full support for **IAsyncDisposable** with **await using**.
+* Immutable builder (**WithXxx**) for safe instance reuse.
+* Updated examples for event-driven downloads.
+* Simplified metadata fetching & format selection.
+* High-performance probe methods with optional buffer size.
+* Improved cancellation & error handling.
+
+---
+
+# 🔧 Required Tools
 ## ⚠️ Important Notes
 
 * **Namespace migrated**: `ManuHub.Ytdlp.NET` — update your `using` directives.
@@ -20,7 +55,7 @@ Tools/
 └─ ffprobe.exe 
 ```
 
-> Recommended: Use companion NuGet packages:
+- **Recommended:** Use companion NuGet packages:
 
 | Package | Description |
 |---------|-------------|
@@ -94,62 +129,9 @@ foreach (var root in metadata.Entries ?? [])
 
 ---
 
-## 🚀 New in this release
-
-* Add more WithXxx() methods for advanced options.
-* New **GetAdobePassListAsync()** for Adobe Pass mso listing.
-* New **GetSubtitlesAsync()** for subtitle extraction.
-* New **Traverse()** method for easy iteration over nested playlist entries.
-* New **GetDeepMetadataAsync()** method for comprehensive metadata extraction.
-* New **GetDeepMetadataRawAsync()** for raw JSON metadata.
-* Improved **Metadata** model with more fields and better parsing.
-* Improved **UpdateAsync** with specific version support.
-* Full support for **IAsyncDisposable** with **await using**.
-* Immutable builder (**WithXxx**) for safe instance reuse.
-* Updated examples for event-driven downloads.
-* Simplified metadata fetching & format selection.
-* High-performance probe methods with optional buffer size.
-* Improved cancellation & error handling.
-
----
-
-## ✨ Features
-
-* **Fluent API**: Build yt-dlp commands with `WithXxx()` methods.
-* **Immutable & thread-safe**: Each method returns a new instance, safe for parallel usage.
-* **Async & IAsyncDisposable**: Automatic cleanup of child processes.
-* **Progress & Events**: Real-time progress tracking and post-processing notifications.
-* **Format Listing**: Retrieve and parse available formats.
-* **Batch Downloads**: Sequential or parallel execution.
-* **Output Templates**: Flexible naming with yt-dlp placeholders.
-* **Custom Command Injection**: Add extra yt-dlp options safely.
-* **Cross-platform**: Windows, macOS, Linux (where yt-dlp is supported).
-
----
-
-## 🛠 Methods
-* `VersionAsync()`
-* `UpdateAsync(UpdateChannel channel, string specificVersion)`
-* `GetExtractorsAsync()`
-* `GetAdobePassListAsync()`
-* `GetSubtitlesAsync(string url)`
-* `GetMetadataAsync(string url)`
-* `GetMetadataRawAsync(string url)`
-* `GetDeepMetadataAsync(string url)`
-* `GetDeepMetadataRawAsync(string url)`
-* `GetFormatsAsync(string url)`
-* `GetMetadataLiteAsync(string url)`
-* `GetMetadataLiteAsync(string url, IEnumerable<string> fields)`
-* `GetBestAudioFormatIdAsync(string url)`
-* `GetBestVideoFormatIdAsync(string url, int maxHeight)`
-* `ExecuteAsync(string url)`
-* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency)`
-
-
-## 🔧 Thread Safety & Disposal
+## 🔧 Thread Safety
 
 * **Immutable & thread-safe**: Each `WithXxx()` call returns a new instance.
-* **Async disposal**: `Ytdlp` implements `IAsyncDisposable`.
 
 ### **Sequential download example**:
 
@@ -224,6 +206,7 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ---
 
 ## Download a Playlist
+
 ```csharp
 var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
     .WithFormat("best")
@@ -234,6 +217,35 @@ var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
 
 await ytdlp.DownloadAsync("https://www.youtube.com/playlist?list=PL12345");
 ```
+
+---
+
+# 📊 Monitor Progress & Events
+
+```csharp
+ytdlp.ProgressDownload += (s, e) =>
+    Console.WriteLine($"{e.Percent:F1}%  {e.Speed}  ETA {e.ETA}");
+
+ytdlp.DownloadCompleted += (s, msg) =>
+    Console.WriteLine($"Finished: {msg}");
+
+ytdlp.ProgressMessage += (s, msg) => Console.WriteLine(msg);
+
+ytdlp.PostProcessingStarted += (s, msg) => 
+    Console.WriteLine($"Post-processing-start: {msg}")
+
+ytdlp.PostProcessingCompleted += (s, msg) => 
+    Console.WriteLine($"Post-processing-complete: {msg}");
+
+ytdlp.ErrorMessage += (s, err) => Console.WriteLine($"Error: {err}");
+
+ytdlp.OutputMessage += (s, msg) => Console.WriteLine(msg);
+
+ytdlp.CommandCompleted += (s, e) => 
+    Console.WriteLine($"Command finished: {e.Command}");
+```
+
+---
 
 ### Fetch Metadata
 
@@ -322,6 +334,42 @@ var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
 
 await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);
 ```
+---
+
+# 📡 Events
+
+| Event                     | Description              |
+| --------------------------| ------------------------ |
+| `ProgressDownload`        | Download progress        |
+| `ProgressMessage`         | Informational messages   |
+| `DownloadCompleted`       | File finished            |
+| `PostProcessingStarted`   | Post‑processing start    |
+| `PostProcessingCompleted` | Post‑processing finished |
+| `OutputMessage`           | Raw output line          |
+| `ErrorMessage`            | Error message            |
+| `CommandCompleted`        | Process finished         |
+
+---
+
+
+## 🛠 Methods
+* `VersionAsync()`
+* `UpdateAsync(UpdateChannel channel, string specificVersion)`
+* `GetExtractorsAsync()`
+* `GetAdobePassListAsync()`
+* `GetSubtitlesAsync(string url)`
+* `GetMetadataAsync(string url)`
+* `GetMetadataRawAsync(string url)`
+* `GetDeepMetadataAsync(string url)`
+* `GetDeepMetadataRawAsync(string url)`
+* `GetFormatsAsync(string url)`
+* `GetMetadataLiteAsync(string url)`
+* `GetMetadataLiteAsync(string url, IEnumerable<string> fields)`
+* `GetBestAudioFormatIdAsync(string url)`
+* `GetBestVideoFormatIdAsync(string url, int maxHeight)`
+* `ExecuteAsync(string url)`
+* `ExecuteBatchAsync(IEnumerable<string> urls, int maxConcurrency)`
+
 ---
 
 ## Fluent Methods
@@ -480,21 +528,6 @@ AND MORE ...
 
 ---
 
-### Events
-
-```csharp
-ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
-ytdlp.ProgressMessage += (s, msg) => Console.WriteLine(msg);
-ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Done: {msg}");
-ytdlp.PostProcessingStarted += (s, msg) => Console.WriteLine($"Post-processing-start: {msg}")
-ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing-complete: {msg}");
-ytdlp.ErrorMessage += (s, err) => Console.WriteLine($"Error: {err}");
-ytdlp.OutputMessage += (s, msg) => Console.WriteLine(msg);
-ytdlp.CommandCompleted += (s, e) => Console.WriteLine($"Command finished: {e.Command}");
-```
-
----
-
 # 🔄 Upgrade Guide (v3 → v4)
 
 v4 introduces a **new immutable fluent API**.
@@ -562,17 +595,15 @@ download.ProgressDownload += ...
 
 ---
 
-### Removed disposal of old instances
+### No disposal required
 
-No need to dispose intermediate instances since they are immutable and stateless.
-So you can create a base instance and reuse it without worrying about disposal:
+**Ytdlp** holds no unmanaged resources and does not implement **IDisposable** or **IAsyncDisposable**.
 
 ```csharp
 var ytdlp = new Ytdlp();
 ```
 
 ---
-
 
 ### ✅ Notes
 
