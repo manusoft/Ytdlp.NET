@@ -6,7 +6,7 @@ class Program
 {
     static async Task Main()
     {
-        await using var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp()
             .WithFormat("bestvideo[height<=720]+bestaudio/best")
             .WithOutputFolder("./downloads")
             .WithOutputTemplate("%(title)s [%(resolution)s].%(ext)s")
@@ -18,6 +18,6 @@ class Program
         ytdlp.OnCompleteDownload += (s, msg) =>
             Console.WriteLine($"\nDownload completed: {msg}");
 
-        await ytdlp.ExecuteAsync("https://www.youtube.com/watch?v=VIDEO_ID");
+        await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=VIDEO_ID", CancellationToken.None);
     }
 }

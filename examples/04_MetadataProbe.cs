@@ -6,7 +6,7 @@ class Program
 {
     static async Task Main()
     {
-        await using var ytdlp = new Ytdlp();
+        var ytdlp = new Ytdlp();
 
         var url = "https://www.youtube.com/watch?v=VIDEO_ID";
         var metadata = await ytdlp.GetMetadataAsync(url);
