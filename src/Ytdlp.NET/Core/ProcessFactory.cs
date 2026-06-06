@@ -139,20 +139,37 @@ public sealed class ProcessFactory
 
     private static string ResolveYtDlp(string path)
     {
-        // If absolute or exists locally → use it
+        if (string.IsNullOrWhiteSpace(path))
+            throw new FileNotFoundException("yt-dlp path is empty");
+
+        // 1. Absolute or local file
         if (File.Exists(path))
             return Path.GetFullPath(path);
 
-        // Otherwise try PATH lookup
-        var fromPath = Environment.GetEnvironmentVariable("PATH")?
-            .Split(Path.PathSeparator)
-            .Select(p => Path.Combine(p, path))
-            .FirstOrDefault(File.Exists);
-
+        // 2. Try PATH resolution (IMPORTANT for CI)
+        var fromPath = FindInPath(path);
         if (fromPath != null)
-            return Path.GetFullPath(fromPath);
+            return fromPath;
 
-        throw new FileNotFoundException($"yt-dlp executable not found: {path}");
+        throw new FileNotFoundException($"yt-dlp not found: {path}");
+    }
+
+    private static string? FindInPath(string exe)
+    {
+        var paths = Environment.GetEnvironmentVariable("PATH")?
+            .Split(Path.PathSeparator);
+
+        if (paths == null)
+            return null;
+
+        foreach (var p in paths)
+        {
+            var full = Path.Combine(p, exe);
+            if (File.Exists(full))
+                return full;
+        }
+
+        return null;
     }
 
     private static void ValidateBinary(string path)
