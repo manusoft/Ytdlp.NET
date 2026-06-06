@@ -13,20 +13,12 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class YtdlpIntegrationTests 
 {
     // Cross-platform binary name selection
-    private readonly string binaryName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+    private readonly string binaryName = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp");
 
     private static readonly bool RunIntegration =  Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     // A short, stable, public-domain video suitable for testing
     private const string TestVideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-
-    public YtdlpIntegrationTests()
-    {
-        Console.WriteLine($"OS: {RuntimeInformation.OSDescription}");
-        Console.WriteLine($"ProcessArch: {RuntimeInformation.ProcessArchitecture}");
-        Console.WriteLine($"yt-dlp exists: {File.Exists("yt-dlp.exe")}");
-        Console.WriteLine($"yt-dlp size: {new FileInfo("yt-dlp.exe").Length}");
-    }
 
     /// <summary>
     /// Helper to instantiate Ytdlp with anti-bot arguments for reliable CI/CD runs.
