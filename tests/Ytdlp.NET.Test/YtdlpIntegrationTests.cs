@@ -12,10 +12,10 @@ namespace ManuHub.Ytdlp.NET.Test;
 [Collection("Integration")]
 public class YtdlpIntegrationTests 
 {
-    // Cross-platform binary name selection
-    private readonly string binaryName = Path.Combine(AppContext.BaseDirectory, "yt-dlp");
-
     private static readonly bool RunIntegration =  Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
+
+    // Cross-platform binary name selection
+    private readonly string binaryName = "yt-dlp";
 
     // A short, stable, public-domain video suitable for testing
     private const string TestVideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";

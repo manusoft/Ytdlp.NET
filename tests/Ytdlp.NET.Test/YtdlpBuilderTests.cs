@@ -12,11 +12,12 @@ public class YtdlpBuilderTests
 {
     private readonly string _fullFakePath;
     public readonly string _fakeFfmpegPath;
+    private static readonly bool RunIntegration = Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     public YtdlpBuilderTests()
     {
-        _fullFakePath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp");
-        _fakeFfmpegPath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
+        _fullFakePath = RunIntegration ? "yt-dlp" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
+        _fakeFfmpegPath = RunIntegration ? "ffmpeg" : Path.Combine(Path.GetTempPath(), "ffmpeg.exe");
 
         if (!File.Exists(_fullFakePath))
         {

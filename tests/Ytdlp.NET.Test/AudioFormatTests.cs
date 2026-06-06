@@ -10,10 +10,11 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class AudioFormatTests 
 {
     private readonly string _fullFakePath;
+    private static readonly bool RunIntegration = Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     public AudioFormatTests()
     {
-        _fullFakePath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp");
+        _fullFakePath = RunIntegration ? "yt-dlp" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
 
         if (!File.Exists(_fullFakePath))
         {

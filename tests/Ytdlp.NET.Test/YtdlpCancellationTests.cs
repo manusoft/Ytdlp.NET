@@ -11,12 +11,13 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class YtdlpCancellationTests 
 {
     private readonly string _fullFakePath;
+    private static readonly bool RunIntegration = Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
     private readonly string SampleUrl = "https://www.youtube.com/watch?v=RGg-Qx1rL9U";
     private readonly string SampleUrl2 = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
     public YtdlpCancellationTests()
     {
-        _fullFakePath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp");
+        _fullFakePath = RunIntegration ? "yt-dlp" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
 
         if (!File.Exists(_fullFakePath))
         {
