@@ -15,7 +15,7 @@ public class YtdlpIntegrationTests
     private static readonly bool RunIntegration =  Environment.GetEnvironmentVariable("YTDLP_INTEGRATION_TESTS") == "1";
 
     // Cross-platform binary name selection
-    private readonly string binaryName = "yt-dlp";
+    private readonly string binaryName = "yt-dlp.exe";
 
     // A short, stable, public-domain video suitable for testing
     private const string TestVideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
