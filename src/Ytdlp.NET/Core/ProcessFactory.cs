@@ -60,6 +60,22 @@ public sealed class ProcessFactory
         ToolPermissionManager.EnsureExecutableIfFile(ytdlpPath);
 
         _ytdlpPath = ytdlpPath;
+
+        if (File.Exists(ytdlpPath))
+        {
+            var full = Path.GetFullPath(ytdlpPath);
+            var fi = new FileInfo(full);
+
+            Console.WriteLine($"[PF] Full path: {full}");
+            Console.WriteLine($"[PF] Size: {fi.Length}");
+        }
+        else
+        {
+            Console.WriteLine($"[PF] File.Exists = false");
+        }
+
+
+
         //if (string.IsNullOrWhiteSpace(ytdlpPath))
         //    throw new ArgumentException("yt-dlp path cannot be empty.", nameof(ytdlpPath));
 
