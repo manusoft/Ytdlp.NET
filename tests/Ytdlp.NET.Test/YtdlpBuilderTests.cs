@@ -11,6 +11,7 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class YtdlpBuilderTests 
 {
     private readonly string _fullFakePath;
+    public static readonly string _fakeFfmpegPath = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
 
     public YtdlpBuilderTests()
     {
@@ -438,7 +439,7 @@ public class YtdlpBuilderTests
     {
         var original = new Ytdlp(_fullFakePath);
 
-        var configured = original.WithFFmpegLocation(TestConstants.FakeFfmpegPath);
+        var configured = original.WithFFmpegLocation(_fakeFfmpegPath);
 
         configured.Should().NotBeSameAs(original);
     }

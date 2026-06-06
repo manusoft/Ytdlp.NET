@@ -11,6 +11,8 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class YtdlpCancellationTests 
 {
     private readonly string _fullFakePath;
+    private readonly string SampleUrl = "https://www.youtube.com/watch?v=RGg-Qx1rL9U";
+    private readonly string SampleUrl2 = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
     public YtdlpCancellationTests()
     {
@@ -40,7 +42,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var act = async () => await ytdlp.DownloadAsync(TestConstants.SampleUrl, cts.Token);
+        var act = async () => await ytdlp.DownloadAsync(SampleUrl, cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
@@ -53,7 +55,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetMetadataAsync(TestConstants.SampleUrl, cts.Token);
+        var result = await ytdlp.GetMetadataAsync(SampleUrl, cts.Token);
 
         result.Should().BeNull();
     }
@@ -66,7 +68,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetFormatsAsync(TestConstants.SampleUrl, cts.Token);
+        var result = await ytdlp.GetFormatsAsync(SampleUrl, cts.Token);
 
         // Cancelled probe: either null or an empty list is acceptable
         (result is null || !result.Any()).Should().BeTrue(
@@ -81,7 +83,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetMetadataRawAsync(TestConstants.SampleUrl, cts.Token);
+        var result = await ytdlp.GetMetadataRawAsync(SampleUrl, cts.Token);
 
         result.Should().BeNull();
     }
@@ -94,7 +96,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetDeepMetadataAsync(TestConstants.SampleUrl, cts.Token);
+        var result = await ytdlp.GetDeepMetadataAsync(SampleUrl, cts.Token);
 
         result.Should().BeNull();
     }
@@ -107,7 +109,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetDeepMetadataRawAsync(TestConstants.SampleUrl, cts.Token);
+        var result = await ytdlp.GetDeepMetadataRawAsync(SampleUrl, cts.Token);
 
         result.Should().BeNull();
     }
@@ -120,7 +122,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetBestAudioFormatIdAsync(TestConstants.SampleUrl, cts.Token);
+        var result = await ytdlp.GetBestAudioFormatIdAsync(SampleUrl, cts.Token);
 
         result.Should().Be("bestaudio");
     }
@@ -133,7 +135,7 @@ public class YtdlpCancellationTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var result = await ytdlp.GetBestVideoFormatIdAsync(TestConstants.SampleUrl, 1080, cts.Token);
+        var result = await ytdlp.GetBestVideoFormatIdAsync(SampleUrl, 1080, cts.Token);
 
         result.Should().Be("bestvideo");
     }
@@ -158,7 +160,7 @@ public class YtdlpCancellationTests
             .WithFormat("best")
             .WithOutputFolder("./downloads");
 
-        var urls = new[] { TestConstants.SampleUrl, TestConstants.SampleUrl2 };
+        var urls = new[] { SampleUrl, SampleUrl2 };
 
         using var cts = new CancellationTokenSource();
         cts.Cancel();

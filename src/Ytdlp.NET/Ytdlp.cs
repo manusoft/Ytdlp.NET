@@ -136,7 +136,7 @@ public sealed partial class Ytdlp
     /// Thrown when the executable exists but cannot be prepared for execution.
     /// </exception>
 
-    public Ytdlp(string ytdlpPath = "yt-dlp", ILogger? logger = null)
+    public Ytdlp(string ytdlpPath = "yt-dlp.exe", ILogger? logger = null)
     {
         _ytdlpPath = ytdlpPath;
         _logger = logger ?? new DefaultLogger();
