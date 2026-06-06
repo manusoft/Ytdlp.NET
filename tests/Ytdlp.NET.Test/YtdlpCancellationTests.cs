@@ -19,6 +19,8 @@ public class YtdlpCancellationTests
     {
         _fullFakePath = RunIntegration ? "yt-dlp" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
 
+        if (RunIntegration) return;
+
         if (!File.Exists(_fullFakePath))
         {
             try

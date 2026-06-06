@@ -19,6 +19,8 @@ public class YtdlpBuilderTests
         _fullFakePath = RunIntegration ? "yt-dlp" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
         _fakeFfmpegPath = RunIntegration ? "ffmpeg" : Path.Combine(Path.GetTempPath(), "ffmpeg.exe");
 
+        if (RunIntegration) return;
+
         if (!File.Exists(_fullFakePath))
         {
             try

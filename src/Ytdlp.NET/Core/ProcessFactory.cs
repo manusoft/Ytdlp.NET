@@ -181,6 +181,15 @@ public sealed class ProcessFactory
 
         // yt-dlp is NEVER tiny
         if (fileInfo.Length < 1024)
+        {
+            try
+            {
+                File.Delete(path);
+                Console.WriteLine("PF : DELETED 0 BYTE FILE");
+            }
+            catch (Exception) { }
+
             throw new InvalidOperationException($"Invalid yt-dlp binary detected: {fileInfo.FullName} ({fileInfo.Length} bytes).");
+        }
     }
 }
