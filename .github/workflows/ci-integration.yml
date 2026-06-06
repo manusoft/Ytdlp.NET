@@ -29,4 +29,4 @@ jobs:
       - name: Run Integration Tests
         env:
           YTDLP_INTEGRATION_TESTS: "1"
-        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release
+        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --verbosity normal
