@@ -8,7 +8,7 @@ public class ArgumentTests
 
     public ArgumentTests()
     {
-        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+        _fullFakePath = Path.Combine(Path.GetTempPath(), OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp");
 
         if (!File.Exists(_fullFakePath))
         {
