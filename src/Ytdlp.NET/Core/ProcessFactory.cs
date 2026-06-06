@@ -25,6 +25,22 @@ public sealed class ProcessFactory
     /// </summary>
     public ProcessFactory(string ytdlpPath, string? workingDirectory = null)
     {
+        Console.WriteLine($"[PF] Input path: {ytdlpPath}");
+        Console.WriteLine($"[PF] Current directory: {Environment.CurrentDirectory}");
+
+        if (File.Exists(ytdlpPath))
+        {
+            var full = Path.GetFullPath(ytdlpPath);
+            var fi = new FileInfo(full);
+
+            Console.WriteLine($"[PF] Full path: {full}");
+            Console.WriteLine($"[PF] Size: {fi.Length}");
+        }
+        else
+        {
+            Console.WriteLine($"[PF] File.Exists = false");
+        }
+
         if (string.IsNullOrWhiteSpace(ytdlpPath))
             throw new ArgumentException("yt-dlp path cannot be empty.", nameof(ytdlpPath));
 
@@ -39,6 +55,20 @@ public sealed class ProcessFactory
         ToolPermissionManager.EnsureExecutableIfFile(ytdlpPath);
 
         _ytdlpPath = ytdlpPath;
+        //if (string.IsNullOrWhiteSpace(ytdlpPath))
+        //    throw new ArgumentException("yt-dlp path cannot be empty.", nameof(ytdlpPath));
+
+        //if (!File.Exists(ytdlpPath) && !IsOnSystemPath(ytdlpPath))
+        //    throw new FileNotFoundException($"yt-dlp executable not found: {ytdlpPath}", ytdlpPath);
+
+        //_workingDirectory = workingDirectory ?? Environment.CurrentDirectory;
+
+        //if (!Directory.Exists(_workingDirectory))
+        //    throw new DirectoryNotFoundException($"Working directory not found: {_workingDirectory}");
+
+        //ToolPermissionManager.EnsureExecutableIfFile(ytdlpPath);
+
+        //_ytdlpPath = ytdlpPath;
     }
 
     /// <summary>
@@ -55,6 +85,10 @@ public sealed class ProcessFactory
     /// </remarks>
     public Process Create(string arguments)
     {
+        Console.WriteLine($"[PF] Launching: {_ytdlpPath}");
+        Console.WriteLine($"[PF] WorkingDir: {_workingDirectory}");
+
+
         if (string.IsNullOrWhiteSpace(arguments))
             throw new ArgumentException("Arguments cannot be empty.", nameof(arguments));
 
