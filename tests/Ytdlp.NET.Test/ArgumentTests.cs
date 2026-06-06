@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 
-namespace Ytdlp.NET.Test;
+namespace ManuHub.Ytdlp.NET.Test;
 
 public class ArgumentTests
 {
@@ -34,7 +34,7 @@ public class ArgumentTests
     public void BuildArguments_ShouldConstructCorrectArguments_WithComplexOptions()
     {
         // Arrange
-        var client = new ManuHub.Ytdlp.NET.Ytdlp(_fullFakePath)
+        var client = new Ytdlp(_fullFakePath)
             .WithOutputTemplate("%(title)s.%(ext)s")
             .WithConcurrentFragments(8)
             .AddOption("--impersonate", "chrome")
@@ -70,16 +70,16 @@ public class ArgumentTests
     }
 
     // Helpers to access private methods for testing
-    private List<string> InvokeBuildArguments(ManuHub.Ytdlp.NET.Ytdlp client, string url)
+    private List<string> InvokeBuildArguments(Ytdlp client, string url)
     {
-        var method = typeof(ManuHub.Ytdlp.NET.Ytdlp).GetMethod("BuildArguments",
+        var method = typeof(Ytdlp).GetMethod("BuildArguments",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         return (List<string>)method.Invoke(client, new object[] { url });
     }
 
     private string InvokeEscapeArgument(string arg)
     {
-        var method = typeof(ManuHub.Ytdlp.NET.Ytdlp).GetMethod("EscapeArgument",
+        var method = typeof(Ytdlp).GetMethod("EscapeArgument",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         return (string)method.Invoke(null, new object[] { arg });
     }

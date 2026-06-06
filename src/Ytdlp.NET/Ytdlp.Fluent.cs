@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using ManuHub.Ytdlp.NET.Helpers;
+using ManuHub.Ytdlp.NET.Models.Auth;
+using System.Globalization;
 
 namespace ManuHub.Ytdlp.NET;
 
@@ -64,10 +66,15 @@ public sealed partial class Ytdlp
     /// In order to use a lower priority runtime when "deno" is available, <see cref="WithNoJsRuntime"/> needs to be passed before enabling other runtimes
     /// </summary>
     /// <param name="runtime">Supported runtimes are deno, node, quickjs, bun</param>
-    /// <param name="runtimePath"></param>
-    public Ytdlp WithJsRuntime(Runtime runtime, string runtimePath)
+    /// <param name="runtimeLocation">Either the path to the binary or its containing directory</param>
+    public Ytdlp WithJsRuntime(Runtime runtime, string runtimeLocation)
     {
-        var builder = $"{runtime}:{runtimePath}";
+        if (string.IsNullOrWhiteSpace(runtimeLocation))
+            throw new ArgumentException($"Runtime {runtime} path required");
+
+        var resolved = RuntimeResolver.Resolve(runtime, runtimeLocation);
+
+        var builder = $"{runtime}:{resolved}";
         return AddOption("--js-runtime", builder);
     }
 
@@ -762,24 +769,24 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="username">Account ID</param>
     /// <param name="password">Account password</param>
-    /// <remarks>
-    /// <b>Security warning:</b> Credentials are passed as command-line arguments and are
-    /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
-    /// Prefer <see cref="WithCookiesFile"/> or <see cref="WithCookiesFromBrowser"/> where possible.
-    /// </remarks>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithAuthentication(string username, string password)
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             throw new ArgumentException("Username and password cannot be empty.");
-        return this.AddOption("--username", username).AddOption("--password", password);
+        return new Ytdlp(this, auth: new YtdlpAuth(username, password));
     }
 
     /// <summary>
     /// Two-factor authentication code
     /// </summary>
     /// <param name="code">Two-factor Code</param>
-    public Ytdlp WithTwoFactor(string code) => AddOption("--twofactor", code);
+    public Ytdlp WithTwoFactor(string code) 
+    {
+        if(string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Two-factor code cannot be empty.");
+        return AddOption("--twofactor", code);
+    }
 
     /// <summary>
     /// Video-specific password
@@ -789,7 +796,12 @@ public sealed partial class Ytdlp
     /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
     /// </remarks>
     /// <param name="password"></param>
-    public Ytdlp WithVideoPassword(string password) => AddOption("--video-password", password);
+    public Ytdlp WithVideoPassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            throw new ArgumentException("Video password cannot be empty.");
+        return AddOption("--video-password", password);
+    }
 
     /// <summary>
     /// Adobe Pass authentication. MSO is the name of the TV provider, e.g. "comcast", "cox", "verizon".
@@ -797,24 +809,13 @@ public sealed partial class Ytdlp
     /// <param name="mso"></param>
     /// <param name="username"></param>
     /// <param name="password"></param>
-    /// <remarks>
-    /// <b>Security warning:</b> Credentials are passed as command-line arguments and are
-    /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
-    /// </remarks>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithAdobePassAuthentication(string mso, string username, string password)
     {
         if (string.IsNullOrWhiteSpace(mso) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             throw new ArgumentException("MSO, username, and password are required for Adobe Pass.");
 
-        // Store these in your internal state to be passed during the execution phase
-        return this.AddOption("--ap-mso", mso)
-                   .AddOption("--ap-username", username)
-                   .AddOption("--ap-password", password);
-
-        // TODO: Implement the logic to handle Adobe Pass authentication during the execution phase,
-        // as it may require additional steps such as fetching tokens or handling redirects.
-        // Pass --ap-password as '-' tells yt-dlp to read from stdin
+        return new Ytdlp(this, adobePass: new AdobePassAuth(mso, username, password));
     }
 
     #endregion
@@ -944,11 +945,14 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Location of the ffmpeg binary
     /// </summary>
-    /// <param name="ffmpegPath">Either the path to the binary or its containing directory</param>
-    public Ytdlp WithFFmpegLocation(string? ffmpegPath)
+    /// <param name="ffmpegLocation">Either the path to the binary or its containing directory</param>
+    public Ytdlp WithFFmpegLocation(string? ffmpegLocation)
     {
-        if (string.IsNullOrWhiteSpace(ffmpegPath)) return this;
-        return new Ytdlp(this, ffmpegLocation: ffmpegPath.Replace('\\', '/'));
+        if (string.IsNullOrWhiteSpace(ffmpegLocation))
+            throw new ArgumentException("FFmpeg location cannot be null or empty.");
+
+        var resolved = FfmpegResolver.Resolve(ffmpegLocation);
+        return new Ytdlp(this, ffmpegLocation: resolved);
     }
 
     /// <summary>
@@ -1041,7 +1045,7 @@ public sealed partial class Ytdlp
 
     #endregion
 
-    #region Core
+    #region Advanced Customization
 
     /// <summary>
     /// Returns a new instance of the Ytdlp class with the specified command-line flag added.

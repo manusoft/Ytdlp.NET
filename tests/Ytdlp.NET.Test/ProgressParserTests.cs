@@ -1,7 +1,6 @@
-﻿using ManuHub.Ytdlp.NET;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
-namespace ManuHub.YtdlpNET.Test;
+namespace ManuHub.Ytdlp.NET.Test;
 
 public class ProgressParserTests
 {
