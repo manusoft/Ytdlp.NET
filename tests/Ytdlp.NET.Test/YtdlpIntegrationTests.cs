@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using System.Runtime.InteropServices;
 
 namespace ManuHub.Ytdlp.NET.Test;
 

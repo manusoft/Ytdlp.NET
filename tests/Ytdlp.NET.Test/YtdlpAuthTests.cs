@@ -7,7 +7,9 @@ public class YtdlpAuthTests
 
     public YtdlpAuthTests()
     {
-        _fullFakePath = RunIntegration ? "yt-dlp.exe" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
+        _fullFakePath = RunIntegration
+            ? "yt-dlp.exe"
+            : Path.Combine(Path.GetTempPath(), $"yt-dlp-fake-{Guid.NewGuid():N}.exe");
 
         if (RunIntegration) return;
 

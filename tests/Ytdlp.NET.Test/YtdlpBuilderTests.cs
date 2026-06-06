@@ -16,8 +16,13 @@ public class YtdlpBuilderTests
 
     public YtdlpBuilderTests()
     {
-        _fullFakePath = RunIntegration ? "yt-dlp.exe" : Path.Combine(Path.GetTempPath(), "yt-dlp.exe");
-        _fakeFfmpegPath = RunIntegration ? "ffmpeg.exe" : Path.Combine(Path.GetTempPath(), "ffmpeg.exe");
+        _fullFakePath = RunIntegration
+             ? "yt-dlp.exe"
+             : Path.Combine(Path.GetTempPath(), $"yt-dlp-fake-{Guid.NewGuid():N}.exe");
+
+        _fakeFfmpegPath = RunIntegration 
+            ? "ffmpeg.exe" 
+            : Path.Combine(Path.GetTempPath(), $"ffmpeg-fake-{Guid.NewGuid():N}.exe");
 
         if (RunIntegration) return;
 
