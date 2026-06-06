@@ -34,7 +34,7 @@ internal static class BatchDownloadPage
 
         var dashboard = new ProgressDashboard();
 
-        ytdlp.OnProgressDownload += (_, p) =>
+        ytdlp.ProgressDownload += (_, p) =>
         {
             dashboard.Update(p.Percent, p.Speed, p.ETA, p.Size);
         };

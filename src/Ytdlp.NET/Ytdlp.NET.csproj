@@ -1,39 +1,70 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net10.0;net9.0;net8.0;</TargetFrameworks>
+		<TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+		
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		
 		<NoWarn>CS0414;CS8602;CS8625</NoWarn>
+		
 		<PackageId>Ytdlp.NET</PackageId>
 		<AssemblyName>Ytdlp.NET</AssemblyName>
 		<RootNamespace>ManuHub.Ytdlp.NET</RootNamespace>
-		<Version>3.0.0</Version>
-		<Authors>ManuHub Manojbabu</Authors>
+
+		<BuildYear>$([System.DateTime]::UtcNow.Year)</BuildYear>
+		<BuildDay>$([System.DateTime]::UtcNow.DayOfYear)</BuildDay>		
+
+		<Version>4.0.0</Version>
+		<FileVersion>$(Version)</FileVersion>
+
+		<InformationalVersion>$(Version)+build.$(BuildYear).$(BuildDay)</InformationalVersion>	
+		
+		<Authors>Manojbabu</Authors>
+		<Company>ManuHub</Company>
+		
 		<PackageDescription>A .NET wrapper for yt-dlp, providing a fluent API and supporting thousands of websites with concurrent downloads, SponsorBlock, and improved format parsing</PackageDescription>
-		<Copyright>© 2025-2026 ManuHub. Allrights researved</Copyright>
+
+		<Copyright>© 2025-$(BuildYear) ManuHub. All rights reserved</Copyright>
+		
 		<PackageTags>yt-dlp youtube downloader video audio subtitles thumbnails fluent-api progress-tracking csharp dotnet sponsorblock concurrent</PackageTags>
+		
 		<PackageProjectUrl>https://manusoft.github.io/Ytdlp.NET</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/manusoft/Ytdlp.NET</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
+		
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<PackageIcon>icon.png</PackageIcon>
-		<Icon>icon.png</Icon>
+
 		<PackageReleaseNotes>
-			Ytdlp.NET ✨ update
-			
+			Ytdlp.NET
+
+			✨ Features
+			- No disposal required, Ytdlp holds no unmanaged resources.
+			- Added more Fluent methods and Probe methods.
+			- Enhanced security for authentication methods.
+			- Implemented file permission for Unix based system.
+			- Events renamed for better usage.
+
 			🛠 Notes
 			- Companion packages recommended: ManuHub.Ytdlp, ManuHub.FFmpeg, ManuHub.FFprobe, ManuHub.Deno.
 			- All examples and documentation updated.
 			- This release greatly improves reliability, cancellation, and maintainability.
 
-			See the repository for the full migration guide.
+			See the repository for the full documentation and migration guide.
 		</PackageReleaseNotes>
-		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+
 		<IsPackable>true</IsPackable>
-		<LangVersion>latest</LangVersion>
-		<AotAssemblies>true</AotAssemblies>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
 	<ItemGroup>

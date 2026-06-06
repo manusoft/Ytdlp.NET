@@ -11,16 +11,11 @@ namespace ManuHub.Ytdlp.NET.Test;
 public class YtdlpBuilderTests 
 {
     private readonly string _fullFakePath;
+    public static readonly string _fakeFfmpegPath = OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg";
 
     public YtdlpBuilderTests()
     {
-        // 1. Get the directory and combine cross-platform paths
-        string toolsDir = Path.Combine(AppContext.BaseDirectory, "tools");
-        string exeName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
-        _fullFakePath = Path.Combine(toolsDir, exeName);
-
-        // 2. Ensure the directory and a dummy file exist so ValidatePath passes
-        Directory.CreateDirectory(toolsDir);
+        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
 
         if (!File.Exists(_fullFakePath))
         {
@@ -444,7 +439,7 @@ public class YtdlpBuilderTests
     {
         var original = new Ytdlp(_fullFakePath);
 
-        var configured = original.WithFFmpegLocation(TestConstants.FakeFfmpegPath);
+        var configured = original.WithFFmpegLocation(_fakeFfmpegPath);
 
         configured.Should().NotBeSameAs(original);
     }

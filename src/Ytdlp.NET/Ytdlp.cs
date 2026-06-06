@@ -95,14 +95,52 @@ public sealed partial class Ytdlp
 
     private readonly ImmutableArray<string> _flags;
     private readonly ImmutableArray<(string Key, string Value)> _options;
-    #endregion   
-       
+    #endregion
+
 
     #region Constructors
 
-    public Ytdlp(string ytdlpPath = "yt-dlp", ILogger? logger = null)
+    /// <summary>
+    /// Initializes a new <see cref="Ytdlp"/> instance using the specified yt-dlp executable.
+    /// </summary>
+    /// <param name="ytdlpPath">
+    /// Path to the yt-dlp executable, or a command resolvable from the system PATH.
+    /// Defaults to <c>"yt-dlp"</c>, allowing the system-installed binary to be used.
+    /// </param>
+    /// <param name="logger">
+    /// Optional logger used for diagnostic, progress, and error output.
+    /// If <see langword="null"/>, a default logger implementation is used.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// The constructor validates that the specified executable exists or can be
+    /// be resolved from the system PATH.
+    /// </para>
+    /// <para>
+    /// On Unix-based platforms, executable permissions are automatically verified
+    /// and adjusted when possible.
+    /// </para>
+    /// <para>
+    /// The created instance is immutable and thread-safe. Configuration methods
+    /// such as <see cref="WithOutputFolder"/> and <see cref="WithFormat"/> return
+    /// new <see cref="Ytdlp"/> instances without modifying the original object.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="ytdlpPath"/> is empty or consists only of whitespace.
+    /// </exception>
+    /// <exception cref="FileNotFoundException">
+    /// Thrown when the specified executable cannot be found and is not available on the system PATH.
+    /// </exception>
+    /// <exception cref="YtdlpException">
+    /// Thrown when the executable exists but cannot be prepared for execution.
+    /// </exception>
+
+    public Ytdlp(string ytdlpPath = "", ILogger? logger = null)
     {
-        _ytdlpPath = ytdlpPath;
+        _ytdlpPath = string.IsNullOrWhiteSpace(ytdlpPath) 
+            ? OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp" 
+            : ytdlpPath;
         _logger = logger ?? new DefaultLogger();
 
         // defaults

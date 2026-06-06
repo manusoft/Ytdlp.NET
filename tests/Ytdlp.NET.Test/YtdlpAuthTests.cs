@@ -2,10 +2,30 @@
 
 public class YtdlpAuthTests
 {
+    private readonly string _fullFakePath;
+
+    public YtdlpAuthTests()
+    {
+        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+
+        if (!File.Exists(_fullFakePath))
+        {
+            try
+            {
+                File.WriteAllText(_fullFakePath, "");
+            }
+            catch (IOException)
+            {
+                // If another parallel test class is writing to it right now, 
+                // ignore the error because the file is being taken care of.
+            }
+        }
+    }
+
     [Fact]
     public void Should_Create_Instance_With_Authentication()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAuthentication("user", "pass");
 
         Assert.NotNull(ytdlp);
@@ -14,7 +34,7 @@ public class YtdlpAuthTests
     [Fact]
     public void Should_Not_Expose_Password_In_Arguments()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAuthentication("user", "secret123");
 
         var args = InvokeBuildArguments(ytdlp, "https://video.com");
@@ -27,7 +47,7 @@ public class YtdlpAuthTests
     [Fact]
     public void Should_Use_Stdin_Password_Placeholder()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAuthentication("user", "secret");
 
         var args = InvokeBuildArguments(ytdlp, "https://video.com");
@@ -41,7 +61,7 @@ public class YtdlpAuthTests
     [Fact]
     public void Should_Include_Username()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAuthentication("myUser", "secret");
 
         var args = InvokeBuildArguments(ytdlp, "https://video.com");
@@ -55,7 +75,7 @@ public class YtdlpAuthTests
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            new Ytdlp().WithAuthentication("", "");
+            new Ytdlp(_fullFakePath).WithAuthentication("", "");
         });
     }
 

@@ -8,10 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ManuHub.Deno" Version="2.7.5" />
+    <PackageReference Include="ManuHub.Deno" Version="2.8.2" />
     <PackageReference Include="ManuHub.FFmpeg" Version="6.3.13" />
     <PackageReference Include="ManuHub.FFprobe" Version="6.3.13" />
-    <PackageReference Include="ManuHub.Ytdlp" Version="6.3.3" />
+    <PackageReference Include="ManuHub.Ytdlp" Version="6.3.17" />
   </ItemGroup>
 
   <ItemGroup>

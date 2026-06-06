@@ -30,7 +30,7 @@ public class YtdlpIntegrationTests
             .AddOption("--extractor-args", "youtube:client=ios");
 
         // Pipe stderr errors directly out to the xUnit test runner console output
-        client.OnErrorMessage += (s, msg) => Console.WriteLine($"[yt-dlp StdErr]: {msg}");
+        client.ErrorMessage += (s, msg) => Console.WriteLine($"[yt-dlp StdErr]: {msg}");
 
         return client;
     }
@@ -182,7 +182,7 @@ public class YtdlpIntegrationTests
             .WithOutputFolder(Path.GetTempPath());
 
         var commandCompleted = false;
-        ytdlp.OnCommandCompleted += (s, e) => commandCompleted = true;
+        ytdlp.CommandCompleted += (s, e) => commandCompleted = true;
 
         await ytdlp.DownloadAsync(TestVideoUrl);
 

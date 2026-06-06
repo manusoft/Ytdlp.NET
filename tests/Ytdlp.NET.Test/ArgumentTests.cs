@@ -8,13 +8,7 @@ public class ArgumentTests
 
     public ArgumentTests()
     {
-        // 1. Get the directory and combine cross-platform paths
-        string toolsDir = Path.Combine(AppContext.BaseDirectory, "tools");
-        string exeName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
-        _fullFakePath = Path.Combine(toolsDir, exeName);
-
-        // 2. Ensure the directory and a dummy file exist so ValidatePath passes
-        Directory.CreateDirectory(toolsDir);
+        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
 
         if (!File.Exists(_fullFakePath))
         {

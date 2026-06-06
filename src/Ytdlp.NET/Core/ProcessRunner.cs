@@ -4,17 +4,43 @@ using System.Text;
 
 namespace ManuHub.Ytdlp.NET.Core;
 
+/// <summary>
+/// Responsible for executing yt-dlp processes and managing their lifecycle,
+/// including stdout/stderr streaming, cancellation, and completion tracking.
+/// </summary>
+/// <remarks>
+/// This runner acts as the execution layer of the SDK. It creates processes
+/// via <see cref="ProcessFactory"/>, streams output asynchronously, and
+/// raises events for error handling and command completion.
+/// </remarks>
 public sealed class ProcessRunner
 {
     private readonly ProcessFactory _factory;
     private readonly ILogger _logger;
 
-    /// <summary>Pre-allocated capacity for JSON/metadata stdout capture.</summary>
+    /// <summary>
+    /// Pre-allocated buffer size used for capturing full JSON or metadata output from stdout.
+    /// </summary>
     private const int JsonOutputInitialCapacity = 128 * 1024;
 
-    public event EventHandler<string>? OnErrorReceived;
-    public event EventHandler<CommandCompletedEventArgs>? OnCommandCompleted;
+    /// <summary>
+    /// Occurs when an error line is received from the process standard error stream.
+    /// </summary>
+    internal event EventHandler<string>? ErrorReceived;
 
+    /// <summary>
+    /// Occurs when the process has completed execution (success or failure).
+    /// </summary>
+    internal event EventHandler<CommandCompletedEventArgs>? CommandCompleted;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProcessRunner"/> class.
+    /// </summary>
+    /// <param name="factory">Factory used to create configured process instances for yt-dlp execution.</param>
+    /// <param name="logger">Logger used for diagnostic and runtime execution messages.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="factory"/> or <paramref name="logger"/> is null.
+    /// </exception>
     public ProcessRunner(ProcessFactory factory, ILogger logger)
     {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
@@ -22,9 +48,39 @@ public sealed class ProcessRunner
     }
 
     /// <summary>
-    /// The universal execution pipe for ALL yt-dlp operations.
-    /// Combines low-latency streaming callbacks with optional high-performance full output aggregation.
+    /// The universal execution pipe for ALL yt-dlp operations. Combines low-latency streaming callbacks with optional high-performance full output aggregation.
+    /// Executes the yt-dlp process asynchronously with the specified arguments and optional authentication.
     /// </summary>
+    /// <param name="arguments">
+    /// Command-line arguments to pass to yt-dlp. This should NOT include the executable path or URL injection logic.
+    /// </param>
+    /// <param name="auth">
+    /// Optional authentication credentials used for protected resources.
+    /// If provided, credentials will be injected securely into the process execution flow.
+    /// </param>
+    /// <param name="adobePass">
+    /// Optional Adobe Pass authentication configuration for DRM-protected content.
+    /// </param>
+    /// <param name="onLineReceived">
+    /// Optional callback invoked for each line of stdout output produced by the process.
+    /// </param>
+    /// <param name="ct">
+    /// Cancellation token used to cancel execution and terminate the process gracefully.
+    /// </param>
+    /// <param name="tuneProcess">
+    /// Indicates whether process priority and performance tuning should be applied before execution.
+    /// </param>
+    /// <param name="captureFullOutput">
+    /// If true, captures the full stdout output into memory and returns it in the result.
+    /// </param>
+    /// <returns>
+    /// A <see cref="ProcessResult"/> containing execution status, exit code, and optional output.
+    /// </returns>
+    /// <remarks>
+    /// This method is the core execution pipeline for yt-dlp commands. It manages:
+    /// process creation, authentication injection, streaming output handling,
+    /// cancellation, and final result aggregation.
+    /// </remarks>
     public async Task<ProcessResult> ExecuteAsync(string arguments,
                                                   YtdlpAuth? auth = null,
                                                   AdobePassAuth? adobePass = null,
@@ -45,7 +101,7 @@ public sealed class ProcessRunner
         void Complete(bool success, string message)
         {
             if (Interlocked.Exchange(ref completed, 1) == 0)
-                OnCommandCompleted?.Invoke(this, new CommandCompletedEventArgs(success, message));
+                CommandCompleted?.Invoke(this, new CommandCompletedEventArgs(success, message));
         }
 
         try
@@ -99,7 +155,7 @@ public sealed class ProcessRunner
                 string? line;
                 while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                 {
-                    OnErrorReceived?.Invoke(this, line);
+                    ErrorReceived?.Invoke(this, line);
                     _logger.Log(LogType.Error, line);
                 }
             });
@@ -112,7 +168,7 @@ public sealed class ProcessRunner
                 ? ct.Register(() =>
                 {
                     if (process.HasExited) return;
-                    _logger.Log(LogType.Info, "Cancellation requested via token -> Safe killing process tree");
+                    _logger.Log(LogType.Information, "Cancellation requested via token -> Safe killing process tree");
                     ProcessFactory.SafeKill(process, _logger);
                 })
                 : default(CancellationTokenRegistration);
@@ -229,6 +285,13 @@ public sealed class ProcessRunner
     }
 }
 
+/// <summary>
+/// Represents the result of a completed process execution.
+/// </summary>
+/// <param name="IsSuccess">Indicates whether the process completed successfully (exit code 0 and no cancellation).</param>
+/// <param name="ExitCode">The exit code returned by the process.</param>
+/// <param name="Message">A human-readable message describing the execution result.</param>
+/// <param name="FullOutput">Optional full captured stdout output from the process, if enabled.</param>
 public record ProcessResult(bool IsSuccess, int ExitCode, string Message, string? FullOutput = null);
 
 

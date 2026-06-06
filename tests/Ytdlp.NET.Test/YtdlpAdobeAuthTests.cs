@@ -2,10 +2,30 @@
 
 public class YtdlpAdobeAuthTests
 {
+    private readonly string _fullFakePath;
+
+    public YtdlpAdobeAuthTests()
+    {
+        _fullFakePath = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
+
+        if (!File.Exists(_fullFakePath))
+        {
+            try
+            {
+                File.WriteAllText(_fullFakePath, "");
+            }
+            catch (IOException)
+            {
+                // If another parallel test class is writing to it right now, 
+                // ignore the error because the file is being taken care of.
+            }
+        }
+    }
+
     [Fact]
     public void Should_Create_Instance_With_AdobePass()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAdobePassAuthentication("HBO", "user", "pass");
 
         Assert.NotNull(ytdlp);
@@ -14,7 +34,7 @@ public class YtdlpAdobeAuthTests
     [Fact]
     public void Should_Include_Mso_And_Username()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAdobePassAuthentication("HBO", "myUser", "secret");
 
         var args = InvokeBuildArguments(ytdlp, "https://video.com");
@@ -29,7 +49,7 @@ public class YtdlpAdobeAuthTests
     [Fact]
     public void Should_Not_Expose_AdobePass_Password()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAdobePassAuthentication("HBO", "user", "secret123");
 
         var args = InvokeBuildArguments(ytdlp, "https://video.com");
@@ -40,7 +60,7 @@ public class YtdlpAdobeAuthTests
     [Fact]
     public void Should_Use_Stdin_Placeholder_For_AdobePass()
     {
-        var ytdlp = new Ytdlp()
+        var ytdlp = new Ytdlp(_fullFakePath)
             .WithAdobePassAuthentication("HBO", "user", "secret");
 
         var args = InvokeBuildArguments(ytdlp, "https://video.com");
@@ -56,7 +76,7 @@ public class YtdlpAdobeAuthTests
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            new Ytdlp().WithAdobePassAuthentication("", "", "");
+            new Ytdlp(_fullFakePath).WithAdobePassAuthentication("", "", "");
         });
     }
 
