@@ -17,15 +17,17 @@ Tools/
 ├─ yt-dlp.exe
 ├─ deno.exe
 ├─ ffmpeg.exe
-└─ ffprobe.exe
+└─ ffprobe.exe 
 ```
 
 > Recommended: Use companion NuGet packages:
->
-> * `ManuHub.Ytdlp`
-> * `ManuHub.Deno`
-> * `ManuHub.FFmpeg`
-> * `ManuHub.FFprobe`
+
+| Package | Description |
+|---------|-------------|
+| **ManuHub.Ytdlp** | Core yt-dlp wrapper with fluent API and event handling. |
+| **ManuHub.Deno** | Provides the required Deno runtime for yt-dlp for JavaScript challenges. |
+| **ManuHub.FFmpeg** | Provides the required FFmpeg executable for post-processing. |
+| **ManuHub.FFprobe** | Provides the required FFprobe executable for format probing. |
 
 Example path resolution in .NET:
 
@@ -36,17 +38,17 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 
 ---
 
-## 📄 Get Subtitles
-Ytdlp.NET now supports fetching subtitles with `GetSubtitlesAsync()`:
-```csharp
-var subtitles = await ytdlp.GetSubtitlesAsync(url);
-```
+## 🚨 No Disposal Required:
 
-## 📄 Get Adobe Pass MSO List
-Ytdlp.NET now supports fetching the Adobe Pass MSO list with `GetAdobePassListAsync()`:
-```csharp
-var msoList = await ytdlp.GetAdobePassListAsync();
-```
+> **Ytdlp** holds no unmanaged resources and does not implement **IDisposable** or **IAsyncDisposable**. Instances are plain configuration objects — create them, share them freely, and let the GC collect them when they go out of scope. All internal runners and parsers are created per-call and cleaned up automatically after each execution.
+
+## 🔐 Improved Secure Authentication Support
+Implemented secure authentication handling for various scenarios, including standard username/password and Adobe Pass authentication.
+
+- .WithAuthentication(string username, string password)
+- .WithAdobePassAuthentication(string mso, string username, string password)
+
+> It securely handles credentials by passing them via standard input to the yt-dlp process, avoiding exposure in command-line arguments or logs. The library ensures that sensitive information is not stored in memory longer than necessary and is properly disposed of after use.
 
 ## 🌲 Deep Metadata Support
 
@@ -156,8 +158,8 @@ var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
     .WithFormat("best")
     .WithOutputFolder("./downloads");
 
-ytdlp.OnProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
-ytdlp.OnCompleteDownload += (s, msg) => Console.WriteLine($"Download complete: {msg}");
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Download complete: {msg}");
 
 await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ```
@@ -173,8 +175,8 @@ var tasks = urls.Select(async url =>
         .WithFormat("best")
         .WithOutputFolder("./batch");
 
-    ytdlp.OnProgressDownload += (s, e) => Console.WriteLine($"[{url}] {e.Percent:F2}%");
-    ytdlp.OnCompleteDownload += (s, msg) => Console.WriteLine($"[{url}] Download complete: {msg}");
+    ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"[{url}] {e.Percent:F2}%");
+    ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"[{url}] Download complete: {msg}");
 
     await ytdlp.DownloadAsync(url);
 });
@@ -201,8 +203,8 @@ var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
     .WithEmbedMetadata()
     .WithEmbedThumbnail();
 
-ytdlp.OnProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
-ytdlp.OnCompleteDownload += (s, msg) => Console.WriteLine($"Download complete: {msg}");
+ytdlp.rogressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Download complete: {msg}");
 
 await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ```
@@ -220,6 +222,18 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
 ```
 
 ---
+
+## Download a Playlist
+```csharp
+var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    .WithFormat("best")
+    .WithOutputFolder("./playlists")
+    .WithPlaylistStart(1)
+    .WithPlaylistEnd(5)
+    .OutputTemplate("%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s");
+
+await ytdlp.DownloadAsync("https://www.youtube.com/playlist?list=PL12345");
+```
 
 ### Fetch Metadata
 
@@ -271,6 +285,15 @@ foreach (var sub in subtitles)
     Console.WriteLine($"Language: {sub.Language}, Format: {sub.Format}, Url: {sub.Url}");
 }
 ```
+
+---
+
+## Get Adobe Pass MSO List
+```csharp
+var msoList = await ytdlp.GetAdobePassListAsync();
+```
+
+---
 
 ### Batch Downloads
 
@@ -460,14 +483,14 @@ AND MORE ...
 ### Events
 
 ```csharp
-ytdlp.OnProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
-ytdlp.OnProgressMessage += (s, msg) => Console.WriteLine(msg);
-ytdlp.OnCompleteDownload += (s, msg) => Console.WriteLine($"Done: {msg}");
-ytdlp.OnPostProcessingStart += (s, msg) => Console.WriteLine($"Post-processing-start: {msg}")
-ytdlp.OnPostProcessingComplete += (s, msg) => Console.WriteLine($"Post-processing-complete: {msg}");
-ytdlp.OnErrorMessage += (s, err) => Console.WriteLine($"Error: {err}");
-ytdlp.OnOutputMessage += (s, msg) => Console.WriteLine(msg);
-ytdlp.OnCommandCompleted += (s, e) => Console.WriteLine($"Command finished: {e.Command}");
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.ProgressMessage += (s, msg) => Console.WriteLine(msg);
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Done: {msg}");
+ytdlp.PostProcessingStarted += (s, msg) => Console.WriteLine($"Post-processing-start: {msg}")
+ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing-complete: {msg}");
+ytdlp.ErrorMessage += (s, err) => Console.WriteLine($"Error: {err}");
+ytdlp.OutputMessage += (s, msg) => Console.WriteLine(msg);
+ytdlp.CommandCompleted += (s, e) => Console.WriteLine($"Command finished: {e.Command}");
 ```
 
 ---
@@ -534,7 +557,7 @@ Attach events **to the configured instance**.
 ```csharp
 var download = baseYtdlp.WithFormat("best");
 
-download.OnProgressDownload += ...
+download.ProgressDownload += ...
 ```
 
 ---
