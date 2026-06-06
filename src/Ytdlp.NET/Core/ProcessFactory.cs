@@ -6,6 +6,13 @@ using System.Text;
 
 namespace ManuHub.Ytdlp.NET.Core;
 
+/// <summary>
+/// Factory responsible for creating configured process instances for yt-dlp execution.
+/// </summary>
+/// <remarks>
+/// Encapsulates process configuration logic including executable resolution,
+/// argument injection, and standard stream setup (stdout/stderr).
+/// </remarks>
 public sealed class ProcessFactory
 {
     private readonly string _ytdlpPath;
@@ -34,6 +41,18 @@ public sealed class ProcessFactory
         _ytdlpPath = ytdlpPath;
     }
 
+    /// <summary>
+    /// Creates a configured <see cref="Process"/> instance for executing yt-dlp.
+    /// </summary>
+    /// <param name="arguments">
+    /// The command-line arguments to pass to the yt-dlp executable.
+    /// This should not include the executable path itself.
+    /// </param>
+    /// <returns>A fully configured <see cref="Process"/> ready to be started.</returns>
+    /// <remarks>
+    /// The process is configured with proper start information including:
+    /// executable path, arguments, working directory, and redirected IO streams.
+    /// </remarks>
     public Process Create(string arguments)
     {
         if (string.IsNullOrWhiteSpace(arguments))
@@ -91,7 +110,7 @@ public sealed class ProcessFactory
         }
         catch (Exception ex)
         {
-            logger?.Log(LogType.Info, $"Process priority tuning skipped: {ex.Message}");
+            logger?.Log(LogType.Information, $"Process priority tuning skipped: {ex.Message}");
         }
     }
 
@@ -107,7 +126,7 @@ public sealed class ProcessFactory
                 return;
 
             process.KillTree();
-            logger?.Log(LogType.Info, "Process tree killed successfully.");
+            logger?.Log(LogType.Information, "Process tree killed successfully.");
         }
         catch (Exception ex)
         {

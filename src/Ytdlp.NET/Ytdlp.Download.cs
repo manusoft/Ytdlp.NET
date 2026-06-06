@@ -6,14 +6,31 @@
 public sealed partial class Ytdlp
 {
     #region Events
-    public event EventHandler<DownloadProgressEventArgs>? OnProgressDownload;
-    public event EventHandler<string>? OnProgressMessage;
-    public event EventHandler<string>? OnOutputMessage;
-    public event EventHandler<string>? OnCompleteDownload;
-    public event EventHandler<string>? OnPostProcessingStart;
-    public event EventHandler<string>? OnPostProcessingComplete;
-    public event EventHandler<CommandCompletedEventArgs>? OnCommandCompleted;
-    public event EventHandler<string>? OnErrorMessage;
+    // Progress events
+    /// <summary>Raised to report download progress updates from yt-dlp.</summary>
+    /// <remarks>Provides real-time progress information such as percentage, speed, downloaded size, and estimated time remaining.</remarks>
+    public event EventHandler<DownloadProgressEventArgs>? ProgressDownload;
+    /// <summary>Raised when a progress/status message is produced.</summary>
+    public event EventHandler<string>? ProgressMessage;
+
+    // Output events
+    /// <summary>Raised when a raw output line is emitted by yt-dlp.</summary>
+    public event EventHandler<string>? OutputMessage;
+    /// <summary>Raised when an error message is emitted by yt-dlp or the process runner.</summary>
+    public event EventHandler<string>? ErrorMessage;
+
+    // Lifecycle events
+    /// <summary>Raised when a download operation completes successfully.</summary>
+    public event EventHandler<string>? DownloadCompleted;
+    /// <summary>Raised when the underlying process completes (success or failure).</summary>
+    public event EventHandler<CommandCompletedEventArgs>? CommandCompleted;
+
+    // Post-Processing events
+    /// <summary>Raised when post-processing starts (e.g., merging, ffmpeg step).</summary>
+    public event EventHandler<string>? PostProcessingStarted;
+    /// <summary>Raised when post-processing finishes.</summary>
+    public event EventHandler<string>? PostProcessingCompleted;   
+    
     #endregion
 
     // ==================================================================================================================
@@ -53,32 +70,32 @@ public sealed partial class Ytdlp
         var argsList = BuildArguments(url);
         var arguments = string.Join(" ", argsList.Select(EscapeArgument));
 
-        _logger.Log(LogType.Info, $"Executing: {_ytdlpPath} {arguments}");
+        _logger.Log(LogType.Information, $"Executing: {_ytdlpPath} {arguments}");
 
         // Isolated per-call — safe for concurrent downloads on the same Ytdlp instance
         var progressParser = new ProgressParser(_logger);
         var runner = CreateRunner();
 
         // ── Wire progress parser events → Ytdlp public events ─────────────────
-        void OnProgressDownloadHandler(object? s, DownloadProgressEventArgs e) => OnProgressDownload?.Invoke(this, e);
-        void OnProgressMessageHandler(object? s, string msg) => OnProgressMessage?.Invoke(this, msg);
-        void OnCompleteDownloadHandler(object? s, string msg) => OnCompleteDownload?.Invoke(this, msg);
-        void OnPostProcessingStartHandler(object? s, string msg) => OnPostProcessingStart?.Invoke(this, msg);
-        void OnPostProcessingCompleteHandler(object? s, string msg) => OnPostProcessingComplete?.Invoke(this, msg);
+        void OnProgressDownloadHandler(object? s, DownloadProgressEventArgs e) => ProgressDownload?.Invoke(this, e);
+        void OnProgressMessageHandler(object? s, string msg) => ProgressMessage?.Invoke(this, msg);
+        void OnCompleteDownloadHandler(object? s, string msg) => DownloadCompleted?.Invoke(this, msg);
+        void OnPostProcessingStartHandler(object? s, string msg) => PostProcessingStarted?.Invoke(this, msg);
+        void OnPostProcessingCompleteHandler(object? s, string msg) => PostProcessingCompleted?.Invoke(this, msg);
 
-        progressParser.OnProgressDownload += OnProgressDownloadHandler;
-        progressParser.OnProgressMessage += OnProgressMessageHandler;
-        progressParser.OnCompleteDownload += OnCompleteDownloadHandler;
-        progressParser.OnPostProcessingStart += OnPostProcessingStartHandler;
-        progressParser.OnPostProcessingComplete += OnPostProcessingCompleteHandler;
+        progressParser.ProgressDownload += OnProgressDownloadHandler;
+        progressParser.ProgressMessage += OnProgressMessageHandler;
+        progressParser.DownloadCompleted += OnCompleteDownloadHandler;
+        progressParser.PostProcessingStarted += OnPostProcessingStartHandler;
+        progressParser.PostProcessingCompleted += OnPostProcessingCompleteHandler;
 
         // ── Wire runner events → Ytdlp public events ──────────────────────────
-        void OnOutputMessageHandler(object? s, string msg) => OnOutputMessage?.Invoke(this, msg);
-        void OnErrorMessageHandler(object? s, string msg) => OnErrorMessage?.Invoke(this, msg);
-        void OnCommandCompletedHandler(object? s, CommandCompletedEventArgs e) => OnCommandCompleted?.Invoke(this, e);
+        void OnOutputMessageHandler(object? s, string msg) => OutputMessage?.Invoke(this, msg);
+        void OnErrorMessageHandler(object? s, string msg) => ErrorMessage?.Invoke(this, msg);
+        void OnCommandCompletedHandler(object? s, CommandCompletedEventArgs e) => CommandCompleted?.Invoke(this, e);
 
-        runner.OnErrorReceived += OnErrorMessageHandler;
-        runner.OnCommandCompleted += OnCommandCompletedHandler;
+        runner.ErrorReceived += OnErrorMessageHandler;
+        runner.CommandCompleted += OnCommandCompletedHandler;
 
         try
         {
@@ -101,14 +118,14 @@ public sealed partial class Ytdlp
         finally
         {
             // Always unsubscribe — prevents memory leaks on cancel or exception
-            progressParser.OnProgressDownload -= OnProgressDownloadHandler;
-            progressParser.OnProgressMessage -= OnProgressMessageHandler;
-            progressParser.OnCompleteDownload -= OnCompleteDownloadHandler;
-            progressParser.OnPostProcessingStart -= OnPostProcessingStartHandler;
-            progressParser.OnPostProcessingComplete -= OnPostProcessingCompleteHandler;
+            progressParser.ProgressDownload -= OnProgressDownloadHandler;
+            progressParser.ProgressMessage -= OnProgressMessageHandler;
+            progressParser.DownloadCompleted -= OnCompleteDownloadHandler;
+            progressParser.PostProcessingStarted -= OnPostProcessingStartHandler;
+            progressParser.PostProcessingCompleted -= OnPostProcessingCompleteHandler;
 
-            runner.OnErrorReceived -= OnErrorMessageHandler;
-            runner.OnCommandCompleted -= OnCommandCompletedHandler;
+            runner.ErrorReceived -= OnErrorMessageHandler;
+            runner.CommandCompleted -= OnCommandCompletedHandler;
         }
     }
 

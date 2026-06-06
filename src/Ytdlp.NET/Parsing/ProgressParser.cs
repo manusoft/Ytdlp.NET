@@ -2,6 +2,10 @@
 
 namespace ManuHub.Ytdlp.NET;
 
+/// <summary>
+/// Parses yt-dlp output and raises strongly-typed progress,
+/// download, and post-processing events.
+/// </summary>
 public sealed class ProgressParser
 {
     private readonly Dictionary<Regex, Action<Match>> _regexHandlers;
@@ -16,14 +20,21 @@ public sealed class ProgressParser
     private int _deleteCount;
 
     // ───────────── Events (unchanged) ─────────────
-    #region Events
-    public event EventHandler<string>? OnProgressMessage;
-    public event EventHandler<DownloadProgressEventArgs>? OnProgressDownload;
-    public event EventHandler<string>? OnCompleteDownload;
-    public event EventHandler<string>? OnPostProcessingStart;
-    public event EventHandler<string>? OnPostProcessingComplete;
+    #region Events   
+    internal event EventHandler<DownloadProgressEventArgs>? ProgressDownload;
+    internal event EventHandler<string>? ProgressMessage;
+    internal event EventHandler<string>? DownloadCompleted;
+    internal event EventHandler<string>? PostProcessingStarted;
+    internal event EventHandler<string>? PostProcessingCompleted;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProgressParser"/> class.
+    /// </summary>
+    /// <param name="logger">
+    /// Optional logger used for diagnostic and parsing messages.
+    /// If <see langword="null"/>, a default logger implementation is used.
+    /// </param>
     public ProgressParser(ILogger? logger = null)
     {
         _logger = logger ?? new DefaultLogger();
@@ -56,10 +67,15 @@ public sealed class ProgressParser
 
             // Optional: add playlist awareness
             { new Regex(RegexPatterns.PlaylistItem, compiledIgnoreCase), m =>
-                LogAndNotify(LogType.Info, $"Playlist progress: item {m.Groups["item"].Value}/{m.Groups["total"].Value} - {m.Groups["playlist"].Value}") },
+                LogAndNotify(LogType.Information, $"Playlist progress: item {m.Groups["item"].Value}/{m.Groups["total"].Value} - {m.Groups["playlist"].Value}") },
         };
     }
 
+    /// <summary>
+    /// Parses a single line of yt-dlp output and dispatches it to the
+    /// appropriate registered handler if a known pattern is matched.
+    /// </summary>
+    /// <param name="output">Raw output line from the yt-dlp process.</param>
     public void ParseProgress(string? output)
     {
         if (string.IsNullOrWhiteSpace(output))
@@ -78,13 +94,20 @@ public sealed class ProgressParser
         HandleUnknownOutput(output);
     }
 
+    /// <summary>
+    /// Resets the internal state of the progress parser.
+    /// </summary>
+    /// <remarks>
+    /// Clears all tracking flags related to download and post-processing stages.
+    /// This does not clear registered regex handlers.
+    /// </remarks>
     public void Reset()
     {
         _isDownloadCompleted = false;
         _postProcessingStarted = false;
         _postProcessStepCount = 0;
         _deleteCount = 0;
-        _logger.Log(LogType.Info, "Progress parser state reset.");
+        _logger.Log(LogType.Information, "Progress parser state reset.");
     }
 
     // ───────────── Event Handlers (existing + improved) ─────────────
@@ -93,15 +116,15 @@ public sealed class ProgressParser
     private void HandleDownloadDestination(Match match)
     {
         string path = match.Groups["path"].Value;
-        LogAndNotify(LogType.Info, $"Download destination: {path}");
+        LogAndNotify(LogType.Information, $"Download destination: {path}");
     }
 
     private void HandleResumeDownload(Match match)
     {
         string bytePosition = match.Groups["byte"].Value;
         var message = $"Resuming download at byte {bytePosition}";
-        LogAndNotify(LogType.Info, message);
-        OnProgressDownload?.Invoke(this, new DownloadProgressEventArgs { Message = message });
+        LogAndNotify(LogType.Information, message);
+        ProgressDownload?.Invoke(this, new DownloadProgressEventArgs { Message = message });
     }
 
     private void HandleDownloadProgress(Match match)
@@ -125,8 +148,8 @@ public sealed class ProgressParser
             Message = $"Progress: {percent:F2}% | {sizeString} | {speedString} | ETA {etaString}"
         };
 
-        LogAndNotify(LogType.Info, args.Message);
-        OnProgressDownload?.Invoke(this, args);
+        LogAndNotify(LogType.Information, args.Message);
+        ProgressDownload?.Invoke(this, args);
 
         if (percent >= 99.0 && !_isDownloadCompleted)
         {
@@ -157,8 +180,8 @@ public sealed class ProgressParser
             Message = $"Progress: {percent:F2}% | {sizeString} | {speedString} | ETA {etaString} | {fragString}"
         };
 
-        LogAndNotify(LogType.Info, args.Message);
-        OnProgressDownload?.Invoke(this, args);
+        LogAndNotify(LogType.Information, args.Message);
+        ProgressDownload?.Invoke(this, args);
 
         // Only trigger complete if really done (avoid false 100% on fragment level)
         if (percent >= 99.0 && IsFinalFragment(fragString) && !_isDownloadCompleted)
@@ -191,15 +214,15 @@ public sealed class ProgressParser
         var message = $"Download finished: {percent}% of {size}";
 
         LogAndNotifyComplete(message);
-        _logger.Log(LogType.Info, "Download marked as completed.");
+        _logger.Log(LogType.Information, "Download marked as completed.");
     }
 
     private void HandleDownloadAlreadyCompleted(Match match)
     {
         string path = match.Groups["path"].Value;
         var message = $"Download completed: {path} has already been downloaded.";
-        LogAndNotify(LogType.Info, message);
-        OnProgressDownload?.Invoke(this, new DownloadProgressEventArgs { Message = message });
+        LogAndNotify(LogType.Information, message);
+        ProgressDownload?.Invoke(this, new DownloadProgressEventArgs { Message = message });
     }
 
     private void HandleUnknownError(Match match)
@@ -225,8 +248,8 @@ public sealed class ProgressParser
             _postProcessingStarted = true;
             _postProcessStepCount = 0;
 
-            LogAndNotify(LogType.Info, "Post-processing started");
-            OnPostProcessingStart?.Invoke(this, "Post-processing started");
+            LogAndNotify(LogType.Information, "Post-processing started");
+            PostProcessingStarted?.Invoke(this, "Post-processing started");
         }
 
         _postProcessStepCount++;
@@ -241,7 +264,7 @@ public sealed class ProgressParser
             : match.Value.Trim();
 
         var message = $"[{processor}] {action}";
-        LogAndNotify(LogType.Info, $"Post-processing [{_postProcessStepCount}]: {message}");
+        LogAndNotify(LogType.Information, $"Post-processing [{_postProcessStepCount}]: {message}");
 
         // Trigger completion when we hit the real last step (MoveFiles is usually the final one)
         bool isFinalStep =
@@ -253,10 +276,10 @@ public sealed class ProgressParser
         {
             var completeMsg = "Post-processing completed successfully";
 
-            LogAndNotify(LogType.Info, completeMsg);
-            OnPostProcessingComplete?.Invoke(this, completeMsg);
+            LogAndNotify(LogType.Information, completeMsg);
+            PostProcessingCompleted?.Invoke(this, completeMsg);
 
-            _logger.Log(LogType.Info, "OnPostProcessingComplete event triggered.");
+            _logger.Log(LogType.Information, "OnPostProcessingComplete event triggered.");
 
             // Reset flags so next download starts fresh
             Reset();
@@ -270,7 +293,7 @@ public sealed class ProgressParser
         LogType logType = lower.Contains("error") ? LogType.Error :
                           lower.Contains("warning") ? LogType.Warning :
                           lower.Contains("[debug]") ? LogType.Debug :
-                          LogType.Info;
+                          LogType.Information;
 
         LogAndNotify(logType, output);
     }
@@ -282,13 +305,13 @@ public sealed class ProgressParser
     private void LogAndNotify(LogType logType, string message)
     {
         _logger.Log(logType, message);
-        OnProgressMessage?.Invoke(this, message);
+        ProgressMessage?.Invoke(this, message);
     }
 
     private void LogAndNotifyComplete(string message)
     {
-        _logger.Log(LogType.Info, message);
-        OnCompleteDownload?.Invoke(this, message);
+        _logger.Log(LogType.Information, message);
+        DownloadCompleted?.Invoke(this, message);
     }
     #endregion   
 }
