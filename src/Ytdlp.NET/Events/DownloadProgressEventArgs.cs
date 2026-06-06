@@ -1,11 +1,41 @@
 ﻿namespace ManuHub.Ytdlp.NET;
 
+/// <summary>
+/// Provides data for download progress updates from yt-dlp.
+/// </summary>
+/// <remarks>
+/// This event argument contains real-time information about the current
+/// download state including progress percentage, speed, size, ETA, and fragments.
+/// </remarks>
 public class DownloadProgressEventArgs : EventArgs
 {
-    public double Percent { get; set; } = default!;     // Percentage of download (0 to 100)
-    public string Size { get; set; } = default!;        // Download size in bytes or MiB
-    public string Speed { get; set; } = default!;       // Speed in MiB/s or similar units
-    public string ETA { get; set; } = default!;         // Estimated Time of Arrival for completion
-    public string Fragments { get; set; } = default!;   // Number of fragments downloaded (if applicable)
-    public string Message { get; set; } = default!;     // Any additional message
+    /// <summary>
+    /// Gets or sets the download progress percentage (0 to 100).
+    /// </summary>
+    public double Percent { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the total downloaded size (e.g., bytes, KB, MiB).
+    /// </summary>
+    public string Size { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the current download speed (e.g., MiB/s).
+    /// </summary>
+    public string Speed { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the estimated time remaining for completion.
+    /// </summary>
+    public string ETA { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the number of fragments downloaded (if applicable).
+    /// </summary>
+    public string Fragments { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets an additional message related to the download progress.
+    /// </summary>
+    public string Message { get; set; } = default!;
 }

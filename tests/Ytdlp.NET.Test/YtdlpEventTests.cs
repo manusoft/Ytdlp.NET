@@ -36,106 +36,105 @@ public class YtdlpEventTests
         }
     }
 
-
     [Fact]
-    public void OnProgressDownload_CanSubscribe()
+    public void ProgressDownload_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnProgressDownload += (s, e) => { };
+            ytdlp.ProgressDownload += (s, e) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnProgressMessage_CanSubscribe()
+    public void ProgressMessage_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnProgressMessage += (s, msg) => { };
+            ytdlp.ProgressMessage += (s, msg) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnCompleteDownload_CanSubscribe()
+    public void DownloadCompleted_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnCompleteDownload += (s, msg) => { };
+            ytdlp.DownloadCompleted += (s, msg) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnPostProcessingStart_CanSubscribe()
+    public void PostProcessingStarted_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnPostProcessingStart += (s, msg) => { };
+            ytdlp.PostProcessingStarted += (s, msg) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnPostProcessingComplete_CanSubscribe()
+    public void PostProcessingCompleted_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnPostProcessingComplete += (s, msg) => { };
+            ytdlp.PostProcessingCompleted += (s, msg) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnErrorMessage_CanSubscribe()
+    public void ErrorMessage_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnErrorMessage += (s, err) => { };
+            ytdlp.ErrorMessage += (s, err) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnOutputMessage_CanSubscribe()
+    public void OutputMessage_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnOutputMessage += (s, msg) => { };
+            ytdlp.OutputMessage += (s, msg) => { };
         };
 
         act.Should().NotThrow();
     }
 
     [Fact]
-    public void OnCommandCompleted_CanSubscribe()
+    public void CommandCompleted_CanSubscribe()
     {
         var ytdlp = new Ytdlp(_fullFakePath);
 
         var act = () =>
         {
-            ytdlp.OnCommandCompleted += (s, e) => { };
+            ytdlp.CommandCompleted += (s, e) => { };
         };
 
         act.Should().NotThrow();
@@ -150,14 +149,14 @@ public class YtdlpEventTests
 
         var act = () =>
         {
-            ytdlp.OnProgressDownload += (s, e) => { };
-            ytdlp.OnProgressMessage += (s, msg) => { };
-            ytdlp.OnCompleteDownload += (s, msg) => { };
-            ytdlp.OnPostProcessingStart += (s, msg) => { };
-            ytdlp.OnPostProcessingComplete += (s, msg) => { };
-            ytdlp.OnErrorMessage += (s, err) => { };
-            ytdlp.OnOutputMessage += (s, msg) => { };
-            ytdlp.OnCommandCompleted += (s, e) => { };
+            ytdlp.ProgressDownload += (s, e) => { };
+            ytdlp.ProgressMessage += (s, msg) => { };
+            ytdlp.DownloadCompleted += (s, msg) => { };
+            ytdlp.PostProcessingStarted += (s, msg) => { };
+            ytdlp.PostProcessingCompleted += (s, msg) => { };
+            ytdlp.ErrorMessage += (s, err) => { };
+            ytdlp.OutputMessage += (s, msg) => { };
+            ytdlp.CommandCompleted += (s, e) => { };
         };
 
         act.Should().NotThrow();
@@ -172,10 +171,10 @@ public class YtdlpEventTests
         bool baseFired = false;
         bool branchFired = false;
 
-        baseInstance.OnCompleteDownload += (s, msg) => baseFired = true;
+        baseInstance.DownloadCompleted += (s, msg) => baseFired = true;
 
         var branchedInstance = baseInstance.WithOutputFolder("./downloads");
-        branchedInstance.OnCompleteDownload += (s, msg) => branchFired = true;
+        branchedInstance.DownloadCompleted += (s, msg) => branchFired = true;
 
         // Without actually running a download, just confirm both can hold their
         // own event subscriptions independently (no cross-contamination at setup time)

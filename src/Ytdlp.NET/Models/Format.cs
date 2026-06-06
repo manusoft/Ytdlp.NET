@@ -4,52 +4,148 @@ using System.Text.RegularExpressions;
 namespace ManuHub.Ytdlp.NET;
 
 /// <summary>
-/// Represents a single format available for a video/audio from yt-dlp's -F (--list-formats) output.
-/// Enriched for v2.0 with more parsed fields from the format table.
+/// Represents a single media format entry returned by yt-dlp (-F output).
+/// Contains both video/audio metadata and convenience flags for selection logic.
 /// </summary>
 public sealed class Format
 {
     // Core identifiers
-    public string Id { get; set; } = string.Empty;          // format code / ID
-    public string Extension { get; set; } = string.Empty;  // ext (mp4, webm, m4a, etc.)
+
+    /// <summary>
+    /// Unique format identifier (yt-dlp format code / ID).
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// File extension (e.g., mp4, webm, m4a).
+    /// </summary>
+    public string Extension { get; set; } = string.Empty;
 
     // Video-specific
-    public string Resolution { get; set; } = string.Empty; // e.g. "1920x1080", "1080p", "audio only"
-    public int? Height { get; set; }                       // parsed numeric height if available
-    public int? Width { get; set; }                        // parsed numeric width if available
-    public double? Fps { get; set; }                       // frames per second
+
+    /// <summary>
+    /// Human-readable resolution (e.g., "1920x1080", "1080p", "audio only").
+    /// </summary>
+    public string Resolution { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Video height in pixels if available.
+    /// </summary>
+    public int? Height { get; set; }
+
+    /// <summary>
+    /// Video width in pixels if available.
+    /// </summary>
+    public int? Width { get; set; }
+
+    /// <summary>
+    /// Frames per second (FPS) if available.
+    /// </summary>
+    public double? Fps { get; set; }
+
 
     // Audio-specific
-    public string? Channels { get; set; }                  // e.g. "2", "stereo", "6"
-    public double? AudioSampleRate { get; set; }           // asr in Hz (from asr column)
+
+    /// <summary>
+    /// Number of audio channels (e.g., "2", "stereo", "6").
+    /// </summary>
+    public string? Channels { get; set; }
+
+    /// <summary>
+    /// Audio sample rate in Hz (asr from yt-dlp output).
+    /// </summary>
+    public double? AudioSampleRate { get; set; }
 
     // Bitrates
-    public string? TotalBitrate { get; set; }              // tbr (total bitrate)
-    public string? VideoBitrate { get; set; }              // vbr
-    public string? AudioBitrate { get; set; }              // abr
+
+    /// <summary>
+    /// Total bitrate (tbr) if available.
+    /// </summary>
+    public string? TotalBitrate { get; set; }
+
+    /// <summary>
+    /// Video bitrate (vbr) if available.
+    /// </summary>
+    public string? VideoBitrate { get; set; }
+
+    /// <summary>
+    /// Audio bitrate (abr) if available.
+    /// </summary>
+    public string? AudioBitrate { get; set; }
 
     // Codecs
-    public string? VideoCodec { get; set; }                // vcodec (avc1, vp9, etc. or "none")
-    public string? AudioCodec { get; set; }                // acodec (opus, mp4a, etc. or "none")
+
+    /// <summary>
+    /// Video codec (e.g., avc1, vp9, none).
+    /// </summary>
+    public string? VideoCodec { get; set; }
+
+    /// <summary>
+    /// Audio codec (e.g., opus, mp4a, none).
+    /// </summary>
+    public string? AudioCodec { get; set; }
 
     // Protocol / delivery
-    public string? Protocol { get; set; }                  // https, m3u8_native, mhtml, etc.
-    public string? Container { get; set; }                 // sometimes inferred from ext or more info
 
-    // Size & approx
-    public string? FileSizeApprox { get; set; }            // e.g. "~123.45MiB", "N/A"
-    public long? ApproxFileSizeBytes { get; set; }         // parsed numeric value (approximate)
+    /// <summary>
+    /// Streaming protocol (e.g., https, m3u8_native).
+    /// </summary>
+    public string? Protocol { get; set; }
+
+    /// <summary>
+    /// Container format inferred from extension or metadata.
+    /// </summary>
+    public string? Container { get; set; }
+
+    // Size & approximate data
+
+    /// <summary>
+    /// Approximate file size as string (e.g., "~123MiB").
+    /// </summary>
+    public string? FileSizeApprox { get; set; }
+
+    /// <summary>
+    /// Approximate file size in bytes if parsed.
+    /// </summary>
+    public long? ApproxFileSizeBytes { get; set; }
 
     // Other metadata
-    public string? Language { get; set; }                  // from more info or subs column if present
-    public string? MoreInfo { get; set; }                  // remaining text (hdr, quality note, etc.)
-    public string? Note { get; set; }                      // sometimes separate note column
+
+    /// <summary>
+    /// Language code if available (e.g., subtitles/audio language).
+    /// </summary>
+    public string? Language { get; set; }
+
+    /// <summary>
+    /// Additional metadata or descriptive info.
+    /// </summary>
+    public string? MoreInfo { get; set; }
+
+    /// <summary>
+    /// Extra note field from yt-dlp output if present.
+    /// </summary>
+    public string? Note { get; set; }
 
     // Convenience flags
+
+    /// <summary>
+    /// Indicates whether this format contains video stream data.
+    /// </summary>
     public bool IsVideo => !string.IsNullOrEmpty(VideoCodec) && VideoCodec != "none" && Resolution != "audio only";
+
+    /// <summary>
+    /// Indicates whether this format is audio-only.
+    /// </summary>
     public bool IsAudioOnly => Resolution == "audio only" || (VideoCodec == "none" && !string.IsNullOrEmpty(AudioCodec));
+
+    /// <summary>
+    /// Indicates whether this format is a storyboard/thumbnail stream.
+    /// </summary>
     public bool IsStoryboard => VideoCodec == "images" || MoreInfo?.Contains("storyboard") == true;
 
+    /// <summary>
+    /// Returns a formatted string representation of the format entry.
+    /// </summary>
     public override string ToString()
     {
         var parts = new[]
@@ -223,6 +319,19 @@ public sealed class Format
         return format;
     }
 
+    /// <summary>
+    /// Filters a collection of available formats based on a specified type.
+    /// </summary>
+    /// <param name="formats">The full list of available formats to filter.</param>
+    /// <param name="type">
+    /// The filter type to apply (e.g. "video", "audio", "best", "worst").
+    /// </param>
+    /// <returns>
+    /// A filtered sequence of <see cref="Format"/> matching the specified criteria.
+    /// </returns>
+    /// <remarks>
+    /// This method does not modify the original collection; it returns a new filtered sequence.
+    /// </remarks>
     public IEnumerable<Format> FilterFormats(IEnumerable<Format> formats, string type)
     {
         return formats.Where(f => type == "audio" ? f.Resolution == "audio only" :

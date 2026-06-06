@@ -58,16 +58,16 @@ public sealed class YtdlpService
 
     private void Subscribe(Ytdlp ytdlp)
     {
-        ytdlp.OnProgressMessage += (s, e) => ProgressMessage?.Invoke(e);
+        ytdlp.ProgressMessage += (s, e) => ProgressMessage?.Invoke(e);
 
-        ytdlp.OnErrorMessage += (s, e) => ErrorMessage?.Invoke(e);
+        ytdlp.ErrorMessage += (s, e) => ErrorMessage?.Invoke(e);
 
-        ytdlp.OnProgressDownload += (s, e) => Progress?.Invoke(e);
+        ytdlp.ProgressDownload += (s, e) => Progress?.Invoke(e);
 
-        ytdlp.OnPostProcessingStart += (s, e) => PostProcessStarted?.Invoke();
+        ytdlp.PostProcessingStarted += (s, e) => PostProcessStarted?.Invoke();
 
-        ytdlp.OnPostProcessingComplete += (s, e) =>  PostProcessCompleted?.Invoke();
+        ytdlp.PostProcessingCompleted += (s, e) =>  PostProcessCompleted?.Invoke();
 
-        ytdlp.OnCompleteDownload += (s, e) => DownloadCompleted?.Invoke();
+        ytdlp.DownloadCompleted += (s, e) => DownloadCompleted?.Invoke();
     }
 }

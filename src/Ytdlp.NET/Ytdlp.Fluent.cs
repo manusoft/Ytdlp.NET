@@ -4,7 +4,6 @@ using System.Globalization;
 
 namespace ManuHub.Ytdlp.NET;
 
-
 /// <summary>
 /// Fluent configuration methods for Ytdlp. 
 /// These methods return a new instance of Ytdlp with the specified option added, allowing for chaining multiple configuration calls in a fluent manner.
@@ -20,17 +19,20 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Ignore download and postprocessing errors. The download will be considered successful even if the postprocessing fails
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithIgnoreErrors() => AddFlag("--ignore-errors");
 
     /// <summary>
     /// IgAbort downloading of further videos if an error occurs 
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithAbortOnError() => AddFlag("--abort-on-error");
 
     /// <summary>
     /// Don't load any more configuration files except those given to <see cref="WithConfigLocations(string)"/>.
     /// For backward compatibility, if this option is found inside the system configuration file, the user configuration is not loaded.
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithIgnoreConfig() => AddFlag("--ignore-config");
 
     /// <summary>
@@ -38,6 +40,7 @@ public sealed partial class Ytdlp
     /// Can be used multiple times and inside other configuration files.
     /// </summary>
     /// <param name="path"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithConfigLocations(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Config folder path required");
@@ -48,6 +51,8 @@ public sealed partial class Ytdlp
     /// Path to an additional directory to search for plugins. This option can be used multiple times to add multiple directories.
     /// </summary>
     /// <param name="path"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithPluginDirs(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("plugin folder path required");
@@ -67,6 +72,8 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="runtime">Supported runtimes are deno, node, quickjs, bun</param>
     /// <param name="runtimeLocation">Either the path to the binary or its containing directory</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithJsRuntime(Runtime runtime, string runtimeLocation)
     {
         if (string.IsNullOrWhiteSpace(runtimeLocation))
@@ -81,22 +88,26 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Clear JavaScript runtimes to enable, including defaults and those provided by <see cref="WithJsRuntime(Runtime, string)"/>
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoJsRuntime() => AddFlag("--no-js-runtime");
 
     /// <summary>
     /// Do not extract a playlist's URL result entries; some entry metadata may be missing and downloading may be bypassed
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithFlatPlaylist() => AddFlag("--flat-playlist");
 
     /// <summary>
     /// Download livestreams from the start. Currently experimental and only supported for YouTube, Twitch, and TVer.
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithLiveFromStart() => AddFlag("--live-from-start");
 
     /// <summary>
     /// Wait for scheduled streams to become available.Pass the minimum number of seconds(or range) to wait between retries
     /// </summary>
     /// <param name="maxWait"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithWaitForVideo(TimeSpan? maxWait = null)
     {
         var opts = new List<(string Key, string? Value)>();
@@ -113,6 +124,7 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Mark videos watched (even with Simulate())
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithMarkWatched() => AddFlag("--mark-watched");
 
     #endregion
@@ -122,13 +134,15 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Use the specified HTTP/HTTPS/SOCKS proxy. To enable SOCKS proxy, specify a proper scheme, e.g. socks5://user:pass@127.0.0.1:1080/.
     /// </summary>
-    /// <param name="url">Pass in an empty string for direct connection</param>
+    /// <param name="proxy">Pass in an empty string for direct connection</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithProxy(string? proxy) => string.IsNullOrWhiteSpace(proxy) ? this : new Ytdlp(this, proxy: proxy);
 
     /// <summary>
     /// Time to wait before giving up, in seconds
     /// </summary>
     /// <param name="timeout"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSocketTimeout(TimeSpan timeout)
     {
         if (timeout <= TimeSpan.Zero) return this;
@@ -139,16 +153,19 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Make all connections via IPv4
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithForceIpv4() => AddFlag("--force-ipv4");
 
     /// <summary>
     /// Make all connections via IPv6
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithForceIpv6() => AddFlag("--force-ipv6");
 
     /// <summary>
     /// Enable file:// URLs. This is disabled by default for security reasons.
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithEnableFileUrls() => AddFlag("--enable-file-urls");
 
     #endregion
@@ -160,13 +177,21 @@ public sealed partial class Ytdlp
     /// The default proxy specified by <see cref="WithProxy(string?)"/> (or none, if the option is not present) is used for the actual downloading
     /// </summary>
     /// <param name="url"></param>
-    public Ytdlp WithGeoVerificationProxy(string url) => AddOption("--geo-verification-proxy", url);
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public Ytdlp WithGeoVerificationProxy(string url) 
+    {
+        if(string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException(nameof(url));
+        return AddOption("--geo-verification-proxy", url);
+    } 
 
     /// <summary>
     /// How to fake X-Forwarded-For HTTP header to try bypassing geographic restriction. One of "default" (only when known to be useful),
     /// "never", an IP block in CIDR notation, or a two-letter ISO 3166-2 country code
     /// </summary>
     /// <param name="countryCode"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithGeoBypassCountry(string countryCode)
     {
@@ -184,6 +209,7 @@ public sealed partial class Ytdlp
     /// E.g. "1:3,7,-5::2" used on a playlist of size 15 will download the items at index 1,2,3,7,11,13,15
     /// </summary>
     /// <param name="items"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithPlaylistItems(string items)
     {
@@ -196,6 +222,8 @@ public sealed partial class Ytdlp
     /// Abort download if filesize is smaller than SIZE
     /// </summary>
     /// <param name="size">e.g. 50k or 44.6M</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithMinFileSize(string size)
     {
         // size examples: 50k, 4.2M, 1G
@@ -208,6 +236,8 @@ public sealed partial class Ytdlp
     /// Abort download if filesize is larger than SIZE
     /// </summary>
     /// <param name="size">e.g. 50k or 44.6M</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithMaxFileSize(string size)
     {
         if (string.IsNullOrWhiteSpace(size))
@@ -221,6 +251,8 @@ public sealed partial class Ytdlp
     /// E.g. "--date today-2weeks" downloads only videos uploaded on the same day two weeks ago
     /// </summary>
     /// <param name="date">"today-2weeks" or "YYYYMMDD"</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithDate(string date)
     {
         // formats: YYYYMMDD, today, yesterday, now-2weeks, etc.
@@ -233,6 +265,8 @@ public sealed partial class Ytdlp
     /// Download only videos uploaded on or before this date. The date formats accepted are the same as <see cref="WithDate(string)"/>
     /// </summary>
     /// <param name="date">"today-2weeks" or "YYYYMMDD"</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithDateBefore(string date)
     {
         // formats: YYYYMMDD, today, yesterday, now-2weeks, etc.
@@ -245,6 +279,8 @@ public sealed partial class Ytdlp
     /// Download only videos uploaded on or after this date. The date formats accepted are the same as <see cref="WithDate(string)"/>
     /// </summary>
     /// <param name="date">"today-2weeks" or "YYYYMMDD"</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithDateAfter(string date)
     {
         // formats: YYYYMMDD, today, yesterday, now-2weeks, etc.
@@ -257,6 +293,7 @@ public sealed partial class Ytdlp
     /// Generic video filter. Any "OUTPUT TEMPLATE" field can be compared with a number or a string using the operators defined in "Filtering Formats".
     /// </summary>
     /// <param name="filterExpression"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithMatchFilter(string filterExpression)
     {
@@ -269,17 +306,21 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Download only the video, if the URL refers to a video and a playlist
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoPlaylist() => AddFlag("--no-playlist");
 
     /// <summary>
     /// Download the playlist, if the URL refers to a video and a playlist
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithYesPlaylist() => AddFlag("--yes-playlist");
 
     /// <summary>
     /// Download only videos suitable for the given age
     /// </summary>
     /// <param name="years"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    ///  <exception cref="ArgumentOutOfRangeException"></exception>
     public Ytdlp WithAgeLimit(int years)
     {
         if (years < 0) throw new ArgumentOutOfRangeException(nameof(years));
@@ -290,6 +331,7 @@ public sealed partial class Ytdlp
     /// Download only videos not listed in the archive file. Record the IDs of all downloaded videos in it
     /// </summary>
     /// <param name="archivePath"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithDownloadArchive(string archivePath = "archive.txt")
     {
@@ -302,6 +344,8 @@ public sealed partial class Ytdlp
     /// Abort after downloading number files
     /// </summary>
     /// <param name="count"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public Ytdlp WithMaxDownloads(int count)
     {
         if (count < 1) throw new ArgumentOutOfRangeException(nameof(count));
@@ -311,6 +355,7 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Stop the download process when encountering a file that is in the archive supplied with the <see cref="WithDownloadArchive(string)" /> option
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithBreakOnExisting() => AddFlag("--break-on-existing");
 
     #endregion
@@ -321,36 +366,42 @@ public sealed partial class Ytdlp
     /// Number of fragments of a dash/hlsnative video that should be downloaded concurrently (default is 1)
     /// </summary>
     /// <param name="count"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithConcurrentFragments(int count = 8) => count > 0 ? new Ytdlp(this, concurrentFragments: count) : this;
 
     /// <summary>
     /// Maximum download rate in bytes per second
     /// </summary>
     /// <param name="rate">e.g. 50K or 4.2M</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithLimitRate(string rate) => AddOption("--limit-rate", rate);
 
     /// <summary>
     /// Minimum download rate in bytes per second below which throttling is assumed and the video data is re-extracted
     /// </summary>
     /// <param name="rate">e.g. 100K</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithThrottledRate(string rate) => AddOption("--throttled-rate", rate);
 
     /// <summary>
     /// Number of retries (default is 10), or -1 for "infinite"
     /// </summary>
     /// <param name="maxRetries"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithRetries(int maxRetries) => AddOption("--retries", maxRetries < 0 ? "infinite" : maxRetries.ToString());
 
     /// <summary>
     /// Number of times to retry on file access error (default is 3), or -1 for "infinite"
     /// </summary>
     /// <param name="maxRetries"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithFileAccessRetries(int maxRetries) => AddOption("--file-access-retries", maxRetries < 0 ? "infinite" : maxRetries.ToString());
 
     /// <summary>
     /// Number of retries for a fragment (default is 10), or -1 for "infinite" (DASH, hlsnative and ISM)
     /// </summary>
-    /// <param name="maxRetries"></param>
+    /// <param name="retries"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithFragmentRetries(int retries)
     {
         // -1 = infinite
@@ -361,43 +412,51 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Skip unavailable fragments for DASH, hlsnative and ISM downloads (default)
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSkipUnavailableFragments() => AddFlag("--skip-unavailable-fragments");
 
     /// <summary>
     /// Abort download if a fragment is unavailable
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithAbortOnUnavailableFragments() => AddFlag("--abort-on-unavailable-fragments");
 
     /// <summary>
     /// Keep downloaded fragments on disk after downloading is finished
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithKeepFragments() => AddFlag("--keep-fragments");
 
     /// <summary>
     /// Size of download buffer, (default is 1024) 
     /// </summary>
     /// <param name="size">e.g. 1024 or 16K</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithBufferSize(string size) => AddOption("--buffer-size", size);
 
     /// <summary>
     /// Do not automatically adjust the buffer size
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoResizeBuffer() => AddFlag("--no-resize-buffer");
 
     /// <summary>
     /// Download playlist videos in random order
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithPlaylistRandom() => AddFlag("--playlist-random");
 
     /// <summary>
     /// Use the mpegts container for HLS videos; allowing some players to play the video while downloading, 
     /// and reducing the chance of file corruption if download is interrupted. This is enabled by default for live streams
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithHlsUseMpegts() => AddFlag("--hls-use-mpegts");
 
     /// <summary>
     /// Do not use the mpegts container for HLS videos. This is default when not downloading live streams
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoHlsUseMpegts() => AddFlag("--no-hls-use-mpegts");
 
 
@@ -407,6 +466,7 @@ public sealed partial class Ytdlp
     /// Needs ffmpeg. This option can be used multiple times to download multiple sections
     /// </summary>
     /// <param name="regex">e.g. "*10:15-inf", "intro"</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithDownloadSections(string regex)
     {
         if (string.IsNullOrWhiteSpace(regex)) return this;
@@ -423,6 +483,7 @@ public sealed partial class Ytdlp
     /// Path is automatically normalized and quoted.
     /// </summary>
     /// <param name="path"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithHomeFolder(string? path)
     {
@@ -435,6 +496,7 @@ public sealed partial class Ytdlp
     /// Path is automatically normalized and quoted.
     /// </summary>
     /// <param name="path"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithTempFolder(string? path)
     {
@@ -446,6 +508,7 @@ public sealed partial class Ytdlp
     /// Sets the output folder
     /// </summary>
     /// <param name="path"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithOutputFolder(string path)
     {
@@ -457,6 +520,7 @@ public sealed partial class Ytdlp
     /// Output filename template
     /// </summary>
     /// <param name="template"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithOutputTemplate(string template)
     {
         if (string.IsNullOrWhiteSpace(template)) throw new ArgumentException("Template required");
@@ -464,19 +528,22 @@ public sealed partial class Ytdlp
     }
 
     /// <summary>
-    /// Restrict filenames to only ASCII characters, and avoid "&" and spaces in filenames
+    /// Restrict filenames to only ASCII characters, and avoid "AND" and spaces in filenames
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithRestrictFilenames() => AddFlag("--restrict-filenames");
 
     /// <summary>
     /// Force filenames to be Windows-compatible
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithWindowsFilenames() => AddFlag("--windows-filenames");
 
     /// <summary>
     /// Limit the filename length (excluding extension) to the specified number of characters
     /// </summary>
     /// <param name="length"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithTrimFilenames(int length)
     {
         if (length < 10)
@@ -488,62 +555,74 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Do not overwrite any files
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoOverwrites() => AddFlag("--no-overwrites");
 
     /// <summary>
     /// Overwrite all video and metadata files. This option includes <see cref="WithNoContinue" />
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithForceOverwrites() => AddFlag("--force-overwrites");
 
     /// <summary>
     /// Do not resume partially downloaded fragments. If the file is not fragmented, restart download of the entire file
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoContinue() => AddFlag("--no-continue");
 
     /// <summary>
     /// Do not use .part files - write directly into output file
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoPart() => AddFlag("--no-part");
 
     /// <summary>
     /// Use the Last-modified header to set the file modification time
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithMtime() => AddFlag("--mtime");
 
     /// <summary>
     /// Write video description to a .description file
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithWriteDescription() => AddFlag("--write-description");
 
     /// <summary>
     /// Write video metadata to a .info.json file (this may contain personal information)
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithWriteInfoJson() => AddFlag("--write-info-json");
 
     /// <summary>
     /// Do not write playlist metadata when using <see cref="WithWriteInfoJson"/>, <see cref="WithWriteDescription"/>
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoWritePlaylistMetafiles() => AddFlag("--no-write-playlist-metafiles");
 
     /// <summary>
     /// Write all fields to the infojson
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoCleanInfoJson() => AddFlag("--no-clean-info-json");
 
     /// <summary>
     /// Retrieve video comments to be placed in the infojson. The comments are fetched even without this option if the extraction is known to be quick
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithWriteComments() => AddFlag("--write-comments");
 
     /// <summary>
     /// Do not retrieve video comments unless the extraction is known to be quick
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoWriteComments() => AddFlag("--no-write-comments");
 
     /// <summary>
     /// JSON file containing the video information (created with the WriteVideoMetadata() option)
     /// </summary>
     /// <param name="path">*.json</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithLoadInfoJson(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -555,6 +634,7 @@ public sealed partial class Ytdlp
     /// Netscape formatted file to read cookies from and dump cookie jar in
     /// </summary>
     /// <param name="path"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithCookiesFile(string path)
     {
@@ -570,16 +650,19 @@ public sealed partial class Ytdlp
     /// keyrings are: basictext, gnomekeyring, kwallet, kwallet5, kwallet6
     /// </summary>
     /// <param name="browser"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithCookiesFromBrowser(string browser) => new Ytdlp(this, cookiesFromBrowser: browser);
 
     /// <summary>
     /// Disable filesystem caching
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoCacheDir() => AddFlag("--no-cache-dir");
 
     /// <summary>
     /// Delete all filesystem cache files
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithRemoveCacheDir() => AddFlag("--rm-cache-dir");
 
     #endregion
@@ -590,6 +673,7 @@ public sealed partial class Ytdlp
     /// Write thumbnail image to disk / Write all thumbnail image formats to disk
     /// </summary>
     /// <param name="allSizes"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithThumbnails(bool allSizes = false)
     {
         if (allSizes)
@@ -606,31 +690,37 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Activate quiet mode. If used with --verbose, print the log to stderr
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithQuiet() => AddFlag("--quiet");
 
     /// <summary>
     /// Ignore warnings
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoWarnings() => AddFlag("--no-warnings");
 
     /// <summary>
     /// Do not download the video and do not write anything to disk
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSimulate() => AddFlag("--simulate");
 
     /// <summary>
     /// Download the video even if printing/listing options are used
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoSimulate() => AddFlag("--no-simulate");
 
     /// <summary>
     /// Do not download the video but write all related files (Alias: --no-download)
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSkipDownload() => AddFlag("--skip-download");
 
     /// <summary>
     /// Print various debugging information
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithVerbose() => AddFlag("--verbose");
 
     #endregion
@@ -641,7 +731,14 @@ public sealed partial class Ytdlp
     /// Force the specified encoding (experimental)
     /// </summary>
     /// <param name="encoding"></param>
-    public Ytdlp WithEncoding(string encoding) => AddOption("--encoding", encoding);
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public Ytdlp WithEncoding(string encoding)
+    {
+        if (string.IsNullOrWhiteSpace(encoding))
+            throw new ArgumentException(nameof(encoding));
+        return this.AddOption("--encoding", encoding);
+    }
 
     /// <summary>
     /// Explicitly allow HTTPS connection to servers that do not support RFC 5746 secure renegotiation
@@ -722,12 +819,14 @@ public sealed partial class Ytdlp
     /// Video format code
     /// </summary>
     /// <param name="format"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithFormat(string format) => new Ytdlp(this, format: format.Trim());
 
     /// <summary>
     /// Containers that may be used when merging formats, separated by "/", e.g. "mp4/mkv" Ignored if no merge is required.
     /// </summary>
     /// <param name="format">(currently supported: avi, flv, mkv, mov, mp4, webm)</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithMergeOutputFormat(string format)
     {
         // Common values: mp4, mkv, webm, mov, avi, flv
@@ -748,6 +847,7 @@ public sealed partial class Ytdlp
     /// (where "en.*" is a regex pattern that matches "en" followed by 0 or more of any character).
     /// </param>
     /// <param name="auto">Write automatically generated subtitle file</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSubtitles(string languages = "all", bool auto = false)
     {
         var flags = new List<string>();
@@ -769,6 +869,7 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="username">Account ID</param>
     /// <param name="password">Account password</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithAuthentication(string username, string password)
     {
@@ -781,9 +882,10 @@ public sealed partial class Ytdlp
     /// Two-factor authentication code
     /// </summary>
     /// <param name="code">Two-factor Code</param>
-    public Ytdlp WithTwoFactor(string code) 
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithTwoFactor(string code)
     {
-        if(string.IsNullOrWhiteSpace(code))
+        if (string.IsNullOrWhiteSpace(code))
             throw new ArgumentException("Two-factor code cannot be empty.");
         return AddOption("--twofactor", code);
     }
@@ -796,6 +898,7 @@ public sealed partial class Ytdlp
     /// visible in system process listings (e.g. Task Manager, <c>ps aux</c>).
     /// </remarks>
     /// <param name="password"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithVideoPassword(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
@@ -809,6 +912,7 @@ public sealed partial class Ytdlp
     /// <param name="mso"></param>
     /// <param name="username"></param>
     /// <param name="password"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithAdobePassAuthentication(string mso, string username, string password)
     {
@@ -827,6 +931,7 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="format">Formats currently supported: best (default),aac, alac, flac, m4a, mp3, opus, vorbis, wav).</param>
     /// <param name="quality">Audio quality (0–10, lower = better). Default: 5 (medium)</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithExtractAudio(AudioFormat format = AudioFormat.Best, int quality = 5)
     {
         return this
@@ -841,6 +946,7 @@ public sealed partial class Ytdlp
     /// e.g. "aac>m4a/mov>mp4/mkv" will remux aac to m4a, mov to mp4 and anything else to mkv
     /// </summary>
     /// <param name="format">(currently supported: avi, flv, gif, mkv, mov, mp4, webm, aac, aiff, alac, flac, m4a, mka, mp3, ogg, opus, vorbis, wav).</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithRemuxVideo(string format)
     {
         if (string.IsNullOrWhiteSpace(format))
@@ -854,6 +960,7 @@ public sealed partial class Ytdlp
     /// <param name="format">(currently supported: avi, flv, gif, mkv, mov, mp4, webm, aac, aiff, alac, flac, m4a, mka, mp3, ogg, opus, vorbis, wav).</param>
     /// <param name="videoCodec"></param>
     /// <param name="audioCodec"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithRecodeVideo(string format, string? videoCodec = null, string? audioCodec = null)
     {
         if (string.IsNullOrWhiteSpace(format))
@@ -873,6 +980,7 @@ public sealed partial class Ytdlp
     /// VideoRemuxer, VideoConvertor, Metadata, EmbedSubtitle, EmbedThumbnail, SubtitlesConvertor, ThumbnailsConvertor, 
     /// FixupStretched, FixupM4a, FixupM3u8, FixupTimestamp and FixupDuration.</param>
     /// <param name="args"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithPostprocessorArgs(PostProcessors postprocessor, string args)
     {
         if (string.IsNullOrWhiteSpace(args))
@@ -885,6 +993,7 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Keep the intermediate video file on disk after post-processing
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithKeepVideo() => AddFlag("-k");
 
     /// <summary>
@@ -895,11 +1004,13 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Embed subtitles in the video (only for mp4, webm and mkv videos)
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithEmbedSubtitles() => AddFlag("--embed-subs");
 
     /// <summary>
     /// Embed thumbnail in the video as cover art
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithEmbedThumbnail() => AddFlag("--embed-thumbnail");
 
     /// <summary>
@@ -910,16 +1021,19 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Add chapter markers to the video file
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithEmbedChapters() => AddFlag("--embed-chapters");
 
     /// <summary>
     /// Embed the infojson as an attachment to mkv/mka video files
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithEmbedInfoJson() => AddFlag("--embed-info-json");
 
     /// <summary>
     /// Do not embed the infojson as an attachment to the video file
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoEmbedInfoJson() => AddFlag("--no-embed-info-json");
 
     /// <summary>
@@ -928,6 +1042,7 @@ public sealed partial class Ytdlp
     /// <param name="field"></param>
     /// <param name="regex"></param>
     /// <param name="replacement"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithReplaceInMetadata(string field, string regex, string replacement)
     {
@@ -940,12 +1055,14 @@ public sealed partial class Ytdlp
     /// Concatenate videos in a playlist. All the video files must have the same codecs and number of streams to be concatenable
     /// </summary>
     /// <param name="policy">never, always, multi_video (default; only when the videos form a single show)</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithConcatPlaylist(string policy = "always") => AddOption("--concat-playlist", policy);
 
     /// <summary>
     /// Location of the ffmpeg binary
     /// </summary>
     /// <param name="ffmpegLocation">Either the path to the binary or its containing directory</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithFFmpegLocation(string? ffmpegLocation)
     {
         if (string.IsNullOrWhiteSpace(ffmpegLocation))
@@ -959,6 +1076,7 @@ public sealed partial class Ytdlp
     /// Convert the subtitles to another format
     /// </summary>
     /// <param name="format">(currently supported: ass, lrc, srt, vtt)</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithConvertSubtitles(string format = "none")
     {
@@ -972,6 +1090,7 @@ public sealed partial class Ytdlp
     /// Convert the thumbnails to another format. You can specify multiple rules using similar WithRemuxVideo().
     /// </summary>
     /// <param name="format">(currently supported: jpg, png, webp)</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithConvertThumbnails(string format = "jpg")
     {
@@ -985,6 +1104,7 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Split video into multiple files based on internal chapters. The "chapter:" prefix can be used with the output filename for the split files.
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSplitChapters() => AddFlag("--split-chapters");
 
     /// <summary>
@@ -992,6 +1112,7 @@ public sealed partial class Ytdlp
     /// This option can be used multiple times to remove multiple sections"/>
     /// </summary>
     /// <param name="regex"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithRemoveChapters(string regex)
     {
@@ -1012,6 +1133,7 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="postProcessor"></param>
     /// <param name="postProcessorArgs"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithUsePostProcessor(PostProcessors postProcessor, string? postProcessorArgs = null)
     {
         if (!string.IsNullOrWhiteSpace(postProcessorArgs))
@@ -1029,6 +1151,7 @@ public sealed partial class Ytdlp
     /// You can prefix the category with a "-" to exclude it. E.g. SponsorBlockMark("all,-preview)
     /// </summary>
     /// <param name="categories"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSponsorblockMark(string categories = "all") => AddOption("--sponsorblock-mark", categories);
 
     /// <summary>
@@ -1036,11 +1159,13 @@ public sealed partial class Ytdlp
     /// If a category is present in both mark and remove, remove takes precedence. Working and available categories are the same as for WithSponsorblockMark()
     /// </summary>
     /// <param name="categories"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithSponsorblockRemove(string categories = "all") => new Ytdlp(this, sponsorblockRemove: categories);
 
     /// <summary>
     /// Disable both WithSponsorblockMark() and WithSponsorblockRemove() options and do not use any sponsorblock features
     /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoSponsorblock() => AddFlag("--no-sponsorblock");
 
     #endregion
@@ -1053,7 +1178,7 @@ public sealed partial class Ytdlp
     /// <remarks>Use this method to add a single custom flag to the Ytdlp command invocation. This does not
     /// modify the current instance, but returns a new one with the additional flag applied.</remarks>
     /// <param name="flag">The command-line flag to add. Leading and trailing whitespace is ignored. Cannot be null or empty.</param>
-    /// <returns>A new Ytdlp instance that includes the specified flag in its configuration.</returns>
+    /// <returns>A new <see cref="Ytdlp"/> instance that includes the specified flag in its configuration.</returns>
     public Ytdlp AddFlag(string flag)
     {
         if (string.IsNullOrWhiteSpace(flag))
@@ -1079,7 +1204,7 @@ public sealed partial class Ytdlp
     /// when constructing command-line arguments.</remarks>
     /// <param name="key">The name of the command-line option to add. Leading and trailing whitespace is ignored. Cannot be null or empty.</param>
     /// <param name="value">The value to assign to the specified command-line option. Cannot be null.</param>
-    /// <returns>A new Ytdlp instance that includes the specified option in addition to any existing options.</returns>
+    /// <returns>A new <see cref="Ytdlp"/> instance that includes the specified option in addition to any existing options.</returns>
     public Ytdlp AddOption(string key, string value)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -1111,6 +1236,7 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="downloaderName"></param>
     /// <param name="downloaderArgs"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithExternalDownloader(string downloaderName, string? downloaderArgs = null)
     {
@@ -1131,6 +1257,7 @@ public sealed partial class Ytdlp
     /// Use aria2c as the external downloader with the specified number of connections per download. This is a convenient wrapper around <see cref="WithExternalDownloader(string, string)"/>
     /// </summary>
     /// <param name="connections"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithAria2(int connections = 16)
     {
         return new Ytdlp(this, extraOptions: new[]
@@ -1143,15 +1270,15 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Use the native HLS downloader (requires ffmpeg). This is usually faster than the default downloader for HLS streams and can be used as a workaround for certain extraction issues, but may cause compatibility issues with some sites
     /// </summary>
-    /// <returns></returns>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithHlsNative() => AddOption("--downloader", "hlsnative");
 
     /// <summary>
     /// Use ffmpeg as the external downloader with the specified extra arguments. This is a convenient wrapper around <see cref="WithExternalDownloader(string, string)"/>
     /// </summary>
     /// <param name="extraFfmpegArgs">Additional arguments to pass to ffmpeg. Can be null.</param>
-    /// <returns>A new instance of the Ytdlp class with ffmpeg as the external downloader and the specified extra arguments applied.</returns>
-    public Ytdlp WithFfmpegAsLiveDownloader(string? extraFfmpegArgs = null) => WithExternalDownloader("ffmpeg", extraFfmpegArgs);
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithFFmpegAsLiveDownloader(string? extraFfmpegArgs = null) => WithExternalDownloader("ffmpeg", extraFfmpegArgs);
 
     #endregion
 
@@ -1249,10 +1376,28 @@ public sealed partial class Ytdlp
 
     #region Bonus
 
+    /// <summary>
+    /// Downloads the best available quality up to 1440p.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp With1440pOrBest() => new Ytdlp(this, format: "bv*[height<=?1440]+bestaudio/best");
+
+    /// <summary>
+    /// Downloads the best available quality up to 1440p.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp With1080pOrBest() => new Ytdlp(this, format: "bv*[height<=?1080]+bestaudio/best");
+
+    /// <summary>
+    /// Downloads the best available quality up to 1440p.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp With720pOrBest() => new Ytdlp(this, format: "bv*[height<=?720]+bestaudio/best");
 
+    /// <summary>
+    /// Preset for remux to mp4 with embed metadata, chapters, thumbnail.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithMp4PostProcessingPreset()
         => this
             .WithRemuxVideo("mp4")
@@ -1260,11 +1405,23 @@ public sealed partial class Ytdlp
             .WithEmbedChapters()
             .WithEmbedThumbnail();
 
+    /// <summary>
+    /// Output to mkv with remux and merge.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithMkvOutput()
         => this
             .WithRemuxVideo("mkv")
             .WithMergeOutputFormat("mkv");
 
+    /// <summary>
+    /// Downloads the best available quality up to the specified height.
+    /// </summary>
+    /// <param name="height">Maximum video height in pixels.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="height"/> is less than or equal to zero.
+    /// </exception>
     public Ytdlp WithMaxHeight(int height)
     {
         if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height), "Height must be positive");
@@ -1273,6 +1430,14 @@ public sealed partial class Ytdlp
         return new Ytdlp(this, format: formatSelector);
     }
 
+    /// <summary>
+    /// Downloads the best available quality up to the specified height or best.
+    /// </summary>
+    /// <param name="height">Maximum video height in pixels.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="height"/> is less than or equal to zero.
+    /// </exception>
     public Ytdlp WithMaxHeightOrBest(int height)
     {
         if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height), "Height must be positive");
@@ -1281,11 +1446,28 @@ public sealed partial class Ytdlp
         return new Ytdlp(this, format: formatSelector);
     }
 
+    /// <summary>
+    /// Selects the best available video and best available audio streams.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithBestVideoPlusBestAudio() => new Ytdlp(this, format: "bv*+bestaudio/best");
+
+    /// <summary>
+    /// Selects the best available audio-only format.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithBestAudioOnly() => new Ytdlp(this, format: "bestaudio");
 
-    public Ytdlp WithNo4k() => new Ytdlp(this, format: "bv*[height<=?2160]+bestaudio/best");
+    /// <summary>
+    /// Excludes formats above 2160p and selects the best available video and audio.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNo4k() => new Ytdlp(this, format: "bv*[height<?2160]+bestaudio/best");
 
+    /// <summary>
+    /// Prefers the best available M4A audio format, falling back to the best available audio.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithBestM4aAudio() => new Ytdlp(this, format: "bestaudio[ext=m4a]/bestaudio/best");
     #endregion
 }

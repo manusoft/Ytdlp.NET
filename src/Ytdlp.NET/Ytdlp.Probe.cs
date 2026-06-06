@@ -503,7 +503,7 @@ public sealed partial class Ytdlp
             }
         }
 
-        _logger.Log(LogType.Info, $"Parsed {formats.Count} formats");
+        _logger.Log(LogType.Information, $"Parsed {formats.Count} formats");
         return formats;
     }
 

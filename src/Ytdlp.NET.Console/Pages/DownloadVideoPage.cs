@@ -20,22 +20,23 @@ internal static class DownloadVideoPage
             .WithOutputTemplate("%(title)s.%(ext)s")
             .WithOutputFolder("./downloads")
             .WithConcurrentFragments(8)
+            .WithAuthentication("user","pwd")
             .WithEmbedMetadata()
             .WithEmbedThumbnail();
 
         var dashboard = new ProgressDashboard();
 
-        ytdlp.OnProgressDownload += (_, p) =>
+        ytdlp.ProgressDownload += (_, p) =>
         {
             dashboard.Update(p.Percent, p.Speed, p.ETA, p.Size);
         };
 
-        ytdlp.OnOutputMessage += (_, msg) =>
+        ytdlp.OutputMessage += (_, msg) =>
         {
             Console.WriteLine(msg);
         };
 
-        ytdlp.OnCommandCompleted += (_, result) =>
+        ytdlp.CommandCompleted += (_, result) =>
         {
             Console.WriteLine();
             ConsoleExtensions.WriteLineColor(result.Success ? "SUCCESS" : "FAILED", result.Success ? ConsoleColor.Green : ConsoleColor.Red
