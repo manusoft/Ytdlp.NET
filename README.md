@@ -26,38 +26,6 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 
 ---
 
-# ✨ Features
-
-* Fluent API (`WithXxx()` methods)
-* Immutable design (thread‑safe instances)
-* Real‑time progress events
-* Metadata & format probing
-* Batch downloads
-* Cancellation support
-* Cross‑platform support
-* Strongly typed event system
-* Async execution
-
----
-
-# 🚀 New in this version
-
-* New **GetAdobePassListAsync()** for Adobe Pass mso listing.
-* New **GetSubtitlesAsync()** for subtitle extraction.
-* New **Traverse()** method for easy iteration over nested playlist entries.
-* New **GetDeepMetadataAsync()** method for comprehensive metadata extraction.
-* New **GetDeepMetadataRawAsync()** for raw JSON metadata.
-* Improved **Metadata** model with more fields and better parsing.
-* Improved **UpdateAsync** with specific version support.
-* Full support for **IAsyncDisposable** with **await using**.
-* Immutable builder (**WithXxx**) for safe instance reuse.
-* Updated examples for event-driven downloads.
-* Simplified metadata fetching & format selection.
-* High-performance probe methods with optional buffer size.
-* Improved cancellation & error handling.
-
----
-
 ## ✨ Features
 
 * **Fluent API**: Build yt-dlp commands with `WithXxx()` methods.
@@ -68,6 +36,24 @@ The library exposes **event‑driven progress reporting**, **metadata probing**,
 * **Output Templates**: Flexible naming with yt-dlp placeholders.
 * **Custom Command Injection**: Add extra yt-dlp options safely.
 * **Cross-platform**: Windows, macOS, Linux (where yt-dlp is supported).
+
+---
+
+# 🚀 New in this version
+
+* Add more **WithXxx()** methods for advanced options.
+* New **GetAdobePassListAsync()** for Adobe Pass mso listing.
+* New **GetSubtitlesAsync()** for subtitle extraction.
+* New **Traverse()** method for easy iteration over nested playlist entries.
+* New **GetDeepMetadataAsync()** method for comprehensive metadata extraction.
+* New **GetDeepMetadataRawAsync()** for raw JSON metadata.
+* Improved **Metadata** model with more fields and better parsing.
+* Improved **UpdateAsync** with specific version support.
+* Immutable builder (**WithXxx**) for safe instance reuse.
+* Updated examples for event-driven downloads.
+* Simplified metadata fetching & format selection.
+* High-performance probe methods with optional buffer size.
+* Improved cancellation & error handling.
 
 ---
 
@@ -111,6 +97,7 @@ var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");
 > **Ytdlp** holds no unmanaged resources and does not implement **IDisposable** or **IAsyncDisposable**. Instances are plain configuration objects — create them, share them freely, and let the GC collect them when they go out of scope. All internal runners and parsers are created per-call and cleaned up automatically after each execution.
 
 ## 🔐 Improved Secure Authentication Support
+
 Implemented secure authentication handling for various scenarios, including standard username/password and Adobe Pass authentication.
 
 - .WithAuthentication(string username, string password)
@@ -219,7 +206,7 @@ var ytdlp = new Ytdlp("tools\\yt-dlp.exe", new ConsoleLogger())
     .WithEmbedMetadata()
     .WithEmbedThumbnail();
 
-ytdlp.rogressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
 ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Download complete: {msg}");
 
 await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");
@@ -561,36 +548,65 @@ AND MORE ...
 
 ---
 
-# 🔄 Upgrade Guide (v3 → v4)
+# 🔄 Migration Guide: Upgrading to v4
 
-v4 introduces a **new immutable fluent API**.
+Version 4.0.0 is a major release that refines the API for better maintainability and removes the overhead of manual lifecycle management.
 
-Old mutable commands were removed.
+> **Note:** The primary breaking change is the removal of `IDisposable`/`IAsyncDisposable`. You no longer need to dispose of your `Ytdlp` instances.
+
+### 1. Key Changes at a Glance
+
+| Feature | v3.x | v4.x |
+| --- | --- | --- |
+| **Lifecycle** | Required `IAsyncDisposable` | **No disposal required** |
+| **Architecture** | Immutable Fluent API | Immutable Fluent API (Refactored) |
+| **Core Process** | `ProcessFactory` | `ProcessFactory` (Refactored) |
+| **Core Runner** | `ProbeRunner` `DownloadRunner` | `ProcessRunner` |
 
 ---
 
-## ❌ Old API (v3)
+### 2. Side-by-Side Comparison
+
+#### ❌ Legacy API (v3)
 
 ```csharp
-var ytdlp = new Ytdlp();
+// Previously required disposal
+await using var ytdlp = new Ytdlp()
+    .WithFormat("best")
+    .WithOutputFolder("./downloads");
 
-await using var ytdlp
-    .SetFormat("best")
-    .SetOutputFolder("./downloads")
-    .ExecuteAsync(url);
+await ytdlp.DownloadAsync(url);
+
 ```
 
----
-
-## ✅ New API (v4)
+#### ✅ New API (v4)
 
 ```csharp
+// Cleaner: No disposal required
 var ytdlp = new Ytdlp()
     .WithFormat("best")
     .WithOutputFolder("./downloads");
 
 await ytdlp.DownloadAsync(url);
+
 ```
+
+---
+
+### 3. Why the change?
+
+We have streamlined the `Ytdlp` lifecycle. Because the instance does not hold unmanaged resources that require explicit cleanup, we have removed the `IDisposable` and `IAsyncDisposable` interfaces.
+
+* **Cleaner Code:** Your codebase is now free of `await using` or `using` statements for `Ytdlp` instances.
+* **Refactored Core:** The internal `ProcessFactory` has been updated and introduce `ProcessRunner` to handle process execution more efficiently without needing to manage the object lifecycle manually.
+
+---
+
+### 4. Migration Checklist
+
+* [ ] **Remove `await using` or `using`:** Simply delete the disposal keywords where you instantiate `Ytdlp`.
+* [ ] **Update Core References:** If you were directly interacting with `ProcessFactory` or custom `ProcessRunner` implementations, please review the updated core interfaces, as these have been modernized to support the new execution flow.
+* [ ] **Verify Events:** Ensure event subscriptions are attached to the instance used for the specific execution.
 
 ---
 
