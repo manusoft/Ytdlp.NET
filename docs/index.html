@@ -137,8 +137,8 @@
     .WithEmbedMetadata()
     .WithEmbedThumbnail();
 
-ytdlp.OnProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
-ytdlp.OnCompleteDownload += (s, msg) => Console.WriteLine($"Download complete: {msg}");
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Download complete: {msg}");
 
 await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
             </div>
