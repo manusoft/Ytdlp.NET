@@ -16,11 +16,9 @@
 
 ---
 
-### Video Downloader - .NET App
+### Video Downloader - .NET App - [Download](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/video-downloader-app-v2.0.7z)
 
 ![Download ClipMate](https://github.com/user-attachments/assets/1b977927-ea26-4220-bd41-9f64d6716058)
-
-![Download ClipMate Lite](https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/video-downloader-app-v2.0.7z)
 
 ---
 
@@ -40,6 +38,7 @@
 ## 🚀 New in v4.0.0
 
 - **Lifecycle Refinement: No disposal required.** The library no longer implements ``IDisposable`` or ``IAsyncDisposable``. Instances are plain configuration objects.
+- **Advanced Execution:** New `ExecuteRawAsync()` for power users who need to execute custom commands that bypass the fluent builder.
 - **Deep Metadata Support:** Added ``GetDeepMetadataAsync()`` and ``GetDeepMetadataRawAsync()`` for full hierarchical structure (playlists → seasons → episodes).
 - **Traverse Helper:** New ``Traverse()`` method for easy iteration over nested playlist entries.
 - **Improved Auth:** Enhanced ``WithAdobePassAuthentication()`` and ``WithAuthentication()`` handling.
@@ -139,6 +138,30 @@ await Task.WhenAll(
     highRes.DownloadAsync(url2)
 );
 ```
+
+---
+## ⚡ Advanced Execution & Control
+
+For power users who need to execute custom commands that bypass the fluent builder, use `ExecuteRawAsync`. This acts as an "escape hatch" for scenarios where specific, non-standard, or experimental `yt-dlp` flags are required.
+
+### How it works
+This method automatically intelligently switches output handling based on how you use it:
+
+- **Streaming Mode:** Provide an `Action<string>` to `onLineReceived` to stream output in real-time (ideal for progress monitoring or logs).
+- **Capture Mode:** Pass null to `onLineReceived` to capture the entire process output into result.FullOutput (ideal for JSON metadata probing or one-off commands).
+
+```csharp
+var ytdlp = new Ytdlp("yt-dlp.exe");
+
+// 1. Capture Mode (Probe/Manual)
+var result = await ytdlp.ExecuteRawAsync("--version");
+Console.WriteLine($"yt-dlp version: {result.FullOutput}");
+
+// 2. Streaming Mode (Real-time tracking)
+await ytdlp.ExecuteRawAsync("--help", onLineReceived: line => Console.WriteLine(line));
+```
+
+> **Note:** While `ExecuteRawAsync` handles security and formatting, logical validation (e.g., passing valid `yt-dlp` flags) remains the responsibility of the developer. Always prefer the fluent `WithXxx()` methods for standard download tasks.
 
 ---
 
@@ -305,6 +328,9 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 ### Download
 * `DownloadAsync(string url)`
 * `DownloadBatchAsync(IEnumerable<string> urls, int maxConcurrency)`
+
+### Advanced Execution
+* `ExecuteRawAsync(string arguments, Action<string>? onLineReceived = null, CancellationToken ct = default, bool tuneProcess = true)`
 
 ---
 
