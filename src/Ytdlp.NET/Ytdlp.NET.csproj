@@ -42,16 +42,19 @@
 			Ytdlp.NET
 
 			✨ Features
-			- No disposal required, Ytdlp holds no unmanaged resources.
-			- Added more Fluent methods and Probe methods.
-			- Enhanced security for authentication methods.
-			- Implemented file permission for Unix based system.
-			- Events renamed for better usage.
+			- Lifecycle Refinement: No disposal required. The library no longer implements IDisposable or IAsyncDisposable. Instances are plain configuration objects.
+			- Advanced Execution: New `ExecuteRawAsync()` for power users who need to execute custom commands that bypass the fluent builder.
+			- Deep Metadata Support: New GetDeepMetadataAsync() and GetDeepMetadataRawAsync() for full hierarchical structure (playlists → seasons → episodes).
+			- Traverse Helper: New Traverse() method for easy iteration over nested playlist entries.
+			- Improved Auth: Enhanced WithAdobePassAuthentication() and WithAuthentication() handling.
+			- Subtitle Extraction: New GetSubtitlesAsync() for streamlined subtitle retrieval.
+			- MSO Listing: New GetAdobePassListAsync() for Adobe Pass mso listing.
+			- Robust Core: Modernized ProcessRunner and ProcessFactory for efficient, isolated execution
 
 			🛠 Notes
 			- Companion packages recommended: ManuHub.Ytdlp, ManuHub.FFmpeg, ManuHub.FFprobe, ManuHub.Deno.
-			- All examples and documentation updated.
 			- This release greatly improves reliability, cancellation, and maintainability.
+			- All examples and documentation updated.
 
 			See the repository for the full documentation and migration guide.
 		</PackageReleaseNotes>
