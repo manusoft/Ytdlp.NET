@@ -15,7 +15,8 @@ public sealed partial class Ytdlp
     {
         PropertyNameCaseInsensitive = true,
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        TypeInfoResolver = YtdlpJsonContext.Default
     };
 
     #endregion
@@ -147,7 +148,7 @@ public sealed partial class Ytdlp
 
         try
         {
-            return JsonSerializer.Deserialize<Metadata>(json, JsonOptions);
+            return JsonSerializer.Deserialize(json, YtdlpJsonContext.Default.Metadata);
         }
         catch (Exception ex)
         {
@@ -187,7 +188,7 @@ public sealed partial class Ytdlp
 
         try
         {
-            return JsonSerializer.Deserialize<Metadata>(json, JsonOptions);
+            return JsonSerializer.Deserialize(json, YtdlpJsonContext.Default.Metadata);
         }
         catch (Exception ex)
         {
@@ -208,24 +209,6 @@ public sealed partial class Ytdlp
     /// (non-flattened) metadata, or null if the output is empty.</returns>
     public async Task<string?> GetDeepMetadataRawAsync(string url, CancellationToken ct = default, bool tuneProcess = true)
         => await GetMetadataInternalAsync(url, flat: false, ct, tuneProcess);
-
-    private async Task<string?> GetMetadataInternalAsync(string url, bool flat, CancellationToken ct, bool tuneProcess)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-            throw new ArgumentException("URL cannot be empty.", nameof(url));
-
-        var arguments =
-            "--dump-single-json " +
-            "--simulate " +
-            "--skip-download " +
-            (flat ? "--flat-playlist " : "") +
-            "--lazy-playlist " +
-            "--quiet " +
-            "--no-warnings " +
-            $"{Quote(url)}";
-
-        return await RunProbeAsync(arguments, ct, tuneProcess);
-    }
 
     /// <summary>
     /// Retrieves a list of all available stream formats for a given URL.
@@ -475,6 +458,25 @@ public sealed partial class Ytdlp
             _logger.Log(LogType.Error, $"Probe failed: {ex.Message}");
             return null;
         }
+    }
+
+
+    private async Task<string?> GetMetadataInternalAsync(string url, bool flat, CancellationToken ct, bool tuneProcess)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("URL cannot be empty.", nameof(url));
+
+        var arguments =
+            "--dump-single-json " +
+            "--simulate " +
+            "--skip-download " +
+            (flat ? "--flat-playlist " : "") +
+            "--lazy-playlist " +
+            "--quiet " +
+            "--no-warnings " +
+            $"{Quote(url)}";
+
+        return await RunProbeAsync(arguments, ct, tuneProcess);
     }
 
     private List<Format> ParseFormats(string result)

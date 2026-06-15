@@ -1,4 +1,6 @@
-﻿namespace ManuHub.Ytdlp.NET;
+﻿using System.Text.Json.Serialization;
+
+namespace ManuHub.Ytdlp.NET;
 
 internal static class RegexPatterns
 {
