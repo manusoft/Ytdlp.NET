@@ -136,7 +136,11 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="proxy">Pass in an empty string for direct connection</param>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
-    public Ytdlp WithProxy(string? proxy) => string.IsNullOrWhiteSpace(proxy) ? this : new Ytdlp(this, proxy: proxy);
+    public Ytdlp WithProxy(string? proxy)
+    {
+        if (proxy == null) return this;
+        return AddOption("--proxy", proxy);
+    }
 
     /// <summary>
     /// Time to wait before giving up, in seconds
@@ -149,6 +153,34 @@ public sealed partial class Ytdlp
         double seconds = timeout.TotalSeconds;
         return AddOption("--socket-timeout", seconds.ToString("F0"));
     }
+
+    /// <summary>
+    /// Client-side IP address to bind to.
+    /// </summary>
+    /// <param name="ipAddress">The IP address to bind to.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithSourceAddress(string ipAddress)
+    {
+        if (string.IsNullOrWhiteSpace(ipAddress)) return this;
+        return AddOption("--source-address", ipAddress);
+    }
+
+    /// <summary>
+    /// Client to impersonate for requests. E.g. "chrome", "chrome-110", "chrome:windows-10".
+    /// </summary>
+    /// <param name="client">Pass string.Empty ("") to impersonate any client, or null to skip the option.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithImpersonate(string? client)
+    {
+        if (client == null) return this;
+        return AddOption("--impersonate", client);
+    }
+
+    /// <summary>
+    /// Impersonates any available client for requests (<c>--impersonate ""</c>).
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithImpersonateAny() => AddOption("--impersonate", string.Empty);
 
     /// <summary>
     /// Make all connections via IPv4
@@ -179,12 +211,12 @@ public sealed partial class Ytdlp
     /// <param name="url"></param>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
-    public Ytdlp WithGeoVerificationProxy(string url) 
+    public Ytdlp WithGeoVerificationProxy(string url)
     {
-        if(string.IsNullOrWhiteSpace(url))
+        if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException(nameof(url));
         return AddOption("--geo-verification-proxy", url);
-    } 
+    }
 
     /// <summary>
     /// How to fake X-Forwarded-For HTTP header to try bypassing geographic restriction. One of "default" (only when known to be useful),
@@ -204,18 +236,45 @@ public sealed partial class Ytdlp
     #region Video Selection
 
     /// <summary>
-    /// Comma-separated playlist_index of the items to download. You can specify a range using "[START]:[STOP][:STEP]".
-    /// For backward compatibility, START-STOP is also supported. Use negative indices to count from the right and negative STEP to download in reverse order.
-    /// E.g. "1:3,7,-5::2" used on a playlist of size 15 will download the items at index 1,2,3,7,11,13,15
+    /// Specify playlist items to download using raw yt-dlp syntax (e.g., "1:3,7,-5::2" or "1-5,8").
     /// </summary>
-    /// <param name="items"></param>
+    /// <param name="items">The raw item specification string.</param>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
-    /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithPlaylistItems(string items)
     {
         if (string.IsNullOrWhiteSpace(items))
             throw new ArgumentException("Playlist items string cannot be empty.", nameof(items));
+
         return AddOption("--playlist-items", items.Trim());
+    }
+
+    /// <summary>
+    /// Specify individual playlist item indices to download (e.g., 1, 2, 5, -1).
+    /// </summary>
+    /// <param name="indices">One or more 1-based playlist indices.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithPlaylistItems(params int[] indices)
+    {
+        if (indices == null || indices.Length == 0) return this;
+        return AddOption("--playlist-items", string.Join(",", indices));
+    }
+
+    /// <summary>
+    /// Specify a playlist item range to download using [start]:[stop][:step].
+    /// </summary>
+    /// <param name="start">1-based starting index (optional).</param>
+    /// <param name="stop">1-based ending index (optional).</param>
+    /// <param name="step">Step size/direction (optional, e.g. -1 for reverse).</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithPlaylistRange(int? start = null, int? stop = null, int? step = null)
+    {
+        if (!start.HasValue && !stop.HasValue && !step.HasValue) return this;
+
+        string startStr = start?.ToString() ?? "";
+        string stopStr = stop?.ToString() ?? "";
+        string stepStr = step.HasValue ? $":{step.Value}" : "";
+
+        return AddOption("--playlist-items", $"{startStr}:{stopStr}{stepStr}");
     }
 
     /// <summary>
@@ -304,6 +363,29 @@ public sealed partial class Ytdlp
     }
 
     /// <summary>
+    /// Do not use any match filters (default). Clears any previously set match filters.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoMatchFilters() => AddFlag("--no-match-filters");
+
+    /// <summary>
+    /// Same as --match-filter, but stops the download process completely when a video is rejected.
+    /// </summary>
+    /// <param name="filter">The filter expression (e.g. "like_count &lt; 100", "duration &gt; 600").</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithBreakMatchFilter(string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter)) return this;
+        return AddOption("--break-match-filters", filter.Trim());
+    }
+
+    /// <summary>
+    /// Do not use any break match filters (default). Resets any applied break match filters.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoBreakMatchFilters() => AddFlag("--no-break-match-filters");
+
+    /// <summary>
     /// Download only the video, if the URL refers to a video and a playlist
     /// </summary>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
@@ -330,7 +412,7 @@ public sealed partial class Ytdlp
     /// <summary>
     /// Download only videos not listed in the archive file. Record the IDs of all downloaded videos in it
     /// </summary>
-    /// <param name="archivePath"></param>
+    /// <param name="archivePath">Path to the download archive file.</param>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     /// <exception cref="ArgumentException"></exception>
     public Ytdlp WithDownloadArchive(string archivePath = "archive.txt")
@@ -339,6 +421,12 @@ public sealed partial class Ytdlp
             throw new ArgumentException("Archive path cannot be empty", nameof(archivePath));
         return AddOption("--download-archive", Path.GetFullPath(archivePath));
     }
+
+    /// <summary>
+    /// Do not use archive file (default)
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoDownloadArchive() => AddFlag("--no-download-archive");
 
     /// <summary>
     /// Abort after downloading number files
@@ -353,10 +441,39 @@ public sealed partial class Ytdlp
     }
 
     /// <summary>
-    /// Stop the download process when encountering a file that is in the archive supplied with the <see cref="WithDownloadArchive(string)" /> option
+    /// Stop the download process when encountering a file that is already in the archive supplied with --download-archive.
     /// </summary>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithBreakOnExisting() => AddFlag("--break-on-existing");
+
+    /// <summary>
+    /// Do not stop the download process when encountering a file that is in the archive (default).
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoBreakOnExisting() => AddFlag("--no-break-on-existing");
+
+    /// <summary>
+    /// Alters --max-downloads, --break-on-existing, --break-match-filters, and autonumber to reset per input URL.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithBreakPerInput() => AddFlag("--break-per-input");
+
+    /// <summary>
+    /// Causes --break-on-existing and similar options to terminate the entire download queue instead of per input.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoBreakPerInput() => AddFlag("--no-break-per-input");
+
+    /// <summary>
+    /// Number of allowed failures until the rest of the playlist is skipped.
+    /// </summary>
+    /// <param name="allowedFailures">Number of allowed error failures before skipping.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithSkipPlaylistAfterErrors(int allowedFailures)
+    {
+        if (allowedFailures < 0) return this;
+        return AddOption("--skip-playlist-after-errors", allowedFailures.ToString());
+    }
 
     #endregion
 
@@ -410,6 +527,67 @@ public sealed partial class Ytdlp
     }
 
     /// <summary>
+    /// Sets the sleep behavior between retries using raw yt-dlp expression syntax.
+    /// E.g. "linear=1::2", "fragment:exp=1:20", or "http:5".
+    /// </summary>
+    /// <param name="retrySleepExpression">The retry sleep expression.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithRetrySleep(string retrySleepExpression)
+    {
+        if (string.IsNullOrWhiteSpace(retrySleepExpression)) return this;
+        return AddOption("--retry-sleep", retrySleepExpression.Trim());
+    }
+
+    /// <summary>
+    /// Sets a fixed sleep duration between retries for a specific retry type.
+    /// </summary>
+    /// <param name="seconds">Time to sleep in seconds.</param>
+    /// <param name="type">Optional retry type ("http", "fragment", "file_access", "extractor").</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithRetrySleep(int seconds, string? type = null)
+    {
+        if (seconds < 0) return this;
+        string prefix = string.IsNullOrWhiteSpace(type) ? "" : $"{type.Trim()}:";
+        return AddOption("--retry-sleep", $"{prefix}{seconds}");
+    }
+
+    /// <summary>
+    /// Configures a linear retry sleep expression: START[:END[:STEP=1]].
+    /// </summary>
+    /// <param name="start">Initial sleep time in seconds.</param>
+    /// <param name="end">Maximum sleep time in seconds (optional).</param>
+    /// <param name="step">Increment step size (defaults to 1 if end is specified).</param>
+    /// <param name="type">Optional retry type ("http", "fragment", "file_access", "extractor").</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithLinearRetrySleep(int start, int? end = null, int? step = null, string? type = null)
+    {
+        string prefix = string.IsNullOrWhiteSpace(type) ? "" : $"{type.Trim()}:";
+        string endStr = end.HasValue ? $":{end.Value}" : "";
+        string stepStr = step.HasValue ? $":{step.Value}" : "";
+
+        string expr = $"{prefix}linear={start}{endStr}{stepStr}";
+        return AddOption("--retry-sleep", expr);
+    }
+
+    /// <summary>
+    /// Configures an exponential retry sleep expression: START[:END[:BASE=2]].
+    /// </summary>
+    /// <param name="start">Initial sleep time in seconds.</param>
+    /// <param name="end">Maximum sleep time in seconds (optional).</param>
+    /// <param name="base">Exponential multiplier base (defaults to 2 if specified).</param>
+    /// <param name="type">Optional retry type ("http", "fragment", "file_access", "extractor").</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithExponentialRetrySleep(int start, int? end = null, double? @base = null, string? type = null)
+    {
+        string prefix = string.IsNullOrWhiteSpace(type) ? "" : $"{type.Trim()}:";
+        string endStr = end.HasValue ? $":{end.Value}" : "";
+        string baseStr = @base.HasValue ? $":{@base.Value}" : "";
+
+        string expr = $"{prefix}exp={start}{endStr}{baseStr}";
+        return AddOption("--retry-sleep", expr);
+    }
+
+    /// <summary>
     /// Skip unavailable fragments for DASH, hlsnative and ISM downloads (default)
     /// </summary>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
@@ -428,6 +606,12 @@ public sealed partial class Ytdlp
     public Ytdlp WithKeepFragments() => AddFlag("--keep-fragments");
 
     /// <summary>
+    /// Delete downloaded fragments after downloading is finished (default)
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoKeepFragments() => AddFlag("--no-keep-fragments");
+
+    /// <summary>
     /// Size of download buffer, (default is 1024) 
     /// </summary>
     /// <param name="size">e.g. 1024 or 16K</param>
@@ -441,10 +625,46 @@ public sealed partial class Ytdlp
     public Ytdlp WithNoResizeBuffer() => AddFlag("--no-resize-buffer");
 
     /// <summary>
+    /// Size of a chunk for chunk-based HTTP downloading (e.g. "10M", "10485760", "500K").
+    /// Useful for bypassing bandwidth throttling imposed by a webserver.
+    /// </summary>
+    /// <param name="size">Chunk size string (e.g., "10M" or "10485760").</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithHttpChunkSize(string size)
+    {
+        if (string.IsNullOrWhiteSpace(size)) return this;
+        return AddOption("--http-chunk-size", size.Trim());
+    }
+
+    /// <summary>
+    /// Size of a chunk for chunk-based HTTP downloading in bytes.
+    /// </summary>
+    /// <param name="bytes">Chunk size in bytes (e.g., 10_485_760 for 10MB).</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithHttpChunkSize(long bytes)
+    {
+        if (bytes <= 0) return this;
+        return AddOption("--http-chunk-size", bytes.ToString());
+    }
+
+    /// <summary>
     /// Download playlist videos in random order
     /// </summary>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithPlaylistRandom() => AddFlag("--playlist-random");
+
+    /// <summary>
+    /// Process entries in the playlist as they are received.
+    /// Disables n_entries, <see cref="WithPlaylistRandom"/>, and --playlist-reverse.
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithLazyPlaylist() => AddFlag("--lazy-playlist");
+
+    /// <summary>
+    /// Process videos in the playlist only after the entire playlist is parsed (default)
+    /// </summary>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithNoLazyPlaylist() => AddFlag("--no-lazy-playlist");
 
     /// <summary>
     /// Use the mpegts container for HLS videos; allowing some players to play the video while downloading, 
@@ -459,7 +679,6 @@ public sealed partial class Ytdlp
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoHlsUseMpegts() => AddFlag("--no-hls-use-mpegts");
 
-
     /// <summary>
     /// Download only chapters that match the regular expression. A "*" prefix denotes time-range instead of chapter.
     /// Negative timestamps are calculated from the end. "*from-url" can be used to download between the "start_time" and "end_time" extracted from the URL.
@@ -473,6 +692,45 @@ public sealed partial class Ytdlp
         return AddOption("--download-sections", regex);
     }
 
+    /// <summary>
+    /// Name or path of the external downloader to use (e.g. "aria2c", "ffmpeg", "curl").
+    /// Optionally prefix with protocols, e.g. "dash,m3u8:native".
+    /// </summary>
+    /// <param name="downloader">Downloader name or protocol specification.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithDownloader(string downloader)
+    {
+        if (string.IsNullOrWhiteSpace(downloader)) return this;
+        return AddOption("--downloader", downloader.Trim());
+    }
+
+    /// <summary>
+    /// Specify an external downloader for explicit protocols (e.g., protocols: ["dash", "m3u8"], downloader: "native").
+    /// </summary>
+    /// <param name="downloader">Name or path of the downloader (e.g. "aria2c", "native").</param>
+    /// <param name="protocols">Protocols to apply this downloader to (e.g. "http", "m3u8", "dash").</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithDownloader(string downloader, params string[] protocols)
+    {
+        if (string.IsNullOrWhiteSpace(downloader)) return this;
+        if (protocols == null || protocols.Length == 0)
+            return AddOption("--downloader", downloader.Trim());
+
+        string protocolList = string.Join(",", protocols.Select(p => p.Trim()));
+        return AddOption("--downloader", $"{protocolList}:{downloader.Trim()}");
+    }
+
+    /// <summary>
+    /// Pass custom arguments to an external downloader (e.g. downloader: "aria2c", args: "-c -j 16").
+    /// </summary>
+    /// <param name="downloaderName">The name of the target downloader (e.g. "aria2c", "ffmpeg").</param>
+    /// <param name="args">The arguments to pass.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithDownloaderArgs(string downloaderName, string args)
+    {
+        if (string.IsNullOrWhiteSpace(downloaderName) || string.IsNullOrWhiteSpace(args)) return this;
+        return AddOption("--downloader-args", $"{downloaderName.Trim()}:{args.Trim()}");
+    }
 
     #endregion
 
