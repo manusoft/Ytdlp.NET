@@ -330,6 +330,9 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 ### Network Options
 * `.WithProxy(string? proxy)`
 * `.WithSocketTimeout(TimeSpan timeout)`
+* `.WithSourceAddress(string ipAddress)`
+* `.WithImpersonate(string? client)`
+* `.WithImpersonateAny()`
 * `.WithForceIpv4()`
 * `.WithForceIpv6()`
 * `.WithEnableFileUrls()`
@@ -340,18 +343,28 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 
 ### Video Selection
 * `.WithPlaylistItems(string items)`
+* `.WithPlaylistItems(params int[] indices)`
+* `.WithPlaylistRange(int? start = null, int? stop = null, int? step = null)`
 * `.WithMinFileSize(string size)`
 * `.WithMaxFileSize(string size)`
 * `.WithDate(string date)`
 * `.WithDateBefore(string date)`
 * `.WithDateAfter(string date)`
 * `.WithMatchFilter(string filterExpression)`
+* `.WithNoMatchFilters()`
+* `.WithBreakMatchFilter(string filter)`
+* `.WithNoBreakMatchFilters()`
 * `.WithNoPlaylist()`
 * `.WithYesPlaylist()`
 * `.WithAgeLimit(int years)`
 * `.WithDownloadArchive(string archivePath = "archive.txt")`
+* `.WithNoDownloadArchive()`
 * `.WithMaxDownloads(int count)`
 * `.WithBreakOnExisting()`
+* `.WithNoBreakOnExisting()`
+* `.WithBreakPerInput()`
+* `.WithNoBreakPerInput()`
+* `.WithSkipPlaylistAfterErrors(int allowedFailures)`
 
 ### Download Options
 * `.WithConcurrentFragments(int count = 8)`
@@ -360,15 +373,26 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 * `.WithRetries(int maxRetries)`
 * `.WithFileAccessRetries(int maxRetries)`
 * `.WithFragmentRetries(int retries)`
+* `.WithRetrySleep(string retrySleepExpression)`
+* `.WithRetrySleep(int seconds, string? type = null)`
+* `.WithLinearRetrySleep(int start, int? end = null, int? step = null, string? type = null)`
+* `.WithExponentialRetrySleep(int start, int? end = null, double? @base = null, string? type = null)`
 * `.WithSkipUnavailableFragments()`
 * `.WithAbortOnUnavailableFragments()`
 * `.WithKeepFragments()`
 * `.WithBufferSize(string size)`
 * `.WithNoResizeBuffer()`
+* `.WithHttpChunkSize(string size)`
+* `.WithHttpChunkSize(long bytes)`
 * `.WithPlaylistRandom()`
+* `.WithLazyPlaylist()`
+* `.WithNoLazyPlaylist()`
 * `.WithHlsUseMpegts()`
 * `.WithNoHlsUseMpegts()`
 * `.WithDownloadSections(string regex)`
+* `.WithDownloader(string downloader)`
+* `.WithDownloader(string downloader, params string[] protocols)`
+* `.WithDownloaderArgs(string downloaderName, string args)`
 
 ### Filesystem Options
 * `.WithHomeFolder(string path)`
