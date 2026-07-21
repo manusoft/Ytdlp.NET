@@ -313,58 +313,11 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 
 ## 🛠 Fluent Methods
 
-### General Options
-* `.WithIgnoreErrors()`
-* `.WithAbortOnError()`
-* `.WithIgnoreConfig()`
-* `.WithConfigLocations(string path)`
-* `.WithPluginDirs(string path)`
-* `.WithNoPluginDirs(string path)`
-* `.WithJsRuntime(Runtime runtime, string runtimePath)`
-* `.WithNoJsRuntime()`
-* `.WithFlatPlaylist()`
-* `.WithLiveFromStart()`
-* `.WithWaitForVideo(TimeSpan? maxWait = null)`
-* `.WithMarkWatched()`   
-
-### Network Options
-* `.WithProxy(string? proxy)`
-* `.WithSocketTimeout(TimeSpan timeout)`
-* `.WithSourceAddress(string ipAddress)`
-* `.WithImpersonate(string? client)`
-* `.WithImpersonateAny()`
-* `.WithForceIpv4()`
-* `.WithForceIpv6()`
-* `.WithEnableFileUrls()`
-
-### Geo-restriction Options
-* `.WithGeoVerificationProxy(string url)`
-* `.WithGeoBypassCountry(string countryCode)`
-
-### Video Selection
-* `.WithPlaylistItems(string items)`
-* `.WithPlaylistItems(params int[] indices)`
-* `.WithPlaylistRange(int? start = null, int? stop = null, int? step = null)`
-* `.WithMinFileSize(string size)`
-* `.WithMaxFileSize(string size)`
-* `.WithDate(string date)`
-* `.WithDateBefore(string date)`
-* `.WithDateAfter(string date)`
-* `.WithMatchFilter(string filterExpression)`
-* `.WithNoMatchFilters()`
-* `.WithBreakMatchFilter(string filter)`
-* `.WithNoBreakMatchFilters()`
-* `.WithNoPlaylist()`
-* `.WithYesPlaylist()`
-* `.WithAgeLimit(int years)`
-* `.WithDownloadArchive(string archivePath = "archive.txt")`
-* `.WithNoDownloadArchive()`
-* `.WithMaxDownloads(int count)`
-* `.WithBreakOnExisting()`
-* `.WithNoBreakOnExisting()`
-* `.WithBreakPerInput()`
-* `.WithNoBreakPerInput()`
-* `.WithSkipPlaylistAfterErrors(int allowedFailures)`
+### Authentication Options
+* `.WithAuthentication(string username, string password)`
+* `.WithTwoFactor(string code)`
+* `.WithVideoPassword(string password)`
+* `.WithAdobePassAuthentication(string mso, string username, string password)`
 
 ### Download Options
 * `.WithConcurrentFragments(int count = 8)`
@@ -394,6 +347,15 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 * `.WithDownloader(string downloader, params string[] protocols)`
 * `.WithDownloaderArgs(string downloaderName, string args)`
 
+### Extractor Options
+* `.WithExtractorRetries(int retries)`
+* `.WithInfiniteExtractorRetries()`
+* `.WithAllowDynamicMpd()`
+* `.WithIgnoreDynamicMpd()`
+* `.WithHlsSplitDiscontinuity()`
+* `.WithNoHlsSplitDiscontinuity()`
+* `.WithExtractorArgs(string extractorKey, string args)`
+
 ### Filesystem Options
 * `.WithHomeFolder(string path)`
 * `.WithTempFolder(string path)`
@@ -420,34 +382,42 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 * `.WithNoCacheDir()`
 * `.WithRemoveCacheDir()`
 
-### Thumbnail Options
-* `.WithThumbnails(bool allSizes = false)`
+### General Options
+* `.WithIgnoreErrors()`
+* `.WithAbortOnError()`
+* `.WithIgnoreConfig()`
+* `.WithConfigLocations(string path)`
+* `.WithPluginDirs(string path)`
+* `.WithNoPluginDirs(string path)`
+* `.WithJsRuntime(Runtime runtime, string runtimePath)`
+* `.WithNoJsRuntime()`
+* `.WithRemoteComponent(string component)`
+* `.WithRemoteComponents(params string[] components)`
+* `.WithNoRemoteComponents()`
+* `.WithFlatPlaylist()`
+* `.WithLiveFromStart()`
+* `.WithWaitForVideo(TimeSpan? maxWait = null)`
+* `.WithMarkWatched()`   
+* `.WithNoMarkWatched()`
+* `.WithColor(string policy, string? stream = null)`
+* `.WithCompatOptions(string options)`
+* `.WithAlias(string alias, string options)`
+* `.WithPresetAlias(string preset)`
+* `.WithPresetAlias(YtdlpPreset preset)`
 
-### Verbosity and Simulation Options
-* `.WithQuiet()`
-* `.WithNoWarnings()`
-* `.WithSimulate()`
-* `.WithNoSimulate()`
-* `.WithSkipDownload()`
-* `.WithVerbose()`
+### Geo-restriction Options
+* `.WithGeoVerificationProxy(string url)`
+* `.WithGeoBypassCountry(string countryCode)`
 
-### Workgrounds
-* `.WithAddHeader(string header, string value)`
-* `.WithSleepInterval(double seconds, double? maxSeconds = null)`
-* `.WithSleepSubtitles(double seconds)`
-
-### Video Format Options
-* `.WithFormat(string format)`
-* `.WithMergeOutputFormat(string format)`
-
-### Subtitle Options
-* `.WithSubtitles(string languages = "all", bool auto = false)`
-
-### Authentication Options
-* `.WithAuthentication(string username, string password)`
-* `.WithTwoFactor(string code)`
-* `.WithVideoPassword(string password)`
-* `.WithAdobePassAuthentication(string mso, string username, string password)`
+### Network Options
+* `.WithProxy(string? proxy)`
+* `.WithSocketTimeout(TimeSpan timeout)`
+* `.WithSourceAddress(string ipAddress)`
+* `.WithImpersonate(string? client)`
+* `.WithImpersonateAny()`
+* `.WithForceIpv4()`
+* `.WithForceIpv6()`
+* `.WithEnableFileUrls()`
 
 ### Post-Processing Options
 * `.WithExtractAudio(string format, int quality = 5)`
@@ -477,15 +447,75 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 * `.WithSponsorblockRemove(string categories = "all")`
 * `.WithNoSponsorblock()`
 
-### Advanced Options
-* `.AddFlag(string flag)`
-* `.AddOption(string key, string value)`
+### Subtitle Options
+* `.WithSubtitles(string languages = "all", bool auto = false)`
+
+### Thumbnail Options
+* `.WithThumbnails(bool allSizes = false)`
+
+### Verbosity and Simulation Options
+* `.WithQuiet()`
+* `.WithNoWarnings()`
+* `.WithSimulate()`
+* `.WithNoSimulate()`
+* `.WithSkipDownload()`
+* `.WithVerbose()`
+
+### Video Selection
+* `.WithPlaylistItems(string items)`
+* `.WithPlaylistItems(params int[] indices)`
+* `.WithPlaylistRange(int? start = null, int? stop = null, int? step = null)`
+* `.WithMinFileSize(string size)`
+* `.WithMaxFileSize(string size)`
+* `.WithDate(string date)`
+* `.WithDateBefore(string date)`
+* `.WithDateAfter(string date)`
+* `.WithMatchFilter(string filterExpression)`
+* `.WithNoMatchFilters()`
+* `.WithBreakMatchFilter(string filter)`
+* `.WithNoBreakMatchFilters()`
+* `.WithNoPlaylist()`
+* `.WithYesPlaylist()`
+* `.WithAgeLimit(int years)`
+* `.WithDownloadArchive(string archivePath = "archive.txt")`
+* `.WithNoDownloadArchive()`
+* `.WithMaxDownloads(int count)`
+* `.WithBreakOnExisting()`
+* `.WithNoBreakOnExisting()`
+* `.WithBreakPerInput()`
+* `.WithNoBreakPerInput()`
+* `.WithSkipPlaylistAfterErrors(int allowedFailures)`
+
+### Video Format Options
+* `.WithFormat(string format)`
+* `.WithMergeOutputFormat(string format)`
+
+### Workgrounds
+* `.WithAddHeader(string header, string value)`
+* `.WithSleepInterval(double seconds, double? maxSeconds = null)`
+* `.WithSleepSubtitles(double seconds)`
 
 ### Downloaders
-* `.WithExternalDownloader(string downloaderName, string? downloaderArgs = null)`
 * `.WithAria2(int connections = 16)`
 * `.WithHlsNative()`
 * `.WithFfmpegAsLiveDownloader(string? extraFfmpegArgs = null)`
+
+### Bonus
+* `.With1440pOrBest()`
+* `.With1080pOrBest()`
+* `.With720pOrBest()`
+* `.WithMp4PostProcessingPreset()`
+* `.WithMkvOutput()`
+* `.WithMaxHeight(int height)`
+* `.WithMaxHeightOrBest(int height)`
+* `.WithBestVideoPlusBestAudio()`
+* `.WithBestAudioOnly()`
+* `.WithNo4k()`
+* `.WithBestM4aAudio()`
+
+### Advanced Options
+* `.AddFlag(string flag)`
+* `.AddOption(string key, string value)`
 
 ---
 
