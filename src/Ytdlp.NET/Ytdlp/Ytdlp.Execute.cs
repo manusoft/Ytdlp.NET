@@ -2,10 +2,12 @@
 
 namespace ManuHub.Ytdlp.NET;
 
+/// <summary>
+/// Partial class containing raw execution methods and helpers for the Ytdlp wrapper.
+/// </summary>
 public sealed partial class Ytdlp
 {
-
-    #region Advanced Execution & Utility Methods
+    #region Raw Execution Methods
 
     /// <summary>
     /// Executes a raw argument string directly. 

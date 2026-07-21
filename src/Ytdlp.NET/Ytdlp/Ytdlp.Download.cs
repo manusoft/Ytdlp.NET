@@ -5,40 +5,62 @@
 /// </summary>
 public sealed partial class Ytdlp
 {
-    #region Events
+    #region Download Events
     // Progress events
-    /// <summary>Raised to report download progress updates from yt-dlp.</summary>
-    /// <remarks>Provides real-time progress information such as percentage, speed, downloaded size, and estimated time remaining.</remarks>
+
+    /// <summary>
+    /// Raised to report download progress updates from yt-dlp.
+    /// </summary>
+    /// <remarks>
+    /// Provides real-time progress information such as percentage, speed, downloaded size, and estimated time remaining.
+    /// </remarks>
     public event EventHandler<DownloadProgressEventArgs>? ProgressDownload;
-    /// <summary>Raised when a progress/status message is produced.</summary>
+
+    /// <summary>
+    /// Raised when a progress/status message is produced.
+    /// </summary>
     public event EventHandler<string>? ProgressMessage;
 
     // Output events
-    /// <summary>Raised when a raw output line is emitted by yt-dlp.</summary>
+    
+    /// <summary>
+    /// Raised when a raw output line is emitted by yt-dlp.
+    /// </summary>
     public event EventHandler<string>? OutputMessage;
-    /// <summary>Raised when an error message is emitted by yt-dlp or the process runner.</summary>
+
+    /// <summary>
+    /// Raised when an error message is emitted by yt-dlp or the process runner.
+    /// </summary>
     public event EventHandler<string>? ErrorMessage;
 
     // Lifecycle events
-    /// <summary>Raised when a download operation completes successfully.</summary>
+
+    /// <summary>
+    /// Raised when a download operation completes successfully.
+    /// </summary>
     public event EventHandler<string>? DownloadCompleted;
-    /// <summary>Raised when the underlying process completes (success or failure).</summary>
+
+    /// <summary>
+    /// Raised when the underlying process completes (success or failure).
+    /// </summary>
     public event EventHandler<CommandCompletedEventArgs>? CommandCompleted;
 
     // Post-Processing events
-    /// <summary>Raised when post-processing starts (e.g., merging, ffmpeg step).</summary>
+
+    /// <summary>
+    /// Raised when post-processing starts (e.g., merging, ffmpeg step).
+    /// </summary>
     public event EventHandler<string>? PostProcessingStarted;
-    /// <summary>Raised when post-processing finishes.</summary>
-    public event EventHandler<string>? PostProcessingCompleted;   
-    
+
+    /// <summary>
+    /// Raised when post-processing finishes.
+    /// </summary>
+    public event EventHandler<string>? PostProcessingCompleted;
+
     #endregion
 
-    // ==================================================================================================================
-    // Download Functions
-    // ==================================================================================================================
-
-    #region Donnload Methods
-
+    #region Download Functions
+  
     /// <summary>
     /// Executes download processing for a URL.
     /// </summary>

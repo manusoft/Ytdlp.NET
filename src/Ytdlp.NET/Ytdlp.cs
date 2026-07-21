@@ -75,6 +75,7 @@ public sealed partial class Ytdlp
     // ==================================================================================================================
     // Immutable configuration fields events and flags and contructors
     // ==================================================================================================================
+
     #region Frozen configuration
     private readonly string _ytdlpPath;
     private readonly ILogger _logger;
@@ -96,7 +97,6 @@ public sealed partial class Ytdlp
     private readonly ImmutableArray<string> _flags;
     private readonly ImmutableArray<(string Key, string Value)> _options;
     #endregion
-
 
     #region Constructors
 
@@ -199,8 +199,70 @@ public sealed partial class Ytdlp
         _options = extraOptions is null ? other._options : other._options.AddRange(extraOptions);
     }
 
-    #endregion 
-    
+    #endregion
+
+    // ==================================================================================================================
+    // Base Fluent Methods
+    // ==================================================================================================================
+
+    #region Advanced Methods
+
+    /// <summary>
+    /// Returns a new instance of the Ytdlp class with the specified command-line flag added.
+    /// </summary>
+    /// <remarks>Use this method to add a single custom flag to the Ytdlp command invocation. This does not
+    /// modify the current instance, but returns a new one with the additional flag applied.</remarks>
+    /// <param name="flag">The command-line flag to add. Leading and trailing whitespace is ignored. Cannot be null or empty.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance that includes the specified flag in its configuration.</returns>
+    public Ytdlp AddFlag(string flag)
+    {
+        if (string.IsNullOrWhiteSpace(flag))
+            throw new ArgumentException("Flag cannot be null or empty.");
+
+        string trimmedFlag = flag.Trim();
+
+        // Validate: Flag must start with '-' and should not contain spaces
+        // This prevents "--flag1 --flag2" which is invalid for a single argument slot
+        if (!trimmedFlag.StartsWith("-"))
+            throw new ArgumentException("Flags must start with '-' or '--'.");
+
+        if (trimmedFlag.Contains(' '))
+            throw new ArgumentException("AddFlag expects a single flag. Use multiple calls for multiple flags, or use AddOption for key-value pairs.");
+
+        return new Ytdlp(this, extraFlags: new[] { trimmedFlag });
+    }
+
+    /// <summary>
+    /// Returns a new instance of the Ytdlp class with an additional command-line option specified by the given key and value.
+    /// </summary>
+    /// <remarks>This method does not modify the current instance. Use this method to fluently add options
+    /// when constructing command-line arguments.</remarks>
+    /// <param name="key">The name of the command-line option to add. Leading and trailing whitespace is ignored. Cannot be null or empty.</param>
+    /// <param name="value">The value to assign to the specified command-line option. Cannot be null.</param>
+    /// <returns>A new <see cref="Ytdlp"/> instance that includes the specified option in addition to any existing options.</returns>
+    public Ytdlp AddOption(string key, string value)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("Option key cannot be null or empty.");
+
+        string trimmedKey = key.Trim();
+
+        // Validate: Option keys must start with '-'
+        if (!trimmedKey.StartsWith("-"))
+            throw new ArgumentException("Option key must start with '-' or '--'.");
+
+        // Prevent users from trying to add a flag via AddOption
+        // Optional: Only allow if key doesn't contain spaces
+        if (trimmedKey.Contains(' '))
+            throw new ArgumentException("Option key cannot contain spaces.");
+
+        // Note: We do NOT trim/validate the value in the same way, 
+        // because paths or URLs might legitimately contain spaces or specific symbols.
+
+        return new Ytdlp(this, extraOptions: new[] { (trimmedKey, value) });
+    }
+
+    #endregion
 
     // ==================================================================================================================
     // Internal Common Helpers and Utilities

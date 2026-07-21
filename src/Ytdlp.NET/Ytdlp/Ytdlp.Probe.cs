@@ -21,10 +21,6 @@ public sealed partial class Ytdlp
 
     #endregion
 
-    // ==================================================================================================================
-    // Probe Functions
-    // ==================================================================================================================
-
     #region Execution & Utility Methods
 
     /// <summary>
@@ -422,11 +418,7 @@ public sealed partial class Ytdlp
 
     #endregion
 
-    // ==================================================================================================================
-    // Internal Probe Helpers and Utilities
-    // ==================================================================================================================
-
-    #region Helpers
+    #region Internal Probe Helpers and Utilities
 
     /// <summary>
     /// Executes any yt-dlp probe command (metadata, version, format list, etc.)
