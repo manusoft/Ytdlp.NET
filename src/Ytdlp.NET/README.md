@@ -445,7 +445,9 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 ### SponsorBlock Options
 * `.WithSponsorblockMark(string categories = "all")`
 * `.WithSponsorblockRemove(string categories = "all")`
+* `.WithSponsorblockChapterTitle(string template)`
 * `.WithNoSponsorblock()`
+* `.WithSponsorblockApi(string url)`
 
 ### Subtitle Options
 * `.WithSubtitles(string languages = "all", bool auto = false)`

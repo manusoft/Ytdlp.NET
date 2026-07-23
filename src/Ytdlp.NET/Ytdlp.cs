@@ -91,8 +91,10 @@ public sealed partial class Ytdlp
     private readonly string? _cookiesFromBrowser;
     private readonly string? _proxy;
     private readonly string? _ffmpegLocation;
+    private readonly string? _sponsorblockMark;
     private readonly string? _sponsorblockRemove;
-    private readonly int? _concurrentFragments;    
+    private readonly string? _sponsorblockChapterTitle;
+    private readonly int? _concurrentFragments;
 
     private readonly ImmutableArray<string> _flags;
     private readonly ImmutableArray<(string Key, string Value)> _options;
@@ -142,19 +144,21 @@ public sealed partial class Ytdlp
         _logger = logger ?? new DefaultLogger();
 
         // defaults
-        _auth = null; 
-        _adobePass = null; 
+        _auth = null;
+        _adobePass = null;
         _outputFolder = null;
         _tempFolder = null;
         _homeFolder = null;
         _outputTemplate = "%(title)s [%(id)s].%(ext)s";
         _format = "b";
-        _concurrentFragments = null;       
+        _concurrentFragments = null;
         _cookiesFile = null;
         _cookiesFromBrowser = null;
         _proxy = null;
         _ffmpegLocation = null;
+        _sponsorblockMark = null;
         _sponsorblockRemove = null;
+        _sponsorblockChapterTitle = null;
         _flags = ImmutableArray<string>.Empty;
         _options = ImmutableArray<(string, string)>.Empty;
     }
@@ -173,7 +177,9 @@ public sealed partial class Ytdlp
         string? cookiesFromBrowser = null,
         string? proxy = null,
         string? ffmpegLocation = null,
+        string? sponsorblockMark = null,
         string? sponsorblockRemove = null,
+        string? sponsorblockChapterTitle = null,
         IEnumerable<string>? extraFlags = null,
         IEnumerable<(string, string)>? extraOptions = null)
     {
@@ -193,7 +199,9 @@ public sealed partial class Ytdlp
         _cookiesFromBrowser = cookiesFromBrowser ?? other._cookiesFromBrowser;
         _proxy = proxy ?? other._proxy;
         _ffmpegLocation = ffmpegLocation ?? other._ffmpegLocation;
+        _sponsorblockMark = sponsorblockMark ?? other._sponsorblockMark;
         _sponsorblockRemove = sponsorblockRemove ?? other._sponsorblockRemove;
+        _sponsorblockChapterTitle = sponsorblockChapterTitle ?? other._sponsorblockChapterTitle;
 
         _flags = extraFlags is null ? other._flags : other._flags.AddRange(extraFlags);
         _options = extraOptions is null ? other._options : other._options.AddRange(extraOptions);
@@ -356,7 +364,7 @@ public sealed partial class Ytdlp
         // Concurrent fragments
         if (_concurrentFragments > 1)
         {
-            args.Add("--concurrent-fragments");
+            args.Add("--concurrent-fragments"); 
             args.Add(_concurrentFragments.Value.ToString());
         }
 
@@ -380,7 +388,9 @@ public sealed partial class Ytdlp
         if (_cookiesFromBrowser is not null) { args.Add("--cookies-from-browser"); args.Add(_cookiesFromBrowser); }
         if (_proxy is not null) { args.Add("--proxy"); args.Add(_proxy); }
         if (_ffmpegLocation is not null) { args.Add("--ffmpeg-location"); args.Add(_ffmpegLocation); }
+        if (_sponsorblockMark is not null) { args.Add("--sponsorblock-mark"); args.Add(_sponsorblockMark); }
         if (_sponsorblockRemove is not null) { args.Add("--sponsorblock-remove"); args.Add(_sponsorblockRemove); }
+        if (_sponsorblockChapterTitle is not null) { args.Add("--sponsorblock-chapter-title"); args.Add(_sponsorblockChapterTitle); }
 
         // URL last
         args.Add(url);

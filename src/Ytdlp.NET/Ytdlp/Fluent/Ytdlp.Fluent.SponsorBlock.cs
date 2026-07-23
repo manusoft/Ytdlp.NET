@@ -17,7 +17,7 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="categories"></param>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
-    public Ytdlp WithSponsorblockMark(string categories = "all") => AddOption("--sponsorblock-mark", categories);
+    public Ytdlp WithSponsorblockMark(string categories = "all") => new Ytdlp(this, sponsorblockMark: categories);
 
     /// <summary>
     /// SponsorBlock categories to be removed from the video file, separated by commas. 
@@ -28,9 +28,36 @@ public sealed partial class Ytdlp
     public Ytdlp WithSponsorblockRemove(string categories = "all") => new Ytdlp(this, sponsorblockRemove: categories);
 
     /// <summary>
+    /// Output template for SponsorBlock chapter titles (used with <see cref="WithSponsorblockMark(string)"/>).
+    /// Available fields: start_time, end_time, category, categories, name, category_names.
+    /// Defaults to "[SponsorBlock]: %(category_names)l"
+    /// </summary>
+    /// <param name="template"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithSponsorblockChapterTitle(string template)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+            template = "[SponsorBlock]: %(category_names)l";
+
+        return new Ytdlp(this, sponsorblockChapterTitle: template.Trim());
+    }
+
+    /// <summary>
     /// Disable both WithSponsorblockMark() and WithSponsorblockRemove() options and do not use any sponsorblock features
     /// </summary>
     /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
     public Ytdlp WithNoSponsorblock() => AddFlag("--no-sponsorblock");
 
+    /// <summary>
+    /// SponsorBlock API location, defaults to https://sponsor.ajay.app
+    /// </summary>
+    /// <param name="url"></param>
+    /// <returns>A new <see cref="Ytdlp"/> instance.</returns>
+    public Ytdlp WithSponsorblockApi(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            url = "https://sponsor.ajay.app";
+
+        return AddOption("--sponsorblock-api", url.Trim());
+    }
 }
