@@ -8,44 +8,47 @@
 
 ## ✨ Features
 
-- **Fluent API**: Build yt-dlp commands with `WithXxx()` methods.
-- **Immutable & thread-safe**: Each method returns a new instance, safe for parallel usage.
-- **Progress & Events**: Real-time progress tracking and post-processing notifications.
-- **Format Listing**: Retrieve and parse available formats.
-- **Batch Downloads**: Sequential or parallel execution.
-- **Output Templates**: Flexible naming with yt-dlp placeholders.
-- **Custom Command Injection**: Add extra yt-dlp options safely.
-- **Cross-platform**: Windows, macOS, Linux.
+- **Fluent API** — Build yt-dlp commands with a rich set of `WithXxx()` methods
+- **Immutable & thread-safe** — Each method returns a new instance, safe for parallel usage
+- **Progress & Events** — Real-time progress tracking and post-processing notifications
+- **Format & Metadata Listing** — Retrieve and parse available formats, subtitles, and deep hierarchical metadata
+- **Batch Downloads** — Sequential or parallel execution with concurrency control
+- **Output Templates** — Flexible naming using yt-dlp placeholders
+- **Custom Command Injection** — Safely add extra yt-dlp options or run raw commands
+- **Lifecycle Refinement: No disposal required.** The library no longer implements ``IDisposable`` or ``IAsyncDisposable``. Instances are plain configuration objects.
+- **Source-generated JSON** — High-performance, Native AOT-friendly metadata serialization
+- **Cross-platform** — Windows, macOS, and Linux
 
 ---
 
-## 🚀 New in v4.0.0
+## 🚀 New in v4.1.0
 
-- **Lifecycle Refinement: No disposal required.** The library no longer implements ``IDisposable`` or ``IAsyncDisposable``. Instances are plain configuration objects.
-- **Advanced Execution:** New `ExecuteRawAsync()` for power users who need to execute custom commands that bypass the fluent builder.
-- **Deep Metadata Support:** New ``GetDeepMetadataAsync()`` and ``GetDeepMetadataRawAsync()`` for full hierarchical structure (playlists → seasons → episodes).
-- **Traverse Helper:** New ``Traverse()`` method for easy iteration over nested playlist entries.
-- **Improved Auth:** Enhanced ``WithAdobePassAuthentication()`` and ``WithAuthentication()`` handling.
-- **Subtitle Extraction:** New ``GetSubtitlesAsync()`` for streamlined subtitle retrieval.
-- **MSO Listing:** New ``GetAdobePassListAsync()`` for Adobe Pass mso listing.
-- **Robust Core:** Modernized ``ProcessRunner`` and ``ProcessFactory`` for efficient, isolated execution
+- **Source-generated JSON** — Switched to `System.Text.Json` source generation via `YtdlpJsonContext` for faster metadata deserialization and full Native AOT support
+- **Expanded Fluent API** — Dozens of new methods covering network, playlist, error handling, retry, fragment, and downloader options
+- **Partial Class Refactor** — Split the large fluent builder into logical partial classes (General, Authentication, Download, etc.) for better maintainability and IntelliSense
+- **YtdlpPreset Enum** — Strongly-typed preset aliases for common configurations
+- **SponsorBlock Enhancements** — Added `WithSponsorblockChapterTitle()` and `WithSponsorblockApi()` for custom chapter titles and API endpoints
+- **Improved Consistency** — Moved `AddFlag` / `AddOption` to the main class and refined validation across the API
 
 ---
 
 ## 🔧 Required Tools
 
-- **Namespace**: `ManuHub.Ytdlp.NET` 
-- **External JS runtime**: yt-dlp requires an external JS runtime like **deno.exe** (from [denoland/deno](https://deno.land)) for YouTube downloads with JS challenges.
-- **Recommended:** Use companion NuGet packages:
+**Namespace:** `ManuHub.Ytdlp.NET`
+
+**External JS Runtime**  
+yt-dlp requires an external JavaScript runtime (such as **deno.exe** from [denoland/deno](https://deno.land)) to solve JavaScript challenges on platforms like YouTube.
+
+**Recommended Companion Packages**
 
 | Package | Description |
 |---------|-------------|
-| **ManuHub.Ytdlp** | Core download engine |
-| **ManuHub.Deno** | JavaScript challenge resolution |
-| **ManuHub.FFmpeg** | Post-processing, merging, and conversion |
-| **ManuHub.FFprobe** | Format probing and metadata extraction |
+| ManuHub.Ytdlp | Core download engine |
+| ManuHub.Deno | JavaScript challenge resolution |
+| ManuHub.FFmpeg | Post-processing, merging, and conversion |
+| ManuHub.FFprobe | Format probing and metadata extraction |
 
-Example path resolution in .NET:
+**Example Path Resolution**
 
 ```csharp
 var ytdlpPath = Path.Combine(AppContext.BaseDirectory, "tools", "yt-dlp.exe");
@@ -115,29 +118,55 @@ await Task.WhenAll(
 ```
 
 ---
+
 ## ⚡ Advanced Execution & Control
 
-For power users who need to execute custom commands that bypass the fluent builder, use `ExecuteRawAsync`. This acts as an "escape hatch" for scenarios where specific, non-standard, or experimental `yt-dlp` flags are required.
+For power users who need to run custom commands that bypass the fluent builder, use `ExecuteRawAsync`.  
+This method acts as an escape hatch for non-standard, experimental, or highly specific yt-dlp flags.
 
-### How it works
+### How It Works
 
-This method automatically intelligently switches output handling based on how you use it:
+The method automatically switches between two output modes:
 
-- **Streaming Mode:** Provide an `Action<string>` to `onLineReceived` to stream output in real-time (ideal for progress monitoring or logs).
-- **Capture Mode:** Pass null to `onLineReceived` to capture the entire process output into result.FullOutput (ideal for JSON metadata probing or one-off commands).
+| Mode | When | Behavior |
+|------|------|----------|
+| **Streaming** | You provide an `Action<string>` to `onLineReceived` | Output is streamed line-by-line in real time (ideal for progress and logs) |
+| **Capture** | You pass `null` (or omit) `onLineReceived` | The entire output is collected into `result.FullOutput` (ideal for JSON or one-off queries) |
+
+### Examples
 
 ```csharp
 var ytdlp = new Ytdlp("yt-dlp.exe");
 
-// 1. Capture Mode (Probe/Manual)
-var result = await ytdlp.ExecuteRawAsync("--version");
-Console.WriteLine($"yt-dlp version: {result.FullOutput}");
+// 1. Capture Mode – Extract full metadata as JSON
+var jsonResult = await ytdlp.ExecuteRawAsync(
+    "--dump-json https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+Console.WriteLine($"Metadata JSON: {jsonResult.FullOutput}");
 
-// 2. Streaming Mode (Real-time tracking)
-await ytdlp.ExecuteRawAsync("--help", onLineReceived: line => Console.WriteLine(line));
+// 2. Capture Mode – List available formats
+var formatsResult = await ytdlp.ExecuteRawAsync(
+    "--list-formats https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+Console.WriteLine($"Available Formats:\n{formatsResult.FullOutput}");
+
+// 3. Streaming Mode – Download with custom flags + live logs
+await ytdlp.ExecuteRawAsync(
+    "--extract-audio --audio-format mp3 --embed-thumbnail https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    onLineReceived: line => Console.WriteLine($"[yt-dlp] {line}"));
+
+// 4. Capture Mode – Get direct stream URL
+var urlResult = await ytdlp.ExecuteRawAsync(
+    "--get-url -f best https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+Console.WriteLine($"Direct Stream URL: {urlResult.FullOutput.Trim()}");
+
+// 5. Streaming Mode – Download playlist range with progress
+await ytdlp.ExecuteRawAsync(
+    "--playlist-items 1-5 --embed-subs --sub-langs en https://www.youtube.com/playlist?list=PLrEnWoR732-HnL9lzX129zUjQ0M9b8Xg7",
+    onLineReceived: line => Console.WriteLine($"[Playlist] {line}"));
 ```
 
-> **Note:** While `ExecuteRawAsync` handles security and formatting, logical validation (e.g., passing valid `yt-dlp` flags) remains the responsibility of the developer. Always prefer the fluent `WithXxx()` methods for standard download tasks.
+> **Note**  
+> `ExecuteRawAsync` handles process security and output formatting, but logical validation of the flags you pass remains your responsibility.  
+> Prefer the fluent `WithXxx()` methods for all standard download tasks.
 
 ---
 
@@ -251,16 +280,16 @@ var msoList = await ytdlp.GetAdobePassListAsync();
 
 ## 📡 Events
 
-| Event                     | Description              |
-| --------------------------| ------------------------ |
-| `ProgressDownload`        | Download progress        |
-| `ProgressMessage`         | Informational messages   |
-| `DownloadCompleted`       | File finished            |
-| `PostProcessingStarted`   | Post‑processing start    |
-| `PostProcessingCompleted` | Post‑processing finished |
-| `OutputMessage`           | Raw output line          |
-| `ErrorMessage`            | Error message            |
-| `CommandCompleted`        | Process finished         |
+| Event | Description |
+|-------|-------------|
+| ProgressDownload | Reports download progress (percentage, speed, ETA, etc.) |
+| ProgressMessage | Emits informational progress messages |
+| DownloadCompleted | Raised when a file has finished downloading |
+| PostProcessingStarted | Raised when post-processing begins |
+| PostProcessingCompleted | Raised when post-processing has finished |
+| OutputMessage | Emits a raw output line from yt-dlp |
+| ErrorMessage | Emits an error message |
+| CommandCompleted | Raised when the entire process has finished |
 
 
 ### Example
@@ -284,240 +313,307 @@ ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing
 
 ---
 
-## 🛠 Methods
+## 🛠 Core API Reference
 
 ### Probe
-* `VersionAsync()`
-* `UpdateAsync(UpdateChannel channel, string specificVersion)`
-* `GetExtractorsAsync()`
-* `GetAdobePassListAsync()`
-* `GetSubtitlesAsync(string url)`
-* `GetMetadataAsync(string url)`
-* `GetMetadataRawAsync(string url)`
-* `GetDeepMetadataAsync(string url)`
-* `GetDeepMetadataRawAsync(string url)`
-* `GetFormatsAsync(string url)`
-* `GetMetadataLiteAsync(string url)`
-* `GetMetadataLiteAsync(string url, IEnumerable<string> fields)`
-* `GetBestAudioFormatIdAsync(string url)`
-* `GetBestVideoFormatIdAsync(string url, int maxHeight)`
+
+| Method | Description |
+|--------|-------------|
+| VersionAsync() | Returns the installed yt-dlp version |
+| UpdateAsync(UpdateChannel channel, string specificVersion) | Updates yt-dlp to the specified channel or exact version |
+| GetExtractorsAsync() | Lists all available extractors |
+| GetAdobePassListAsync() | Retrieves the list of supported Adobe Pass providers |
+| GetSubtitlesAsync(string url) | Fetches available subtitles for the given URL |
+| GetMetadataAsync(string url) | Retrieves parsed metadata for the given URL |
+| GetMetadataRawAsync(string url) | Retrieves raw (unparsed) metadata for the given URL |
+| GetDeepMetadataAsync(string url) | Retrieves deep/parsed metadata (more detailed) |
+| GetDeepMetadataRawAsync(string url) | Retrieves deep raw metadata |
+| GetFormatsAsync(string url) | Lists all available formats for the given URL |
+| GetMetadataLiteAsync(string url) | Retrieves lightweight metadata |
+| GetMetadataLiteAsync(string url, IEnumerable\<string\> fields) | Retrieves lightweight metadata for specific fields only |
+| GetBestAudioFormatIdAsync(string url) | Returns the format ID of the best available audio |
+| GetBestVideoFormatIdAsync(string url, int maxHeight) | Returns the format ID of the best video up to the specified height |
 
 ### Download
-* `DownloadAsync(string url)`
-* `DownloadBatchAsync(IEnumerable<string> urls, int maxConcurrency)`
+
+| Method | Description |
+|--------|-------------|
+| DownloadAsync(string url) | Downloads a single URL |
+| DownloadBatchAsync(IEnumerable\<string\> urls, int maxConcurrency) | Downloads multiple URLs concurrently with the specified limit |
+
+### Helpers
+
+| Method | Description |
+|--------|-------------|
+| Traverse() | For easy iteration over nested playlist entries |
 
 ### Advanced Execution
-* `ExecuteRawAsync(string arguments, Action<string>? onLineReceived = null, CancellationToken ct = default, bool tuneProcess = true)`
+
+| Method | Description |
+|--------|-------------|
+| ExecuteRawAsync(string arguments, Action\<string\>? onLineReceived = null, CancellationToken ct = default, bool tuneProcess = true) | Executes yt-dlp with raw arguments and optional line-by-line output handling |
 
 ---
 
-## 🛠 Fluent Methods
+## 🏗️ Fluent Builder API Reference
 
-### Authentication Options
-* `.WithAuthentication(string username, string password)`
-* `.WithTwoFactor(string code)`
-* `.WithVideoPassword(string password)`
-* `.WithAdobePassAuthentication(string mso, string username, string password)`
+**Authentication Options**
 
-### Download Options
-* `.WithConcurrentFragments(int count = 8)`
-* `.WithLimitRate(string rate)`
-* `.WithThrottledRate(string rate)`
-* `.WithRetries(int maxRetries)`
-* `.WithFileAccessRetries(int maxRetries)`
-* `.WithFragmentRetries(int retries)`
-* `.WithRetrySleep(string retrySleepExpression)`
-* `.WithRetrySleep(int seconds, string? type = null)`
-* `.WithLinearRetrySleep(int start, int? end = null, int? step = null, string? type = null)`
-* `.WithExponentialRetrySleep(int start, int? end = null, double? @base = null, string? type = null)`
-* `.WithSkipUnavailableFragments()`
-* `.WithAbortOnUnavailableFragments()`
-* `.WithKeepFragments()`
-* `.WithBufferSize(string size)`
-* `.WithNoResizeBuffer()`
-* `.WithHttpChunkSize(string size)`
-* `.WithHttpChunkSize(long bytes)`
-* `.WithPlaylistRandom()`
-* `.WithLazyPlaylist()`
-* `.WithNoLazyPlaylist()`
-* `.WithHlsUseMpegts()`
-* `.WithNoHlsUseMpegts()`
-* `.WithDownloadSections(string regex)`
-* `.WithDownloader(string downloader)`
-* `.WithDownloader(string downloader, params string[] protocols)`
-* `.WithDownloaderArgs(string downloaderName, string args)`
+| Method | Description |
+|--------|-------------|
+| WithAuthentication(string username, string password) | Sets username and password for HTTP authentication |
+| WithTwoFactor(string code) | Provides a two-factor authentication code |
+| WithVideoPassword(string password) | Sets a password required to access the video |
+| WithAdobePassAuthentication(string mso, string username, string password) | Authenticates using Adobe Pass with the specified MSO, username and password |
 
-### Extractor Options
-* `.WithExtractorRetries(int retries)`
-* `.WithInfiniteExtractorRetries()`
-* `.WithAllowDynamicMpd()`
-* `.WithIgnoreDynamicMpd()`
-* `.WithHlsSplitDiscontinuity()`
-* `.WithNoHlsSplitDiscontinuity()`
-* `.WithExtractorArgs(string extractorKey, string args)`
+**Download Options**
 
-### Filesystem Options
-* `.WithHomeFolder(string path)`
-* `.WithTempFolder(string path)`
-* `.WithOutputFolder(string path)`
-* `.WithFFmpegLocation(string path)`
-* `.WithOutputTemplate(string template)`
-* `.WithRestrictFilenames()`
-* `.WithWindowsFilenames()`
-* `.WithTrimFilenames(int length)`
-* `.WithNoOverwrites()`
-* `.WithForceOverwrites()`
-* `.WithNoContinue()`
-* `.WithNoPart()`
-* `.WithMtime()`
-* `.WithWriteDescription()`
-* `.WithWriteInfoJson()`
-* `.WithNoWritePlaylistMetafiles()`
-* `.WithNoCleanInfoJson()`
-* `.WriteComments()`
-* `.WithNoWriteComments()`
-* `.WithLoadInfoJson(string path)`
-* `.WithCookiesFile(string path)`
-* `.WithCookiesFromBrowser(string browser)`
-* `.WithNoCacheDir()`
-* `.WithRemoveCacheDir()`
+| Method | Description |
+|--------|-------------|
+| WithConcurrentFragments(int count = 8) | Downloads multiple fragments in parallel (default 8) |
+| WithLimitRate(string rate) | Limits download speed (e.g. "50K" or "4.2M") |
+| WithThrottledRate(string rate) | Minimum download rate before throttling is applied |
+| WithRetries(int maxRetries) | Number of retries for network errors |
+| WithFileAccessRetries(int maxRetries) | Number of retries for file access errors |
+| WithFragmentRetries(int retries) | Number of retries for fragment downloads |
+| WithRetrySleep(string retrySleepExpression) | Custom sleep expression between retries |
+| WithRetrySleep(int seconds, string? type = null) | Fixed sleep time between retries |
+| WithLinearRetrySleep(int start, int? end = null, int? step = null, string? type = null) | Linear backoff sleep between retries |
+| WithExponentialRetrySleep(int start, int? end = null, double? @base = null, string? type = null) | Exponential backoff sleep between retries |
+| WithSkipUnavailableFragments() | Skips unavailable fragments instead of aborting |
+| WithAbortOnUnavailableFragments() | Aborts download if any fragment is unavailable |
+| WithKeepFragments() | Keeps downloaded fragments after merging |
+| WithBufferSize(string size) | Sets the size of the download buffer |
+| WithNoResizeBuffer() | Disables automatic buffer resizing |
+| WithHttpChunkSize(string size) | Sets HTTP chunk size as a string |
+| WithHttpChunkSize(long bytes) | Sets HTTP chunk size in bytes |
+| WithPlaylistRandom() | Downloads playlist items in random order |
+| WithLazyPlaylist() | Processes playlist items only when needed |
+| WithNoLazyPlaylist() | Disables lazy playlist processing |
+| WithHlsUseMpegts() | Forces HLS downloads to use MPEG-TS container |
+| WithNoHlsUseMpegts() | Disables forcing MPEG-TS for HLS |
+| WithDownloadSections(string regex) | Downloads only specific sections matching the regex |
+| WithDownloader(string downloader) | Specifies the external downloader to use |
+| WithDownloader(string downloader, params string[] protocols) | Specifies downloader for particular protocols |
+| WithDownloaderArgs(string downloaderName, string args) | Passes additional arguments to a specific downloader |
 
-### General Options
-* `.WithIgnoreErrors()`
-* `.WithAbortOnError()`
-* `.WithIgnoreConfig()`
-* `.WithConfigLocations(string path)`
-* `.WithPluginDirs(string path)`
-* `.WithNoPluginDirs(string path)`
-* `.WithJsRuntime(Runtime runtime, string runtimePath)`
-* `.WithNoJsRuntime()`
-* `.WithRemoteComponent(string component)`
-* `.WithRemoteComponents(params string[] components)`
-* `.WithNoRemoteComponents()`
-* `.WithFlatPlaylist()`
-* `.WithLiveFromStart()`
-* `.WithWaitForVideo(TimeSpan? maxWait = null)`
-* `.WithMarkWatched()`   
-* `.WithNoMarkWatched()`
-* `.WithColor(string policy, string? stream = null)`
-* `.WithCompatOptions(string options)`
-* `.WithAlias(string alias, string options)`
-* `.WithPresetAlias(string preset)`
-* `.WithPresetAlias(YtdlpPreset preset)`
+**Extractor Options**
 
-### Geo-restriction Options
-* `.WithGeoVerificationProxy(string url)`
-* `.WithGeoBypassCountry(string countryCode)`
+| Method | Description |
+|--------|-------------|
+| WithExtractorRetries(int retries) | Number of retries for extractor failures |
+| WithInfiniteExtractorRetries() | Retries extractor indefinitely |
+| WithAllowDynamicMpd() | Allows dynamic MPD manifests |
+| WithIgnoreDynamicMpd() | Ignores dynamic MPD manifests |
+| WithHlsSplitDiscontinuity() | Splits HLS streams on discontinuity tags |
+| WithNoHlsSplitDiscontinuity() | Does not split HLS on discontinuity tags |
+| WithExtractorArgs(string extractorKey, string args) | Passes custom arguments to a specific extractor |
 
-### Network Options
-* `.WithProxy(string? proxy)`
-* `.WithSocketTimeout(TimeSpan timeout)`
-* `.WithSourceAddress(string ipAddress)`
-* `.WithImpersonate(string? client)`
-* `.WithImpersonateAny()`
-* `.WithForceIpv4()`
-* `.WithForceIpv6()`
-* `.WithEnableFileUrls()`
+**Filesystem Options**
 
-### Post-Processing Options
-* `.WithExtractAudio(string format, int quality = 5)`
-* `.WithRemuxVideo(string format)` usage 'mp4' or 'mp4>mkv'
-* `.WithRecodeVideo(string format, string? videoCodec = null, string? audioCodec = null)`
-* `.WithPostprocessorArgs(PostProcessors postprocessor, string args)`
-* `.WithKeepVideo()`
-* `.WithNoPostOverwrites()`
-* `.WithEmbedSubtitles()`
-* `.WithEmbedThumbnail()`
-* `.WithEmbedMetadata()`
-* `.WithEmbedChapters()`
-* `.WithEmbedInfoJson()`
-* `.WithNoEmbedInfoJson()`
-* `.WithReplaceInMetadata(string field, string regex, string replacement)`
-* `.WithConcatPlaylist(string policy = "always")`
-* `.WithFFmpegLocation(string? ffmpegPath)`
-* `.WithConvertSubtitles(string format = "none")`
-* `.WithConvertThumbnails(string format = "jpg")`
-* `.WithSplitChapters() => AddFlag("--split-chapters")`
-* `.WithRemoveChapters(string regex)`
-* `.WithForceKeyframesAtCuts()`
-* `.WithUsePostProcessor(PostProcessors postProcessor, string? postProcessorArgs = null)`
+| Method | Description |
+|--------|-------------|
+| WithHomeFolder(string path) | Sets the home directory for configuration and cache |
+| WithTempFolder(string path) | Sets the temporary directory for downloads |
+| WithOutputFolder(string path) | Sets the output directory for finished files |
+| WithFFmpegLocation(string path) | Specifies the path to the FFmpeg binary |
+| WithOutputTemplate(string template) | Sets the output filename template |
+| WithRestrictFilenames() | Restricts filenames to ASCII characters only |
+| WithWindowsFilenames() | Forces Windows-compatible filenames |
+| WithTrimFilenames(int length) | Trims filenames to the specified maximum length |
+| WithNoOverwrites() | Prevents overwriting existing files |
+| WithForceOverwrites() | Forces overwriting of existing files |
+| WithNoContinue() | Disables resuming of partially downloaded files |
+| WithNoPart() | Does not use .part files during download |
+| WithMtime() | Sets the file modification time from the video metadata |
+| WithWriteDescription() | Writes the video description to a separate file |
+| WithWriteInfoJson() | Writes video metadata to an .info.json file |
+| WithNoWritePlaylistMetafiles() | Disables writing of playlist metadata files |
+| WithNoCleanInfoJson() | Keeps the .info.json file after download |
+| WriteComments() | Writes video comments to a separate file |
+| WithNoWriteComments() | Disables writing of comments |
+| WithLoadInfoJson(string path) | Loads video information from an existing .info.json file |
+| WithCookiesFile(string path) | Loads cookies from the specified file |
+| WithCookiesFromBrowser(string browser) | Loads cookies from the specified browser |
+| WithNoCacheDir() | Disables the use of a cache directory |
+| WithRemoveCacheDir() | Removes the cache directory after use |
 
-### SponsorBlock Options
-* `.WithSponsorblockMark(string categories = "all")`
-* `.WithSponsorblockRemove(string categories = "all")`
-* `.WithSponsorblockChapterTitle(string template)`
-* `.WithNoSponsorblock()`
-* `.WithSponsorblockApi(string url)`
+**General Options**
 
-### Subtitle Options
-* `.WithSubtitles(string languages = "all", bool auto = false)`
+| Method | Description |
+|--------|-------------|
+| WithIgnoreErrors() | Continues on download/extraction errors |
+| WithAbortOnError() | Aborts on the first error |
+| WithIgnoreConfig() | Ignores configuration files |
+| WithConfigLocations(string path) | Specifies location of configuration files |
+| WithPluginDirs(string path) | Adds a directory to search for plugins |
+| WithNoPluginDirs(string path) | Removes a directory from the plugin search path |
+| WithJsRuntime(Runtime runtime, string runtimePath) | Sets the JavaScript runtime to use |
+| WithNoJsRuntime() | Disables the JavaScript runtime |
+| WithRemoteComponent(string component) | Enables a specific remote component |
+| WithRemoteComponents(params string[] components) | Enables multiple remote components |
+| WithNoRemoteComponents() | Disables all remote components |
+| WithFlatPlaylist() | Lists playlist entries without extracting full info |
+| WithLiveFromStart() | Downloads live streams from the beginning |
+| WithWaitForVideo(TimeSpan? maxWait = null) | Waits for a scheduled video to become available |
+| WithMarkWatched() | Marks the video as watched on the platform |
+| WithNoMarkWatched() | Does not mark the video as watched |
+| WithColor(string policy, string? stream = null) | Controls colored output |
+| WithCompatOptions(string options) | Enables compatibility options |
+| WithAlias(string alias, string options) | Defines a custom option alias |
+| WithPresetAlias(string preset) | Applies a named preset alias |
+| WithPresetAlias(YtdlpPreset preset) | Applies a predefined YtdlpPreset |
 
-### Thumbnail Options
-* `.WithThumbnails(bool allSizes = false)`
+**Geo-restriction Options**
 
-### Verbosity and Simulation Options
-* `.WithQuiet()`
-* `.WithNoWarnings()`
-* `.WithSimulate()`
-* `.WithNoSimulate()`
-* `.WithSkipDownload()`
-* `.WithVerbose()`
+| Method | Description |
+|--------|-------------|
+| WithGeoVerificationProxy(string url) | Uses a proxy for geo-verification |
+| WithGeoBypassCountry(string countryCode) | Bypasses geo-restriction as if from the given country |
 
-### Video Selection
-* `.WithPlaylistItems(string items)`
-* `.WithPlaylistItems(params int[] indices)`
-* `.WithPlaylistRange(int? start = null, int? stop = null, int? step = null)`
-* `.WithMinFileSize(string size)`
-* `.WithMaxFileSize(string size)`
-* `.WithDate(string date)`
-* `.WithDateBefore(string date)`
-* `.WithDateAfter(string date)`
-* `.WithMatchFilter(string filterExpression)`
-* `.WithNoMatchFilters()`
-* `.WithBreakMatchFilter(string filter)`
-* `.WithNoBreakMatchFilters()`
-* `.WithNoPlaylist()`
-* `.WithYesPlaylist()`
-* `.WithAgeLimit(int years)`
-* `.WithDownloadArchive(string archivePath = "archive.txt")`
-* `.WithNoDownloadArchive()`
-* `.WithMaxDownloads(int count)`
-* `.WithBreakOnExisting()`
-* `.WithNoBreakOnExisting()`
-* `.WithBreakPerInput()`
-* `.WithNoBreakPerInput()`
-* `.WithSkipPlaylistAfterErrors(int allowedFailures)`
+**Network Options**
 
-### Video Format Options
-* `.WithFormat(string format)`
-* `.WithMergeOutputFormat(string format)`
+| Method | Description |
+|--------|-------------|
+| WithProxy(string? proxy) | Sets an HTTP/HTTPS/SOCKS proxy |
+| WithSocketTimeout(TimeSpan timeout) | Sets the network socket timeout |
+| WithSourceAddress(string ipAddress) | Binds to a specific local IP address |
+| WithImpersonate(string? client) | Impersonates a specific client (browser/device) |
+| WithImpersonateAny() | Impersonates a random supported client |
+| WithForceIpv4() | Forces the use of IPv4 |
+| WithForceIpv6() | Forces the use of IPv6 |
+| WithEnableFileUrls() | Allows downloading from file:// URLs |
 
-### Workgrounds
-* `.WithAddHeader(string header, string value)`
-* `.WithSleepInterval(double seconds, double? maxSeconds = null)`
-* `.WithSleepSubtitles(double seconds)`
+**Post-Processing Options**
 
-### Downloaders
-* `.WithAria2(int connections = 16)`
-* `.WithHlsNative()`
-* `.WithFfmpegAsLiveDownloader(string? extraFfmpegArgs = null)`
+| Method | Description |
+|--------|-------------|
+| WithExtractAudio(string format, int quality = 5) | Extracts audio in the specified format and quality |
+| WithRemuxVideo(string format) | Remuxes video into the specified container (e.g. "mp4" or "mp4>mkv") |
+| WithRecodeVideo(string format, string? videoCodec = null, string? audioCodec = null) | Recodes video using the given format and optional codecs |
+| WithPostprocessorArgs(PostProcessors postprocessor, string args) | Passes arguments to a specific post-processor |
+| WithKeepVideo() | Keeps the original video file after post-processing |
+| WithNoPostOverwrites() | Prevents overwriting of post-processed files |
+| WithEmbedSubtitles() | Embeds subtitles into the video file |
+| WithEmbedThumbnail() | Embeds the thumbnail into the video file |
+| WithEmbedMetadata() | Embeds metadata into the video file |
+| WithEmbedChapters() | Embeds chapter information into the video file |
+| WithEmbedInfoJson() | Embeds the .info.json data into the video file |
+| WithNoEmbedInfoJson() | Disables embedding of .info.json data |
+| WithReplaceInMetadata(string field, string regex, string replacement) | Replaces text in a metadata field using regex |
+| WithConcatPlaylist(string policy = "always") | Concatenates playlist items according to the policy |
+| WithFFmpegLocation(string? ffmpegPath) | Sets the path to FFmpeg (post-processing overload) |
+| WithConvertSubtitles(string format = "none") | Converts subtitles to the specified format |
+| WithConvertThumbnails(string format = "jpg") | Converts thumbnails to the specified format |
+| WithSplitChapters() | Splits the video into separate files by chapters |
+| WithRemoveChapters(string regex) | Removes chapters matching the given regex |
+| WithForceKeyframesAtCuts() | Forces keyframes at cut points during processing |
+| WithUsePostProcessor(PostProcessors postProcessor, string? postProcessorArgs = null) | Enables a specific post-processor with optional arguments |
 
-### Bonus
-* `.With1440pOrBest()`
-* `.With1080pOrBest()`
-* `.With720pOrBest()`
-* `.WithMp4PostProcessingPreset()`
-* `.WithMkvOutput()`
-* `.WithMaxHeight(int height)`
-* `.WithMaxHeightOrBest(int height)`
-* `.WithBestVideoPlusBestAudio()`
-* `.WithBestAudioOnly()`
-* `.WithNo4k()`
-* `.WithBestM4aAudio()`
+**SponsorBlock Options**
 
-### Advanced Options
-* `.AddFlag(string flag)`
-* `.AddOption(string key, string value)`
+| Method | Description |
+|--------|-------------|
+| WithSponsorblockMark(string categories = "all") | Marks SponsorBlock segments of the given categories |
+| WithSponsorblockRemove(string categories = "all") | Removes SponsorBlock segments of the given categories |
+| WithNoSponsorblock() | Disables SponsorBlock integration |
+
+**Subtitle Options**
+
+| Method | Description |
+|--------|-------------|
+| WithSubtitles(string languages = "all", bool auto = false) | Downloads subtitles for the specified languages (optionally including auto-generated) |
+
+**Thumbnail Options**
+
+| Method | Description |
+|--------|-------------|
+| WithThumbnails(bool allSizes = false) | Downloads the video thumbnail (all sizes if true) |
+
+**Verbosity and Simulation Options**
+
+| Method | Description |
+|--------|-------------|
+| WithQuiet() | Suppresses most output messages |
+| WithNoWarnings() | Suppresses warning messages |
+| WithSimulate() | Simulates the download without actually downloading |
+| WithNoSimulate() | Disables simulation mode |
+| WithSkipDownload() | Extracts information but skips the actual download |
+| WithVerbose() | Enables verbose output |
+
+**Video Selection**
+
+| Method | Description |
+|--------|-------------|
+| WithPlaylistItems(string items) | Downloads only the specified playlist items (e.g. "1,3-5") |
+| WithPlaylistItems(params int[] indices) | Downloads only the specified playlist indices |
+| WithPlaylistRange(int? start = null, int? stop = null, int? step = null) | Downloads a range of playlist items |
+| WithMinFileSize(string size) | Downloads only files larger than the specified size |
+| WithMaxFileSize(string size) | Downloads only files smaller than the specified size |
+| WithDate(string date) | Downloads only videos matching the exact date |
+| WithDateBefore(string date) | Downloads only videos uploaded before the date |
+| WithDateAfter(string date) | Downloads only videos uploaded after the date |
+| WithMatchFilter(string filterExpression) | Applies a custom match filter expression |
+| WithNoMatchFilters() | Disables all match filters |
+| WithBreakMatchFilter(string filter) | Stops downloading when the match filter is no longer satisfied |
+| WithNoBreakMatchFilters() | Disables break-on-match-filter behavior |
+| WithNoPlaylist() | Downloads only the single video, not the whole playlist |
+| WithYesPlaylist() | Forces downloading the whole playlist |
+| WithAgeLimit(int years) | Skips videos restricted by age limit |
+| WithDownloadArchive(string archivePath = "archive.txt") | Records downloaded videos in an archive file |
+| WithNoDownloadArchive() | Disables the download archive |
+| WithMaxDownloads(int count) | Limits the maximum number of videos to download |
+| WithBreakOnExisting() | Stops when an already-downloaded video is encountered |
+| WithNoBreakOnExisting() | Continues even if videos already exist in the archive |
+| WithBreakPerInput() | Applies break conditions per input URL |
+| WithNoBreakPerInput() | Applies break conditions across all inputs |
+| WithSkipPlaylistAfterErrors(int allowedFailures) | Skips the rest of the playlist after too many errors |
+
+**Video Format Options**
+
+| Method | Description |
+|--------|-------------|
+| WithFormat(string format) | Selects the video/audio format using yt-dlp format syntax |
+| WithMergeOutputFormat(string format) | Sets the container format used when merging video and audio |
+
+**Workarounds**
+
+| Method | Description |
+|--------|-------------|
+| WithAddHeader(string header, string value) | Adds a custom HTTP header to all requests |
+| WithSleepInterval(double seconds, double? maxSeconds = null) | Sleeps between downloads (optionally with a random range) |
+| WithSleepSubtitles(double seconds) | Sleeps before downloading each subtitle |
+
+**Downloaders**
+
+| Method | Description |
+|--------|-------------|
+| WithAria2(int connections = 16) | Uses aria2c as the external downloader with the given number of connections |
+| WithHlsNative() | Forces the use of the native HLS downloader |
+| WithFfmpegAsLiveDownloader(string? extraFfmpegArgs = null) | Uses FFmpeg as the live stream downloader |
+
+**Bonus**
+
+| Method | Description |
+|--------|-------------|
+| With1440pOrBest() | Prefers 1440p or the best available quality |
+| With1080pOrBest() | Prefers 1080p or the best available quality |
+| With720pOrBest() | Prefers 720p or the best available quality |
+| WithMp4PostProcessingPreset() | Applies a preset that outputs MP4 with common post-processing |
+| WithMkvOutput() | Forces the final output container to MKV |
+| WithMaxHeight(int height) | Limits the maximum video height |
+| WithMaxHeightOrBest(int height) | Limits height but falls back to the best available if necessary |
+| WithBestVideoPlusBestAudio() | Selects the best video stream + best audio stream |
+| WithBestAudioOnly() | Downloads only the best available audio |
+| WithNo4k() | Excludes 4K (2160p) and higher resolutions |
+| WithBestM4aAudio() | Prefers the best M4A audio stream |
+
+**Advanced Options**
+
+| Method | Description |
+|--------|-------------|
+| AddFlag(string flag) | Adds a raw command-line flag |
+| AddOption(string key, string value) | Adds a raw key-value option |
 
 ---
 

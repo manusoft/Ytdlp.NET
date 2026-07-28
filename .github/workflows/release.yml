@@ -51,7 +51,7 @@ jobs:
       # 5. Run Tests (GATE)
       # ───────────────────────────────
       - name: Run Unit Tests
-        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build --verbosity normal
+        run: dotnet test tests/Ytdlp.NET.Test/Ytdlp.NET.Test.csproj -c Release --no-build --verbosity minimal
 
       # ───────────────────────────────
       # 6. Extract version from tag
