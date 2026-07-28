@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,45 +29,53 @@
         }
     </style>
 </head>
+
 <body class="bg-slate-950 text-slate-200">
 
-    <!-- Hero -->
-    <section class="hero-bg relative flex min-h-screen items-center overflow-hidden">
-        <div class="bg-[radial-gradient(at_top_right,#3b82f6_0%,transparent_50%)] absolute inset-0"></div>
+    <!-- Navigation -->
+    <nav class="fixed top-0 z-50 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <a href="index.html" class="title-font text-2xl font-bold text-red-500">
+                Ytdlp<span class="text-white">.</span><span class="text-blue-500">NET</span>
+            </a>
+            <div class="flex items-center gap-8">
+                <a href="docs.html" class="text-slate-300 transition hover:text-white">Documentation</a>
+                <a href="https://www.nuget.org/packages/Ytdlp.NET" target="_blank"
+                   class="text-slate-300 transition hover:text-white">NuGet</a>
+                <a href="https://github.com/manusoft/Ytdlp.NET" target="_blank"
+                   class="text-slate-300 transition hover:text-white">GitHub</a>
+            </div>
+        </div>
+    </nav>
 
+    <!-- Hero -->
+    <section class="hero-bg relative flex min-h-screen items-center overflow-hidden pt-20">
+        <div class="bg-[radial-gradient(at_top_right,#3b82f6_0%,transparent_50%)] absolute inset-0"></div>
         <div class="relative z-10 mx-auto max-w-7xl px-6 py-24">
             <div class="flex flex-col items-center gap-16 lg:flex-row">
-
                 <div class="lg:w-1/2">
                     <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-slate-800/50 px-4 py-2">
                         <span class="text-emerald-400">●</span>
                         <span id="version-text" class="text-sm font-medium">Loading version...</span>
                     </div>
-
                     <h1 class="title-font mb-6 text-7xl font-bold leading-tight text-red-500 lg:text-8xl">
                         Ytdlp<span class="text-white">.</span><span class="text-blue-500">NET</span>
                     </h1>
-
                     <p class="mb-8 text-2xl text-slate-400">
                         A fluent, strongly-typed, async .NET wrapper for <span class="font-mono text-amber-400">yt-dlp</span>
                     </p>
-
                     <div class="flex flex-wrap gap-4">
-                        <a href="https://www.nuget.org/packages/Ytdlp.NET"
-                           target="_blank"
+                        <a href="https://www.nuget.org/packages/Ytdlp.NET" target="_blank"
                            class="flex items-center gap-3 rounded-2xl bg-white px-8 py-4 text-lg font-semibold text-slate-900 transition hover:bg-amber-400">
                             <i class="fa-brands fa-nuget"></i>
                             Install via NuGet
                         </a>
-
-                        <a href="https://github.com/manusoft/Ytdlp.NET"
-                           target="_blank"
+                        <a href="docs.html"
                            class="flex items-center gap-3 rounded-2xl border border-slate-600 px-8 py-4 text-lg font-semibold transition hover:border-slate-400">
-                            <i class="fa-brands fa-github"></i>
-                            View on GitHub
+                            <i class="fa-solid fa-book"></i>
+                            Documentation
                         </a>
                     </div>
-
                     <div class="mt-10 flex gap-8 text-sm">
                         <div>
                             <span class="block text-3xl font-bold text-emerald-400">1000+</span>
@@ -82,17 +91,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="lg:w-1/2">
-                    <img src="https://github.com/user-attachments/assets/39e09415-fa0c-4991-976f-8966e9c50c5b"
-                         alt="ClipMate App"
-                         class="rounded-3xl border border-slate-700 shadow-2xl" />
+                    <img src="https://github.com/user-attachments/assets/8f526c93-5131-4ad3-8c06-a3645033f8b5"
+                         alt="ClipMate App" class="rounded-2xl border border-slate-700 shadow-2xl" />
                 </div>
             </div>
-        </div>
-
-        <div class="-translate-x-1/2 absolute bottom-10 left-1/2 animate-bounce">
-            <i class="fa-solid fa-chevron-down text-4xl text-slate-500"></i>
         </div>
     </section>
 
@@ -100,24 +103,43 @@
     <section class="bg-slate-900 py-24">
         <div class="mx-auto max-w-7xl px-6">
             <h2 class="title-font mb-16 text-center text-5xl font-bold">Why Developers Love Ytdlp.NET</h2>
-
             <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
                     <i class="fa-solid fa-wand-magic-sparkles mb-6 text-4xl text-blue-500"></i>
                     <h3 class="mb-3 text-2xl font-semibold">Fluent & Beautiful API</h3>
-                    <p class="text-slate-400">Chain methods like <span class="text-orange-400">.WithFormat("best")</span>, <span class="text-orange-400">.WithExtractAudio(AudioFormat.Mp3)</span> — clean and intuitive.</p>
+                    <p class="text-slate-400">
+                        Chain methods like <span class="text-orange-400">.WithFormat("best")</span>, <span class="text-orange-400">.WithExtractAudio()</span> — clean and intuitive.
+                    </p>
                 </div>
-
                 <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
                     <i class="fa-solid fa-bolt mb-6 text-4xl text-amber-500"></i>
                     <h3 class="mb-3 text-2xl font-semibold">High Performance</h3>
-                    <p class="text-slate-400">Fully asynchronous, real-time progress events, batch downloads, and proper cancellation support.</p>
+                    <p class="text-slate-400">
+                        Fully asynchronous, real-time progress events, batch downloads, and proper
+                        cancellation support.
+                    </p>
                 </div>
-
                 <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
                     <i class="fa-solid fa-shield-halved mb-6 text-4xl text-emerald-500"></i>
                     <h3 class="mb-3 text-2xl font-semibold">Immutable & Thread-Safe</h3>
                     <p class="text-slate-400">Every configuration returns a new instance. Safe for concurrent usage.</p>
+                </div>
+                <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
+                    <i class="fa-solid fa-code mb-6 text-4xl text-purple-500"></i>
+                    <h3 class="mb-3 text-2xl font-semibold">Source-Generated JSON</h3>
+                    <p class="text-slate-400">Native AOT friendly metadata serialization with high performance.</p>
+                </div>
+                <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
+                    <i class="fa-solid fa-layer-group mb-6 text-4xl text-cyan-500"></i>
+                    <h3 class="mb-3 text-2xl font-semibold">Deep Metadata</h3>
+                    <p class="text-slate-400">Full hierarchical support for playlists → seasons → episodes.</p>
+                </div>
+                <div class="glass rounded-3xl border border-slate-700 p-8 transition hover:border-blue-500">
+                    <i class="fa-solid fa-terminal mb-6 text-4xl text-rose-500"></i>
+                    <h3 class="mb-3 text-2xl font-semibold">Escape Hatch</h3>
+                    <p class="text-slate-400">
+                        ExecuteRawAsync for power users who need full control over yt-dlp flags.
+                    </p>
                 </div>
             </div>
         </div>
@@ -127,7 +149,6 @@
     <section class="bg-black py-24">
         <div class="mx-auto max-w-5xl px-6">
             <h2 class="mb-8 text-center text-4xl font-bold">Simple. Powerful. Modern.</h2>
-
             <div class="overflow-auto rounded-3xl border border-slate-800 bg-slate-950 p-8 font-mono text-sm">
                 <pre class="text-emerald-300">var ytdlp = new Ytdlp("tools/yt-dlp.exe")
     .WithFormat("bv+ba/b")
@@ -149,10 +170,9 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
     <section class="bg-slate-900 py-24">
         <div class="mx-auto max-w-7xl px-6">
             <h2 class="title-font mb-16 text-center text-5xl font-bold">Real-World Apps Built With It</h2>
-
             <div class="grid gap-12 md:grid-cols-2">
                 <div class="text-center">
-                    <img src="https://github.com/user-attachments/assets/39e09415-fa0c-4991-976f-8966e9c50c5b"
+                    <img src="https://github.com/user-attachments/assets/8f526c93-5131-4ad3-8c06-a3645033f8b5"
                          class="mx-auto mb-6 rounded-3xl shadow-2xl" alt="ClipMate" />
                     <h3 class="mb-2 text-2xl font-semibold">ClipMate</h3>
                     <p class="mb-4 text-slate-400">Beautiful MAUI .NET Video Downloader</p>
@@ -161,13 +181,12 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
                         Download from Microsoft Store →
                     </a>
                 </div>
-
                 <div class="text-center">
                     <img src="https://github.com/user-attachments/assets/1b977927-ea26-4220-bd41-9f64d6716058"
                          class="mx-auto mb-6 rounded-3xl shadow-2xl" alt="Video Downloader" />
                     <h3 class="mb-2 text-2xl font-semibold">Video Downloader</h3>
                     <p class="mb-4 text-slate-400">.NET Desktop Application</p>
-                    <a href="https://github.com/manusoft/Ytdlp.NET/releases/download/v1.0.0/video-downloader-app-v2.0.7z"
+                    <a href="https://github.com/manusoft/Ytdlp.NET/releases"
                        class="inline-flex items-center gap-2 text-blue-400 hover:underline">
                         Download GUI App →
                     </a>
@@ -181,9 +200,24 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
         <div class="mx-auto max-w-7xl px-6 text-center">
             <p class="text-slate-400">Made with ❤️ for the .NET community</p>
             <div class="mt-6 flex justify-center gap-8 text-4xl">
-                <a href="https://github.com/manusoft/Ytdlp.NET" class="transition hover:text-white"><i class="fa-brands fa-github"></i></a>
+                <a href="https://github.com/manusoft/Ytdlp.NET" class="transition hover:text-white">
+                    <i class="fa-brands fa-github"></i>
+                </a>
                 <a href="https://www.nuget.org/packages/Ytdlp.NET" class="transition hover:text-white">
-                    <svg class="transition hover:text-white" width="38px" height="38px" viewBox="-7.6 -7.6 91.20 91.20" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" enable-background="new 0 0 76.00 76.00" xml:space="preserve" fill="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"><rect x="-7.6" y="-7.6" width="91.20" height="91.20" rx="45.6" fill="#f6f4f4" strokewidth="0"></rect></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill="#000000" fill-opacity="1" stroke-linejoin="round" d="M 21.5,18C 23.433,18 25,19.567 25,21.5C 25,23.433 23.433,25 21.5,25C 19.567,25 18,23.433 18,21.5C 18,19.567 19.567,18 21.5,18 Z M 46.9998,57.0001L 34.9999,57.0001C 29.4771,57.0001 24.9999,52.523 24.9999,47.0001L 24.9999,35.0001C 24.9999,29.4773 29.4771,25.0001 34.9999,25.0001L 46.9998,25.0001C 52.5227,25.0001 56.9998,29.4773 56.9998,35.0001L 56.9998,47.0001C 56.9998,52.523 52.5227,57.0001 46.9998,57.0001 Z M 46.5,39C 42.3578,39 39,42.3579 39,46.5C 39,50.6421 42.3579,54 46.5,54C 50.6421,54 54,50.6421 54,46.5C 54,42.3579 50.6421,39 46.5,39 Z M 33.5,29C 31.0147,29 29,31.0148 29,33.5C 29,35.9853 31.0147,38 33.5,38C 35.9853,38 38,35.9853 38,33.5C 38,31.0148 35.9853,29 33.5,29 Z "></path> </g></svg>
+                    <svg class="transition hover:text-white" width="38px" height="38px" viewBox="-7.6 -7.6 91.20 91.20"
+                         xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+                         baseProfile="full" enable-background="new 0 0 76.00 76.00" xml:space="preserve" fill="#ffffff">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0">
+                    <rect x="-7.6" y="-7.6" width="91.20" height="91.20" rx="45.6" fill="#f6f4f4"
+                          strokewidth="0"></rect>
+                        </g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier">
+                    <path fill="#000000" fill-opacity="1" stroke-linejoin="round"
+                          d="M 21.5,18C 23.433,18 25,19.567 25,21.5C 25,23.433 23.433,25 21.5,25C 19.567,25 18,23.433 18,21.5C 18,19.567 19.567,18 21.5,18 Z M 46.9998,57.0001L 34.9999,57.0001C 29.4771,57.0001 24.9999,52.523 24.9999,47.0001L 24.9999,35.0001C 24.9999,29.4773 29.4771,25.0001 34.9999,25.0001L 46.9998,25.0001C 52.5227,25.0001 56.9998,29.4773 56.9998,35.0001L 56.9998,47.0001C 56.9998,52.523 52.5227,57.0001 46.9998,57.0001 Z M 46.5,39C 42.3578,39 39,42.3579 39,46.5C 39,50.6421 42.3579,54 46.5,54C 50.6421,54 54,50.6421 54,46.5C 54,42.3579 50.6421,39 46.5,39 Z M 33.5,29C 31.0147,29 29,31.0148 29,33.5C 29,35.9853 31.0147,38 33.5,38C 35.9853,38 38,35.9853 38,33.5C 38,31.0148 35.9853,29 33.5,29 Z ">
+                            </path>
+                        </g>
+                    </svg>
                 </a>
             </div>
             <p class="mt-5 text-xs text-slate-500">© <span id="year-text"></span> ManuHub • Ytdlp.NET</p>
@@ -192,12 +226,9 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
     </footer>
 
     <script>
-        // 1. Update Copyright Year automatically
         document.getElementById('year-text').textContent = new Date().getFullYear();
-
-        // 2. Fetch latest version from GitHub API
         fetch('https://api.github.com/repos/manusoft/Ytdlp.NET/releases/latest')
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 document.getElementById('version-text').textContent = data.tag_name + " Now Available";
             })
@@ -205,6 +236,6 @@ await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=ABCDEFGH");</pre>
                 document.getElementById('version-text').textContent = "Latest Version Available";
             });
     </script>
-
 </body>
+
 </html>

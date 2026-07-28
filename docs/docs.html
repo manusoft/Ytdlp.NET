@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Documentation • Ytdlp.NET</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); }
+        .sidebar-link { transition: all 0.15s ease; }
+        .sidebar-link:hover, .sidebar-link.active { color: #60a5fa; background: rgba(59, 130, 246, 0.1); }
+        pre { white-space: pre-wrap; word-break: break-word; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #334155; padding: 0.75rem 1rem; text-align: left; }
+        th { background: #1e2937; font-weight: 600; }
+        tr:nth-child(even) { background: rgba(30, 41, 59, 0.4); }
+        code { background: #1e2937; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.9em; }
+        .prose h2 { scroll-margin-top: 6rem; }
+        .prose h3 { scroll-margin-top: 5rem; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+
+    <!-- Top Navigation -->
+    <nav class="fixed top-0 z-50 w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur-md">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <a href="index.html" class="title-font text-2xl font-bold text-red-500">
+                Ytdlp<span class="text-white">.</span><span class="text-blue-500">NET</span>
+            </a>
+            <div class="flex items-center gap-8 text-sm font-medium">
+                <a href="index.html" class="text-slate-400 transition hover:text-white">Home</a>
+                <a href="docs.html" class="text-blue-400">Documentation</a>
+                <a href="https://www.nuget.org/packages/Ytdlp.NET" target="_blank" class="text-slate-400 transition hover:text-white">NuGet</a>
+                <a href="https://github.com/manusoft/Ytdlp.NET" target="_blank" class="text-slate-400 transition hover:text-white">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mx-auto flex max-w-7xl pt-20">
+
+        <!-- Sidebar -->
+        <aside class="sticky top-24 hidden h-[calc(100vh-6rem)] w-64 flex-shrink-0 overflow-y-auto border-r border-slate-800 pr-6 lg:block">
+            <nav class="space-y-1 py-8 text-sm">
+                <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Getting Started</p>
+                <a href="#features" class="sidebar-link block rounded-lg px-3 py-2">Features</a>
+                <a href="#whats-new" class="sidebar-link block rounded-lg px-3 py-2">What's New in v4.1.0</a>
+                <a href="#required-tools" class="sidebar-link block rounded-lg px-3 py-2">Required Tools</a>
+                <a href="#core-concepts" class="sidebar-link block rounded-lg px-3 py-2">Core Concepts</a>
+                <a href="#quick-start" class="sidebar-link block rounded-lg px-3 py-2">Quick Start</a>
+
+                <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Usage</p>
+                <a href="#advanced-execution" class="sidebar-link block rounded-lg px-3 py-2">Advanced Execution</a>
+                <a href="#usage-examples" class="sidebar-link block rounded-lg px-3 py-2">Usage Examples</a>
+                <a href="#events" class="sidebar-link block rounded-lg px-3 py-2">Events</a>
+
+                <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">API Reference</p>
+                <a href="#core-api" class="sidebar-link block rounded-lg px-3 py-2">Core API</a>
+                <a href="#fluent-builder" class="sidebar-link block rounded-lg px-3 py-2">Fluent Builder</a>
+                <a href="#customization" class="sidebar-link block rounded-lg px-3 py-2">Customization</a>
+
+                <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Migration & Notes</p>
+                <a href="#migration" class="sidebar-link block rounded-lg px-3 py-2">Migration Guide</a>
+                <a href="#notes" class="sidebar-link block rounded-lg px-3 py-2">Notes</a>
+                <a href="#license" class="sidebar-link block rounded-lg px-3 py-2">License</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="prose prose-invert max-w-none flex-1 px-6 py-12 lg:px-12">
+
+            <!-- Header -->
+            <div class="mb-16">
+                <h1 class="title-font text-5xl font-bold text-white">Documentation</h1>
+                <p class="mt-4 text-xl text-slate-400">Complete reference for Ytdlp.NET — the modern, fluent .NET wrapper for yt-dlp.</p>
+            </div>
+
+            <!-- Features -->
+            <section id="features" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">✨ Features</h2>
+                <ul class="space-y-3 text-slate-300">
+                    <li><strong class="text-white">Fluent API</strong> — Build yt-dlp commands with a rich set of <code>WithXxx()</code> methods</li>
+                    <li><strong class="text-white">Immutable & thread-safe</strong> — Each method returns a new instance, safe for parallel usage</li>
+                    <li><strong class="text-white">Progress & Events</strong> — Real-time progress tracking and post-processing notifications</li>
+                    <li><strong class="text-white">Format & Metadata Listing</strong> — Retrieve and parse available formats, subtitles, and deep hierarchical metadata</li>
+                    <li><strong class="text-white">Batch Downloads</strong> — Sequential or parallel execution with concurrency control</li>
+                    <li><strong class="text-white">Output Templates</strong> — Flexible naming using yt-dlp placeholders</li>
+                    <li><strong class="text-white">Custom Command Injection</strong> — Safely add extra yt-dlp options or run raw commands</li>
+                    <li><strong class="text-white">Lifecycle Refinement</strong> — No disposal required. Instances are plain configuration objects.</li>
+                    <li><strong class="text-white">Source-generated JSON</strong> — High-performance, Native AOT-friendly metadata serialization</li>
+                    <li><strong class="text-white">Cross-platform</strong> — Windows, macOS, and Linux</li>
+                </ul>
+            </section>
+
+            <!-- What's New -->
+            <section id="whats-new" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🚀 New in v4.1.0</h2>
+                <ul class="space-y-3 text-slate-300">
+                    <li><strong class="text-white">Source-generated JSON</strong> — Switched to <code>System.Text.Json</code> source generation via <code>YtdlpJsonContext</code> for faster metadata deserialization and full Native AOT support</li>
+                    <li><strong class="text-white">Expanded Fluent API</strong> — Dozens of new methods covering network, playlist, error handling, retry, fragment, and downloader options</li>
+                    <li><strong class="text-white">Partial Class Refactor</strong> — Split the large fluent builder into logical partial classes (General, Authentication, Download, etc.) for better maintainability and IntelliSense</li>
+                    <li><strong class="text-white">YtdlpPreset Enum</strong> — Strongly-typed preset aliases for common configurations</li>
+                    <li><strong class="text-white">SponsorBlock Enhancements</strong> — Added <code>WithSponsorblockChapterTitle()</code> and <code>WithSponsorblockApi()</code></li>
+                    <li><strong class="text-white">Improved Consistency</strong> — Moved <code>AddFlag</code> / <code>AddOption</code> to the main class and refined validation across the API</li>
+                </ul>
+            </section>
+
+            <!-- Required Tools -->
+            <section id="required-tools" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🔧 Required Tools</h2>
+                <p class="mb-4 text-slate-300"><strong>Namespace:</strong> <code>ManuHub.Ytdlp.NET</code></p>
+                
+                <h3 class="mb-3 mt-8 text-xl font-semibold text-white">External JS Runtime</h3>
+                <p class="mb-6 text-slate-300">yt-dlp requires an external JavaScript runtime (such as <strong>deno.exe</strong> from <a href="https://deno.land" class="text-blue-400 hover:underline" target="_blank">denoland/deno</a>) to solve JavaScript challenges on platforms like YouTube.</p>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Recommended Companion Packages</h3>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>ManuHub.Ytdlp</td><td>Core download engine</td></tr>
+                            <tr><td>ManuHub.Deno</td><td>JavaScript challenge resolution</td></tr>
+                            <tr><td>ManuHub.FFmpeg</td><td>Post-processing, merging, and conversion</td></tr>
+                            <tr><td>ManuHub.FFprobe</td><td>Format probing and metadata extraction</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 mt-8 text-xl font-semibold text-white">Example Path Resolution</h3>
+                <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlpPath = Path.Combine(AppContext.BaseDirectory, "tools", "yt-dlp.exe");
+var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "tools");</pre>
+                </div>
+            </section>
+
+            <!-- Core Concepts -->
+            <section id="core-concepts" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🧬 Core Concepts</h2>
+
+                <h3 class="mb-3 text-xl font-semibold text-white">No Disposal Required</h3>
+                <p class="mb-6 text-slate-300"><strong>Ytdlp</strong> holds no unmanaged resources. Create instances, share them, and let the GC collect them. All internal runners are created per-call.</p>
+
+                <h3 class="mb-3 text-xl font-semibold text-white">Immutable Fluent API</h3>
+                <p class="mb-6 text-slate-300">Every configuration method (e.g., <code>WithOutputFolder</code>, <code>WithFormat</code>) returns a new instance, ensuring the original is never modified. This makes branching configurations safe and clean.</p>
+
+                <h3 class="mb-3 text-xl font-semibold text-white">Thread Safety</h3>
+                <p class="mb-6 text-slate-300">A single <code>Ytdlp</code> instance can be shared across threads. Each execution creates isolated internal runners, allowing concurrent downloads without synchronization.</p>
+
+                <h3 class="mb-3 text-xl font-semibold text-white">Secure Authentication</h3>
+                <p class="mb-4 text-slate-300">Implemented secure authentication handling for various scenarios, including standard username/password and Adobe Pass authentication.</p>
+                <ul class="mb-4 list-disc space-y-1 pl-6 text-slate-300">
+                    <li><code>.WithAuthentication(string username, string password)</code></li>
+                    <li><code>.WithAdobePassAuthentication(string mso, string username, string password)</code></li>
+                </ul>
+                <p class="text-slate-400 text-sm">Credentials are passed via standard input to the yt-dlp process, avoiding exposure in command-line arguments or logs.</p>
+            </section>
+
+            <!-- Quick Start -->
+            <section id="quick-start" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🚀 Quick Start</h2>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">1. Basic Download</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("yt-dlp.exe")
+    .WithOutputFolder("./downloads")
+    .WithBestVideoPlusBestAudio()
+    .WithEmbedMetadata();
+
+// Subscribe to events
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"Progress: {e.Percent:F2}%");
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Finished: {msg}");
+
+// Execute
+await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=XXX");</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">2. Immutable Configuration Branching</h3>
+                <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>// Define a shared base configuration
+var baseConfig = new Ytdlp("yt-dlp.exe").WithOutputFolder("./media");
+
+// Create specialized versions
+var audioOnly = baseConfig.WithBestAudioOnly();
+var highRes = baseConfig.WithMaxHeightOrBest(1080);
+
+// baseConfig, audioOnly, and highRes are independent, thread-safe instances
+await Task.WhenAll(
+    audioOnly.DownloadAsync(url1),
+    highRes.DownloadAsync(url2)
+);</pre>
+                </div>
+            </section>
+
+            <!-- Advanced Execution -->
+            <section id="advanced-execution" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">⚡ Advanced Execution & Control</h2>
+                <p class="mb-6 text-slate-300">For power users who need to run custom commands that bypass the fluent builder, use <code>ExecuteRawAsync</code>. This method acts as an escape hatch for non-standard, experimental, or highly specific yt-dlp flags.</p>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">How It Works</h3>
+                <div class="mb-8 overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th>When</th>
+                                <th>Behavior</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Streaming</strong></td>
+                                <td>You provide an <code>Action&lt;string&gt;</code> to <code>onLineReceived</code></td>
+                                <td>Output is streamed line-by-line in real time (ideal for progress and logs)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Capture</strong></td>
+                                <td>You pass <code>null</code> (or omit) <code>onLineReceived</code></td>
+                                <td>The entire output is collected into <code>result.FullOutput</code> (ideal for JSON or one-off queries)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Examples</h3>
+                <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("yt-dlp.exe");
+
+// 1. Capture Mode – Extract full metadata as JSON
+var jsonResult = await ytdlp.ExecuteRawAsync(
+    "--dump-json https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+Console.WriteLine($"Metadata JSON: {jsonResult.FullOutput}");
+
+// 2. Capture Mode – List available formats
+var formatsResult = await ytdlp.ExecuteRawAsync(
+    "--list-formats https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+Console.WriteLine($"Available Formats:\n{formatsResult.FullOutput}");
+
+// 3. Streaming Mode – Download with custom flags + live logs
+await ytdlp.ExecuteRawAsync(
+    "--extract-audio --audio-format mp3 --embed-thumbnail https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    onLineReceived: line => Console.WriteLine($"[yt-dlp] {line}"));
+
+// 4. Capture Mode – Get direct stream URL
+var urlResult = await ytdlp.ExecuteRawAsync(
+    "--get-url -f best https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+Console.WriteLine($"Direct Stream URL: {urlResult.FullOutput.Trim()}");
+
+// 5. Streaming Mode – Download playlist range with progress
+await ytdlp.ExecuteRawAsync(
+    "--playlist-items 1-5 --embed-subs --sub-langs en https://www.youtube.com/playlist?list=PLrEnWoR732-HnL9lzX129zUjQ0M9b8Xg7",
+    onLineReceived: line => Console.WriteLine($"[Playlist] {line}"));</pre>
+                </div>
+                <p class="mt-4 text-sm text-slate-400">Prefer the fluent <code>WithXxx()</code> methods for all standard download tasks.</p>
+            </section>
+
+            <!-- Usage Examples -->
+            <section id="usage-examples" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">📦 Usage Examples</h2>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Fetch Metadata</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var metadata = await ytdlp.GetMetadataAsync("https://www.youtube.com/watch?v=abc123");
+Console.WriteLine($"Title: {metadata?.Title}, Duration: {metadata?.Duration}");</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Deep Metadata Extraction</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var metadata = await ytdlp.GetDeepMetadataAsync(url);
+foreach (var root in metadata.Entries ?? [])
+{
+    foreach (var item in root.Traverse())
+    {
+        Console.WriteLine(item.Title);
+    }
+}</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Parallel Execution</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    .WithFormat("best")
+    .WithOutputFolder("./batch");
+
+var urls = new[] { "https://youtu.be/vid1", "https://youtu.be/vid2" };
+
+// Safe: Concurrent usage of the same instance
+await ytdlp.DownloadBatchAsync(urls, maxConcurrency: 3);</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Extract Audio</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    .WithExtractAudio(AudioFormat.Mp3, 5)
+    .WithOutputFolder("./audio")
+    .WithEmbedThumbnail()
+    .WithEmbedMetadata();
+
+await ytdlp.DownloadAsync("https://www.youtube.com/watch?v=RGg-Qx1rL9U");</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Download a Playlist</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("tools\\yt-dlp.exe")
+    .WithFormat("best")
+    .WithOutputFolder("./playlists")
+    .WithPlaylistStart(1)
+    .WithPlaylistEnd(5)
+    .WithOutputTemplate("%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s");
+
+await ytdlp.DownloadAsync("https://www.youtube.com/playlist?list=PL12345");</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Best Format Selection</h3>
+                <div class="mb-8 overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+
+string bestAudio = await ytdlp.GetBestAudioFormatIdAsync(url);
+string bestVideo = await ytdlp.GetBestVideoFormatIdAsync(url, maxHeight: 720);
+
+await ytdlp
+    .WithFormat($"{bestVideo}+{bestAudio}/best")
+    .WithOutputFolder("./downloads")
+    .DownloadAsync(url);</pre>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Get Subtitles</h3>
+                <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>var ytdlp = new Ytdlp("tools\\yt-dlp.exe");
+var subtitles = await ytdlp.GetSubtitlesAsync("https://www.youtube.com/watch?v=abc123");
+
+foreach (var sub in subtitles)
+{
+    Console.WriteLine($"Language: {sub.Language}, Format: {sub.Format}, Url: {sub.Url}");
+}</pre>
+                </div>
+            </section>
+
+            <!-- Events -->
+            <section id="events" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">📡 Events</h2>
+                <div class="mb-8 overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>ProgressDownload</td><td>Reports download progress (percentage, speed, ETA, etc.)</td></tr>
+                            <tr><td>ProgressMessage</td><td>Emits informational progress messages</td></tr>
+                            <tr><td>DownloadCompleted</td><td>Raised when a file has finished downloading</td></tr>
+                            <tr><td>PostProcessingStarted</td><td>Raised when post-processing begins</td></tr>
+                            <tr><td>PostProcessingCompleted</td><td>Raised when post-processing has finished</td></tr>
+                            <tr><td>OutputMessage</td><td>Emits a raw output line from yt-dlp</td></tr>
+                            <tr><td>ErrorMessage</td><td>Emits an error message</td></tr>
+                            <tr><td>CommandCompleted</td><td>Raised when the entire process has finished</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Example</h3>
+                <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>// Progress events
+ytdlp.ProgressDownload += (s, e) => Console.WriteLine($"{e.Percent:F1}% {e.Speed} ETA {e.ETA}");
+ytdlp.ProgressMessage += (s, msg) => Console.WriteLine(msg);
+
+// Output events
+ytdlp.ErrorMessage += (s, err) => Console.WriteLine($"Error: {err}");
+ytdlp.OutputMessage += (s, msg) => Console.WriteLine(msg);
+
+// Lifecycle events
+ytdlp.DownloadCompleted += (s, msg) => Console.WriteLine($"Finished: {msg}");
+ytdlp.CommandCompleted += (s, e) => Console.WriteLine($"Command finished: {e.Command}");
+
+// Post-Processing events
+ytdlp.PostProcessingStarted += (s, msg) => Console.WriteLine($"Post-processing-start: {msg}");
+ytdlp.PostProcessingCompleted += (s, msg) => Console.WriteLine($"Post-processing-complete: {msg}");</pre>
+                </div>
+            </section>
+
+            <!-- Core API -->
+            <section id="core-api" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🛠 Core API Reference</h2>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Probe</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>VersionAsync()</td><td>Returns the installed yt-dlp version</td></tr>
+                            <tr><td>UpdateAsync(UpdateChannel channel, string specificVersion)</td><td>Updates yt-dlp to the specified channel or exact version</td></tr>
+                            <tr><td>GetExtractorsAsync()</td><td>Lists all available extractors</td></tr>
+                            <tr><td>GetAdobePassListAsync()</td><td>Retrieves the list of supported Adobe Pass providers</td></tr>
+                            <tr><td>GetSubtitlesAsync(string url)</td><td>Fetches available subtitles for the given URL</td></tr>
+                            <tr><td>GetMetadataAsync(string url)</td><td>Retrieves parsed metadata for the given URL</td></tr>
+                            <tr><td>GetMetadataRawAsync(string url)</td><td>Retrieves raw (unparsed) metadata for the given URL</td></tr>
+                            <tr><td>GetDeepMetadataAsync(string url)</td><td>Retrieves deep/parsed metadata (more detailed)</td></tr>
+                            <tr><td>GetDeepMetadataRawAsync(string url)</td><td>Retrieves deep raw metadata</td></tr>
+                            <tr><td>GetFormatsAsync(string url)</td><td>Lists all available formats for the given URL</td></tr>
+                            <tr><td>GetMetadataLiteAsync(string url)</td><td>Retrieves lightweight metadata</td></tr>
+                            <tr><td>GetMetadataLiteAsync(string url, IEnumerable&lt;string&gt; fields)</td><td>Retrieves lightweight metadata for specific fields only</td></tr>
+                            <tr><td>GetBestAudioFormatIdAsync(string url)</td><td>Returns the format ID of the best available audio</td></tr>
+                            <tr><td>GetBestVideoFormatIdAsync(string url, int maxHeight)</td><td>Returns the format ID of the best video up to the specified height</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Download</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>DownloadAsync(string url)</td><td>Downloads a single URL</td></tr>
+                            <tr><td>DownloadBatchAsync(IEnumerable&lt;string&gt; urls, int maxConcurrency)</td><td>Downloads multiple URLs concurrently with the specified limit</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Helpers</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>Traverse()</td><td>For easy iteration over nested playlist entries</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Advanced Execution</h3>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>ExecuteRawAsync(string arguments, Action&lt;string&gt;? onLineReceived = null, CancellationToken ct = default, bool tuneProcess = true)</td><td>Executes yt-dlp with raw arguments and optional line-by-line output handling</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Fluent Builder -->
+            <section id="fluent-builder" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🏗️ Fluent Builder API Reference</h2>
+
+                <!-- Authentication -->
+                <h3 class="mb-4 mt-10 text-xl font-semibold text-white">Authentication Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithAuthentication(string username, string password)</td><td>Sets username and password for HTTP authentication</td></tr>
+                            <tr><td>WithTwoFactor(string code)</td><td>Provides a two-factor authentication code</td></tr>
+                            <tr><td>WithVideoPassword(string password)</td><td>Sets a password required to access the video</td></tr>
+                            <tr><td>WithAdobePassAuthentication(string mso, string username, string password)</td><td>Authenticates using Adobe Pass with the specified MSO, username and password</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Download Options -->
+                <h3 class="mb-4 text-xl font-semibold text-white">Download Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithConcurrentFragments(int count = 8)</td><td>Downloads multiple fragments in parallel (default 8)</td></tr>
+                            <tr><td>WithLimitRate(string rate)</td><td>Limits download speed (e.g. "50K" or "4.2M")</td></tr>
+                            <tr><td>WithThrottledRate(string rate)</td><td>Minimum download rate before throttling is applied</td></tr>
+                            <tr><td>WithRetries(int maxRetries)</td><td>Number of retries for network errors</td></tr>
+                            <tr><td>WithFileAccessRetries(int maxRetries)</td><td>Number of retries for file access errors</td></tr>
+                            <tr><td>WithFragmentRetries(int retries)</td><td>Number of retries for fragment downloads</td></tr>
+                            <tr><td>WithRetrySleep(string retrySleepExpression)</td><td>Custom sleep expression between retries</td></tr>
+                            <tr><td>WithRetrySleep(int seconds, string? type = null)</td><td>Fixed sleep time between retries</td></tr>
+                            <tr><td>WithLinearRetrySleep(int start, int? end = null, int? step = null, string? type = null)</td><td>Linear backoff sleep between retries</td></tr>
+                            <tr><td>WithExponentialRetrySleep(int start, int? end = null, double? @base = null, string? type = null)</td><td>Exponential backoff sleep between retries</td></tr>
+                            <tr><td>WithSkipUnavailableFragments()</td><td>Skips unavailable fragments instead of aborting</td></tr>
+                            <tr><td>WithAbortOnUnavailableFragments()</td><td>Aborts download if any fragment is unavailable</td></tr>
+                            <tr><td>WithKeepFragments()</td><td>Keeps downloaded fragments after merging</td></tr>
+                            <tr><td>WithBufferSize(string size)</td><td>Sets the size of the download buffer</td></tr>
+                            <tr><td>WithNoResizeBuffer()</td><td>Disables automatic buffer resizing</td></tr>
+                            <tr><td>WithHttpChunkSize(string size)</td><td>Sets HTTP chunk size as a string</td></tr>
+                            <tr><td>WithHttpChunkSize(long bytes)</td><td>Sets HTTP chunk size in bytes</td></tr>
+                            <tr><td>WithPlaylistRandom()</td><td>Downloads playlist items in random order</td></tr>
+                            <tr><td>WithLazyPlaylist()</td><td>Processes playlist items only when needed</td></tr>
+                            <tr><td>WithNoLazyPlaylist()</td><td>Disables lazy playlist processing</td></tr>
+                            <tr><td>WithHlsUseMpegts()</td><td>Forces HLS downloads to use MPEG-TS container</td></tr>
+                            <tr><td>WithNoHlsUseMpegts()</td><td>Disables forcing MPEG-TS for HLS</td></tr>
+                            <tr><td>WithDownloadSections(string regex)</td><td>Downloads only specific sections matching the regex</td></tr>
+                            <tr><td>WithDownloader(string downloader)</td><td>Specifies the external downloader to use</td></tr>
+                            <tr><td>WithDownloader(string downloader, params string[] protocols)</td><td>Specifies downloader for particular protocols</td></tr>
+                            <tr><td>WithDownloaderArgs(string downloaderName, string args)</td><td>Passes additional arguments to a specific downloader</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Extractor -->
+                <h3 class="mb-4 text-xl font-semibold text-white">Extractor Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithExtractorRetries(int retries)</td><td>Number of retries for extractor failures</td></tr>
+                            <tr><td>WithInfiniteExtractorRetries()</td><td>Retries extractor indefinitely</td></tr>
+                            <tr><td>WithAllowDynamicMpd()</td><td>Allows dynamic MPD manifests</td></tr>
+                            <tr><td>WithIgnoreDynamicMpd()</td><td>Ignores dynamic MPD manifests</td></tr>
+                            <tr><td>WithHlsSplitDiscontinuity()</td><td>Splits HLS streams on discontinuity tags</td></tr>
+                            <tr><td>WithNoHlsSplitDiscontinuity()</td><td>Does not split HLS on discontinuity tags</td></tr>
+                            <tr><td>WithExtractorArgs(string extractorKey, string args)</td><td>Passes custom arguments to a specific extractor</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Filesystem -->
+                <h3 class="mb-4 text-xl font-semibold text-white">Filesystem Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithHomeFolder(string path)</td><td>Sets the home directory for configuration and cache</td></tr>
+                            <tr><td>WithTempFolder(string path)</td><td>Sets the temporary directory for downloads</td></tr>
+                            <tr><td>WithOutputFolder(string path)</td><td>Sets the output directory for finished files</td></tr>
+                            <tr><td>WithFFmpegLocation(string path)</td><td>Specifies the path to the FFmpeg binary</td></tr>
+                            <tr><td>WithOutputTemplate(string template)</td><td>Sets the output filename template</td></tr>
+                            <tr><td>WithRestrictFilenames()</td><td>Restricts filenames to ASCII characters only</td></tr>
+                            <tr><td>WithWindowsFilenames()</td><td>Forces Windows-compatible filenames</td></tr>
+                            <tr><td>WithTrimFilenames(int length)</td><td>Trims filenames to the specified maximum length</td></tr>
+                            <tr><td>WithNoOverwrites()</td><td>Prevents overwriting existing files</td></tr>
+                            <tr><td>WithForceOverwrites()</td><td>Forces overwriting of existing files</td></tr>
+                            <tr><td>WithNoContinue()</td><td>Disables resuming of partially downloaded files</td></tr>
+                            <tr><td>WithNoPart()</td><td>Does not use .part files during download</td></tr>
+                            <tr><td>WithMtime()</td><td>Sets the file modification time from the video metadata</td></tr>
+                            <tr><td>WithWriteDescription()</td><td>Writes the video description to a separate file</td></tr>
+                            <tr><td>WithWriteInfoJson()</td><td>Writes video metadata to an .info.json file</td></tr>
+                            <tr><td>WithNoWritePlaylistMetafiles()</td><td>Disables writing of playlist metadata files</td></tr>
+                            <tr><td>WithNoCleanInfoJson()</td><td>Keeps the .info.json file after download</td></tr>
+                            <tr><td>WriteComments()</td><td>Writes video comments to a separate file</td></tr>
+                            <tr><td>WithNoWriteComments()</td><td>Disables writing of comments</td></tr>
+                            <tr><td>WithLoadInfoJson(string path)</td><td>Loads video information from an existing .info.json file</td></tr>
+                            <tr><td>WithCookiesFile(string path)</td><td>Loads cookies from the specified file</td></tr>
+                            <tr><td>WithCookiesFromBrowser(string browser)</td><td>Loads cookies from the specified browser</td></tr>
+                            <tr><td>WithNoCacheDir()</td><td>Disables the use of a cache directory</td></tr>
+                            <tr><td>WithRemoveCacheDir()</td><td>Removes the cache directory after use</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- General -->
+                <h3 class="mb-4 text-xl font-semibold text-white">General Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithIgnoreErrors()</td><td>Continues on download/extraction errors</td></tr>
+                            <tr><td>WithAbortOnError()</td><td>Aborts on the first error</td></tr>
+                            <tr><td>WithIgnoreConfig()</td><td>Ignores configuration files</td></tr>
+                            <tr><td>WithConfigLocations(string path)</td><td>Specifies location of configuration files</td></tr>
+                            <tr><td>WithPluginDirs(string path)</td><td>Adds a directory to search for plugins</td></tr>
+                            <tr><td>WithNoPluginDirs(string path)</td><td>Removes a directory from the plugin search path</td></tr>
+                            <tr><td>WithJsRuntime(Runtime runtime, string runtimePath)</td><td>Sets the JavaScript runtime to use</td></tr>
+                            <tr><td>WithNoJsRuntime()</td><td>Disables the JavaScript runtime</td></tr>
+                            <tr><td>WithRemoteComponent(string component)</td><td>Enables a specific remote component</td></tr>
+                            <tr><td>WithRemoteComponents(params string[] components)</td><td>Enables multiple remote components</td></tr>
+                            <tr><td>WithNoRemoteComponents()</td><td>Disables all remote components</td></tr>
+                            <tr><td>WithFlatPlaylist()</td><td>Lists playlist entries without extracting full info</td></tr>
+                            <tr><td>WithLiveFromStart()</td><td>Downloads live streams from the beginning</td></tr>
+                            <tr><td>WithWaitForVideo(TimeSpan? maxWait = null)</td><td>Waits for a scheduled video to become available</td></tr>
+                            <tr><td>WithMarkWatched()</td><td>Marks the video as watched on the platform</td></tr>
+                            <tr><td>WithNoMarkWatched()</td><td>Does not mark the video as watched</td></tr>
+                            <tr><td>WithColor(string policy, string? stream = null)</td><td>Controls colored output</td></tr>
+                            <tr><td>WithCompatOptions(string options)</td><td>Enables compatibility options</td></tr>
+                            <tr><td>WithAlias(string alias, string options)</td><td>Defines a custom option alias</td></tr>
+                            <tr><td>WithPresetAlias(string preset)</td><td>Applies a named preset alias</td></tr>
+                            <tr><td>WithPresetAlias(YtdlpPreset preset)</td><td>Applies a predefined YtdlpPreset</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Remaining groups (Geo, Network, Post-Processing, etc.) -->
+                <h3 class="mb-4 text-xl font-semibold text-white">Geo-restriction Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithGeoVerificationProxy(string url)</td><td>Uses a proxy for geo-verification</td></tr>
+                            <tr><td>WithGeoBypassCountry(string countryCode)</td><td>Bypasses geo-restriction as if from the given country</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Network Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithProxy(string? proxy)</td><td>Sets an HTTP/HTTPS/SOCKS proxy</td></tr>
+                            <tr><td>WithSocketTimeout(TimeSpan timeout)</td><td>Sets the network socket timeout</td></tr>
+                            <tr><td>WithSourceAddress(string ipAddress)</td><td>Binds to a specific local IP address</td></tr>
+                            <tr><td>WithImpersonate(string? client)</td><td>Impersonates a specific client (browser/device)</td></tr>
+                            <tr><td>WithImpersonateAny()</td><td>Impersonates a random supported client</td></tr>
+                            <tr><td>WithForceIpv4()</td><td>Forces the use of IPv4</td></tr>
+                            <tr><td>WithForceIpv6()</td><td>Forces the use of IPv6</td></tr>
+                            <tr><td>WithEnableFileUrls()</td><td>Allows downloading from file:// URLs</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Post-Processing Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithExtractAudio(string format, int quality = 5)</td><td>Extracts audio in the specified format and quality</td></tr>
+                            <tr><td>WithRemuxVideo(string format)</td><td>Remuxes video into the specified container (e.g. "mp4" or "mp4>mkv")</td></tr>
+                            <tr><td>WithRecodeVideo(string format, string? videoCodec = null, string? audioCodec = null)</td><td>Recodes video using the given format and optional codecs</td></tr>
+                            <tr><td>WithPostprocessorArgs(PostProcessors postprocessor, string args)</td><td>Passes arguments to a specific post-processor</td></tr>
+                            <tr><td>WithKeepVideo()</td><td>Keeps the original video file after post-processing</td></tr>
+                            <tr><td>WithNoPostOverwrites()</td><td>Prevents overwriting of post-processed files</td></tr>
+                            <tr><td>WithEmbedSubtitles()</td><td>Embeds subtitles into the video file</td></tr>
+                            <tr><td>WithEmbedThumbnail()</td><td>Embeds the thumbnail into the video file</td></tr>
+                            <tr><td>WithEmbedMetadata()</td><td>Embeds metadata into the video file</td></tr>
+                            <tr><td>WithEmbedChapters()</td><td>Embeds chapter information into the video file</td></tr>
+                            <tr><td>WithEmbedInfoJson()</td><td>Embeds the .info.json data into the video file</td></tr>
+                            <tr><td>WithNoEmbedInfoJson()</td><td>Disables embedding of .info.json data</td></tr>
+                            <tr><td>WithReplaceInMetadata(string field, string regex, string replacement)</td><td>Replaces text in a metadata field using regex</td></tr>
+                            <tr><td>WithConcatPlaylist(string policy = "always")</td><td>Concatenates playlist items according to the policy</td></tr>
+                            <tr><td>WithFFmpegLocation(string? ffmpegPath)</td><td>Sets the path to FFmpeg (post-processing overload)</td></tr>
+                            <tr><td>WithConvertSubtitles(string format = "none")</td><td>Converts subtitles to the specified format</td></tr>
+                            <tr><td>WithConvertThumbnails(string format = "jpg")</td><td>Converts thumbnails to the specified format</td></tr>
+                            <tr><td>WithSplitChapters()</td><td>Splits the video into separate files by chapters</td></tr>
+                            <tr><td>WithRemoveChapters(string regex)</td><td>Removes chapters matching the given regex</td></tr>
+                            <tr><td>WithForceKeyframesAtCuts()</td><td>Forces keyframes at cut points during processing</td></tr>
+                            <tr><td>WithUsePostProcessor(PostProcessors postProcessor, string? postProcessorArgs = null)</td><td>Enables a specific post-processor with optional arguments</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">SponsorBlock Options</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithSponsorblockMark(string categories = "all")</td><td>Marks SponsorBlock segments of the given categories</td></tr>
+                            <tr><td>WithSponsorblockRemove(string categories = "all")</td><td>Removes SponsorBlock segments of the given categories</td></tr>
+                            <tr><td>WithNoSponsorblock()</td><td>Disables SponsorBlock integration</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Subtitle / Thumbnail / Verbosity</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithSubtitles(string languages = "all", bool auto = false)</td><td>Downloads subtitles for the specified languages</td></tr>
+                            <tr><td>WithThumbnails(bool allSizes = false)</td><td>Downloads the video thumbnail</td></tr>
+                            <tr><td>WithQuiet()</td><td>Suppresses most output messages</td></tr>
+                            <tr><td>WithNoWarnings()</td><td>Suppresses warning messages</td></tr>
+                            <tr><td>WithSimulate()</td><td>Simulates the download without actually downloading</td></tr>
+                            <tr><td>WithNoSimulate()</td><td>Disables simulation mode</td></tr>
+                            <tr><td>WithSkipDownload()</td><td>Extracts information but skips the actual download</td></tr>
+                            <tr><td>WithVerbose()</td><td>Enables verbose output</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Video Selection</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithPlaylistItems(string items)</td><td>Downloads only the specified playlist items (e.g. "1,3-5")</td></tr>
+                            <tr><td>WithPlaylistItems(params int[] indices)</td><td>Downloads only the specified playlist indices</td></tr>
+                            <tr><td>WithPlaylistRange(int? start = null, int? stop = null, int? step = null)</td><td>Downloads a range of playlist items</td></tr>
+                            <tr><td>WithMinFileSize(string size)</td><td>Downloads only files larger than the specified size</td></tr>
+                            <tr><td>WithMaxFileSize(string size)</td><td>Downloads only files smaller than the specified size</td></tr>
+                            <tr><td>WithDate(string date)</td><td>Downloads only videos matching the exact date</td></tr>
+                            <tr><td>WithDateBefore(string date)</td><td>Downloads only videos uploaded before the date</td></tr>
+                            <tr><td>WithDateAfter(string date)</td><td>Downloads only videos uploaded after the date</td></tr>
+                            <tr><td>WithMatchFilter(string filterExpression)</td><td>Applies a custom match filter expression</td></tr>
+                            <tr><td>WithNoMatchFilters()</td><td>Disables all match filters</td></tr>
+                            <tr><td>WithBreakMatchFilter(string filter)</td><td>Stops downloading when the match filter is no longer satisfied</td></tr>
+                            <tr><td>WithNoBreakMatchFilters()</td><td>Disables break-on-match-filter behavior</td></tr>
+                            <tr><td>WithNoPlaylist()</td><td>Downloads only the single video, not the whole playlist</td></tr>
+                            <tr><td>WithYesPlaylist()</td><td>Forces downloading the whole playlist</td></tr>
+                            <tr><td>WithAgeLimit(int years)</td><td>Skips videos restricted by age limit</td></tr>
+                            <tr><td>WithDownloadArchive(string archivePath = "archive.txt")</td><td>Records downloaded videos in an archive file</td></tr>
+                            <tr><td>WithNoDownloadArchive()</td><td>Disables the download archive</td></tr>
+                            <tr><td>WithMaxDownloads(int count)</td><td>Limits the maximum number of videos to download</td></tr>
+                            <tr><td>WithBreakOnExisting()</td><td>Stops when an already-downloaded video is encountered</td></tr>
+                            <tr><td>WithNoBreakOnExisting()</td><td>Continues even if videos already exist in the archive</td></tr>
+                            <tr><td>WithBreakPerInput()</td><td>Applies break conditions per input URL</td></tr>
+                            <tr><td>WithNoBreakPerInput()</td><td>Applies break conditions across all inputs</td></tr>
+                            <tr><td>WithSkipPlaylistAfterErrors(int allowedFailures)</td><td>Skips the rest of the playlist after too many errors</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Video Format / Workarounds / Downloaders / Bonus</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>WithFormat(string format)</td><td>Selects the video/audio format using yt-dlp format syntax</td></tr>
+                            <tr><td>WithMergeOutputFormat(string format)</td><td>Sets the container format used when merging video and audio</td></tr>
+                            <tr><td>WithAddHeader(string header, string value)</td><td>Adds a custom HTTP header to all requests</td></tr>
+                            <tr><td>WithSleepInterval(double seconds, double? maxSeconds = null)</td><td>Sleeps between downloads (optionally with a random range)</td></tr>
+                            <tr><td>WithSleepSubtitles(double seconds)</td><td>Sleeps before downloading each subtitle</td></tr>
+                            <tr><td>WithAria2(int connections = 16)</td><td>Uses aria2c as the external downloader</td></tr>
+                            <tr><td>WithHlsNative()</td><td>Forces the use of the native HLS downloader</td></tr>
+                            <tr><td>WithFfmpegAsLiveDownloader(string? extraFfmpegArgs = null)</td><td>Uses FFmpeg as the live stream downloader</td></tr>
+                            <tr><td>With1440pOrBest()</td><td>Prefers 1440p or the best available quality</td></tr>
+                            <tr><td>With1080pOrBest()</td><td>Prefers 1080p or the best available quality</td></tr>
+                            <tr><td>With720pOrBest()</td><td>Prefers 720p or the best available quality</td></tr>
+                            <tr><td>WithMp4PostProcessingPreset()</td><td>Applies a preset that outputs MP4 with common post-processing</td></tr>
+                            <tr><td>WithMkvOutput()</td><td>Forces the final output container to MKV</td></tr>
+                            <tr><td>WithMaxHeight(int height)</td><td>Limits the maximum video height</td></tr>
+                            <tr><td>WithMaxHeightOrBest(int height)</td><td>Limits height but falls back to the best available if necessary</td></tr>
+                            <tr><td>WithBestVideoPlusBestAudio()</td><td>Selects the best video stream + best audio stream</td></tr>
+                            <tr><td>WithBestAudioOnly()</td><td>Downloads only the best available audio</td></tr>
+                            <tr><td>WithNo4k()</td><td>Excludes 4K (2160p) and higher resolutions</td></tr>
+                            <tr><td>WithBestM4aAudio()</td><td>Prefers the best M4A audio stream</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Advanced Options</h3>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>AddFlag(string flag)</td><td>Adds a raw command-line flag</td></tr>
+                            <tr><td>AddOption(string key, string value)</td><td>Adds a raw key-value option</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Customization -->
+            <section id="customization" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">⚙️ Customization</h2>
+                <p class="mb-4 text-slate-300">If you need specific arguments not covered by the fluent API:</p>
+                <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm text-emerald-300">
+<pre>ytdlp.AddFlag("--no-check-certificate")
+     .AddOption("--external-downloader", "aria2c")
+     .DownloadAsync(url);</pre>
+                </div>
+            </section>
+
+            <!-- Migration -->
+            <section id="migration" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">🔄 Migration Guide: Upgrading to v4</h2>
+                <p class="mb-6 text-slate-300">Version 4.0.0 is a major release that refines the API for better maintainability and removes the overhead of manual lifecycle management.</p>
+                <p class="mb-8 text-slate-400"><strong>Note:</strong> The primary breaking change is the removal of <code>IDisposable</code>/<code>IAsyncDisposable</code>. You no longer need to dispose of your <code>Ytdlp</code> instances.</p>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Key Changes at a Glance</h3>
+                <div class="mb-10 overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>v3.x</th>
+                                <th>v4.x</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Lifecycle</strong></td><td>Required <code>IAsyncDisposable</code></td><td><strong>No disposal required</strong></td></tr>
+                            <tr><td><strong>Architecture</strong></td><td>Immutable Fluent API</td><td>Immutable Fluent API (Refactored)</td></tr>
+                            <tr><td><strong>Core Process</strong></td><td><code>ProcessFactory</code></td><td><code>ProcessFactory</code> (Refactored)</td></tr>
+                            <tr><td><strong>Core Runner</strong></td><td><code>ProbeRunner</code> / <code>DownloadRunner</code></td><td><code>ProcessRunner</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="mb-4 text-xl font-semibold text-white">Side-by-Side Comparison</h3>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div>
+                        <p class="mb-2 font-semibold text-red-400">❌ Legacy API (v3)</p>
+                        <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-5 font-mono text-sm text-emerald-300">
+<pre>// Previously required disposal
+await using var ytdlp = new Ytdlp()
+    .WithFormat("best")
+    .WithOutputFolder("./downloads");
+
+await ytdlp.DownloadAsync(url);</pre>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-2 font-semibold text-emerald-400">✅ New API (v4)</p>
+                        <div class="overflow-auto rounded-2xl border border-slate-800 bg-slate-900 p-5 font-mono text-sm text-emerald-300">
+<pre>// Cleaner: No disposal required
+var ytdlp = new Ytdlp()
+    .WithFormat("best")
+    .WithOutputFolder("./downloads");
+
+await ytdlp.DownloadAsync(url);</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="mb-4 mt-10 text-xl font-semibold text-white">Migration Checklist</h3>
+                <ul class="list-disc space-y-2 pl-6 text-slate-300">
+                    <li>Remove <code>await using</code> or <code>using</code> — simply delete the disposal keywords where you instantiate <code>Ytdlp</code>.</li>
+                    <li>Verify Events — ensure event subscriptions are attached to the instance used for the specific execution.</li>
+                </ul>
+            </section>
+
+            <!-- Notes -->
+            <section id="notes" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">💡 Notes</h2>
+                <ul class="space-y-3 text-slate-300">
+                    <li><strong class="text-white">Dependencies:</strong> Ensure <code>yt-dlp</code> (and optionally <code>FFmpeg</code>/<code>FFprobe</code>) are available on your system path or point to their specific locations via <code>WithFFmpegLocation()</code>.</li>
+                    <li><strong class="text-white">Performance:</strong> <code>tuneProcess: true</code> (default) is enabled for download methods to optimize output buffer management.</li>
+                </ul>
+            </section>
+
+            <!-- License -->
+            <section id="license" class="mb-20">
+                <h2 class="title-font mb-8 text-3xl font-bold text-white">📜 License</h2>
+                <p class="text-slate-300">MIT License — see <a href="https://github.com/manusoft/Ytdlp.NET/blob/master/LICENSE.md" class="text-blue-400 hover:underline" target="_blank">LICENSE</a></p>
+                <p class="mt-4 text-slate-400"><strong>Author:</strong> Manojbabu (ManuHub)<br>
+                <strong>Repository:</strong> <a href="https://github.com/manusoft/Ytdlp.NET" class="text-blue-400 hover:underline" target="_blank">Ytdlp.NET</a></p>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-black py-12">
+        <div class="mx-auto max-w-7xl px-6 text-center">
+            <p class="text-slate-400">Made with ❤️ for the .NET community</p>
+            <p class="mt-4 text-xs text-slate-500">© <span id="year-text"></span> ManuHub • Ytdlp.NET</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year-text').textContent = new Date().getFullYear();
+
+        // Simple active link highlighting
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.sidebar-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 120) {
+                    current = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
