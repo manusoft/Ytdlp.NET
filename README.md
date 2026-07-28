@@ -10,9 +10,14 @@
    
 ---
 
-### ClipMate - MAUI.NET App - [Download](https://apps.microsoft.com/detail/9NTP1DH4CQ4X?hl=en&gl=IN&ocid=pdpshare)
+<img width="1126" height="793" alt="en-4" src="https://github.com/user-attachments/assets/8f526c93-5131-4ad3-8c06-a3645033f8b5" />
 
-<img width="986" height="693" alt="image" src="https://github.com/user-attachments/assets/39e09415-fa0c-4991-976f-8966e9c50c5b" />
+#### Download from the Microsoft Store
+ClipMate is available on the Microsoft Store.
+
+<a href="https://apps.microsoft.com/detail/9NTP1DH4CQ4X?referrer=appbadge&cid=gh-readme&mode=full" target="_blank"  rel="noopener noreferrer">
+	<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="OVD download badge for Microsoft Store"/>
+</a>
 
 ---
 
