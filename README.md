@@ -1,8 +1,9 @@
-![Static Badge](https://img.shields.io/badge/ytdlp.NET-red) ![NuGet Version](https://img.shields.io/nuget/v/ytdlp.net) ![NuGet Downloads](https://img.shields.io/nuget/dt/ytdlp.net)
-
-![Visitors](https://visitor-badge.laobi.icu/badge?page_id=manusoft/yt-dlp-wrapper)
-
 # Ytdlp.NET
+![CI](https://github.com/user-attachments/assets/c328efc7-e6b8-444b-8ccd-1336d88f1226)
+![Static Badge](https://img.shields.io/badge/Ytdlp.NET-red) 
+![NuGet Version](https://img.shields.io/nuget/v/ytdlp.net) 
+![NuGet Downloads](https://img.shields.io/nuget/dt/ytdlp.net) 
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=manusoft/yt-dlp-wrapper)
 
 ![icon](https://github.com/user-attachments/assets/2147c398-4e0f-43e2-99cb-32b34be7dc2f)
 
