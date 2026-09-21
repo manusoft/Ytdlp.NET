@@ -107,9 +107,9 @@ jobs:
         run: |
           $pkg = Get-ChildItem "./nupkg" -Filter "*.nupkg" | Select-Object -First 1
 
-          dotnet nuget push $pkg.FullName `            
-            --api-key ${{ steps.login.outputs.NUGET_API_KEY }} `
-            --source "https://api.nuget.org/v3/index.json" `
+          dotnet nuget push $pkg.FullName \           
+            --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
+            --source "https://api.nuget.org/v3/index.json" \
             --skip-duplicate
 
       # ───────────────────────────────
@@ -120,7 +120,7 @@ jobs:
         run: |
           $pkg = Get-ChildItem "./nupkg" -Filter "*.nupkg" | Select-Object -First 1
 
-          dotnet nuget push $pkg.FullName `
-            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" `
-            --api-key "${{ secrets.GITHUB_TOKEN }}" `
+          dotnet nuget push $pkg.FullName \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
             --skip-duplicate
