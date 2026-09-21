@@ -179,8 +179,7 @@ public sealed class ProcessFactory
 
         var fileInfo = new FileInfo(path);
 
-        // yt-dlp is NEVER tiny
-        if (fileInfo.Length < 1024)
-            throw new InvalidOperationException($"Invalid yt-dlp binary detected: {fileInfo.FullName} ({fileInfo.Length} bytes).");
+        if (fileInfo.Length == 0)
+            throw new InvalidOperationException($"Invalid yt-dlp binary detected (empty file): {fileInfo.FullName}");
     }
 }
