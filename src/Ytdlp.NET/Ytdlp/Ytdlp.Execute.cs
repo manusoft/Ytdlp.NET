@@ -31,17 +31,33 @@ public sealed partial class Ytdlp
         var sanitizedArgs = string.Join(" ", tokens.Select(EscapeArgument));
 
         var runner = CreateRunner();
+
+        // ── Wire runner events → Ytdlp public events ──────────────────────────
+        void OnErrorMessageHandler(object? s, string msg) => ErrorMessage?.Invoke(this, msg);
+        void OnCommandCompletedHandler(object? s, CommandCompletedEventArgs e) => CommandCompleted?.Invoke(this, e);
+
+        runner.ErrorReceived += OnErrorMessageHandler;
+        runner.CommandCompleted += OnCommandCompletedHandler;
+
         bool captureFullOutput = (onLineReceived == null);
 
-        return await runner.ExecuteAsync(
-            arguments: arguments, // Now we know it's "cleaner"
-            auth: _auth,
-            adobePass: _adobePass,
-            onLineReceived: onLineReceived,
-            ct: ct,
-            tuneProcess: tuneProcess,
-            captureFullOutput: captureFullOutput
-        );
+        try
+        {
+            return await runner.ExecuteAsync(
+                arguments: arguments, // Now we know it's "cleaner"
+                auth: _auth,
+                adobePass: _adobePass,
+                onLineReceived: onLineReceived,
+                ct: ct,
+                tuneProcess: tuneProcess,
+                captureFullOutput: captureFullOutput
+            );
+        }
+        finally
+        {
+            runner.ErrorReceived -= OnErrorMessageHandler;
+            runner.CommandCompleted -= OnCommandCompletedHandler;
+        }
     }
 
     /// <summary>

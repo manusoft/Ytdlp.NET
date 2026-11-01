@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -427,9 +428,18 @@ public sealed partial class Ytdlp
     /// </summary>
     private async Task<string?> RunProbeAsync(string arguments, CancellationToken ct = default, bool tuneProcess = true)
     {
+        var runner = CreateRunner();
+
+        // ── Wire runner events → Ytdlp public events ──────────────────────────
+        void OnErrorMessageHandler(object? s, string msg) => ErrorMessage?.Invoke(this, msg);
+        void OnCommandCompletedHandler(object? s, CommandCompletedEventArgs e) => CommandCompleted?.Invoke(this, e);
+
+        runner.ErrorReceived += OnErrorMessageHandler;
+        runner.CommandCompleted += OnCommandCompletedHandler;
+
         try
         {
-            var result = await CreateRunner().ExecuteAsync(
+            var result = await runner.ExecuteAsync(
                 arguments,
                 onLineReceived: null,
                 ct: ct,
@@ -449,6 +459,11 @@ public sealed partial class Ytdlp
         {
             _logger.Log(LogType.Error, $"Probe failed: {ex.Message}");
             return null;
+        }
+        finally
+        {
+            runner.ErrorReceived -= OnErrorMessageHandler;
+            runner.CommandCompleted -= OnCommandCompletedHandler;
         }
     }
 
