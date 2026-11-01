@@ -431,6 +431,8 @@ public sealed partial class Ytdlp
         {
             var result = await CreateRunner().ExecuteAsync(
                 arguments,
+                auth: _auth,
+                adobePass: _adobePass,
                 onLineReceived: null,
                 ct: ct,
                 tuneProcess: tuneProcess,
@@ -458,7 +460,10 @@ public sealed partial class Ytdlp
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL cannot be empty.", nameof(url));
 
+        var connectionArguments = string.Join(" ", BuildConnectionArguments().Select(EscapeArgument));
+
         var arguments =
+            (connectionArguments.Length > 0 ? connectionArguments + " " : string.Empty) +
             "--dump-single-json " +
             "--simulate " +
             "--skip-download " +

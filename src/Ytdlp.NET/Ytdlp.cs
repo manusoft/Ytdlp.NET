@@ -290,16 +290,9 @@ public sealed partial class Ytdlp
     /// </summary>
     /// <param name="url"></param>
     /// <returns></returns>
-    private List<string> BuildArguments(string url)
+    private List<string> BuildConnectionArguments()
     {
         var args = new List<string>();
-
-        bool usingAbsoluteOutput = !string.IsNullOrWhiteSpace(_outputFolder);
-
-        if (usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_tempFolder))
-        {
-            _logger.Log(LogType.Debug, "Temp folder ignored because absolute output template is used.");
-        }
 
         // Authentication
         if (_auth is not null)
@@ -322,6 +315,40 @@ public sealed partial class Ytdlp
 
             args.Add("--ap-password");
             args.Add("-"); // tells yt-dlp to read from stdin
+        }
+
+        // Options
+        if (_options.Length > 0)
+        {
+            foreach (var kv in _options)
+            {
+                args.Add(kv.Key);
+                if (kv.Value != null)
+                    args.Add(kv.Value);
+            }
+        }
+
+        // Special single-value options
+        if (_cookiesFile is not null) { args.Add("--cookies"); args.Add(_cookiesFile); }
+        if (_cookiesFromBrowser is not null) { args.Add("--cookies-from-browser"); args.Add(_cookiesFromBrowser); }
+        if (_proxy is not null) { args.Add("--proxy"); args.Add(_proxy); }
+        if (_ffmpegLocation is not null) { args.Add("--ffmpeg-location"); args.Add(_ffmpegLocation); }
+        if (_sponsorblockMark is not null) { args.Add("--sponsorblock-mark"); args.Add(_sponsorblockMark); }
+        if (_sponsorblockRemove is not null) { args.Add("--sponsorblock-remove"); args.Add(_sponsorblockRemove); }
+        if (_sponsorblockChapterTitle is not null) { args.Add("--sponsorblock-chapter-title"); args.Add(_sponsorblockChapterTitle); }
+
+        return args;
+    }
+
+    private List<string> BuildArguments(string url)
+    {
+        var args = BuildConnectionArguments();
+
+        bool usingAbsoluteOutput = !string.IsNullOrWhiteSpace(_outputFolder);
+
+        if (usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_tempFolder))
+        {
+            _logger.Log(LogType.Debug, "Temp folder ignored because absolute output template is used.");
         }
 
         // temp folder
@@ -371,26 +398,6 @@ public sealed partial class Ytdlp
         // Flags
         if (_flags.Length > 0)
             args.AddRange(_flags);
-
-        // Options
-        if (_options.Length > 0)
-        {
-            foreach (var kv in _options)
-            {
-                args.Add(kv.Key);
-                if (kv.Value != null)
-                    args.Add(kv.Value);
-            }
-        }
-
-        // Special single-value options
-        if (_cookiesFile is not null) { args.Add("--cookies"); args.Add(_cookiesFile); }
-        if (_cookiesFromBrowser is not null) { args.Add("--cookies-from-browser"); args.Add(_cookiesFromBrowser); }
-        if (_proxy is not null) { args.Add("--proxy"); args.Add(_proxy); }
-        if (_ffmpegLocation is not null) { args.Add("--ffmpeg-location"); args.Add(_ffmpegLocation); }
-        if (_sponsorblockMark is not null) { args.Add("--sponsorblock-mark"); args.Add(_sponsorblockMark); }
-        if (_sponsorblockRemove is not null) { args.Add("--sponsorblock-remove"); args.Add(_sponsorblockRemove); }
-        if (_sponsorblockChapterTitle is not null) { args.Add("--sponsorblock-chapter-title"); args.Add(_sponsorblockChapterTitle); }
 
         // URL last
         args.Add(url);
