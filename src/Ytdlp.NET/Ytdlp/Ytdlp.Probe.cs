@@ -429,6 +429,8 @@ public sealed partial class Ytdlp
     {
         try
         {
+            ct.ThrowIfCancellationRequested();
+
             var result = await CreateRunner().ExecuteAsync(
                 arguments,
                 onLineReceived: null,
