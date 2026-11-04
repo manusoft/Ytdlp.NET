@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -223,7 +222,9 @@ public sealed partial class Ytdlp
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("Video URL cannot be empty.", nameof(url));
 
-        var output = await RunProbeAsync($"-F {Quote(url)}", ct, tuneProcess);
+        var probeFlags = new[] { "-F" };
+        var output = await RunProbeWithOptionsAsync(url, probeFlags, ct, tuneProcess);
+
         return string.IsNullOrWhiteSpace(output)
             ? new List<Format>()
             : ParseFormats(output);
@@ -260,11 +261,17 @@ public sealed partial class Ytdlp
                 "%(description).500s"
             };
 
-            var arguments =
-                $"--print \"{string.Join(separator, fields)}\" " +
-                $"--skip-download --no-playlist --quiet {Quote(url)}";
+            var printFormat = string.Join(separator, fields);
 
-            var output = await RunProbeAsync(arguments, ct, tuneProcess);
+            var probeFlags = new[]
+            {
+                "--print", printFormat,
+                "--skip-download",
+                "--no-playlist",
+                "--quiet"
+            };
+
+            var output = await RunProbeWithOptionsAsync(url, probeFlags, ct, tuneProcess);
             if (string.IsNullOrWhiteSpace(output)) return null;
 
             var parts = output.Trim().Split(separator);
@@ -320,11 +327,16 @@ public sealed partial class Ytdlp
         {
             var separator = $"|||{Guid.NewGuid():N}|||";
             var printFormat = string.Join(separator, fieldList.Select(f => $"%({f})s"));
-            var arguments =
-                $"--print \"{printFormat}\" " +
-                $"--skip-download --no-playlist --quiet {Quote(url)}";
 
-            var rawOutput = await RunProbeAsync(arguments, ct, tuneProcess);
+            var probeFlags = new[]
+            {
+                "--print", printFormat,
+                "--skip-download",
+                "--no-playlist",
+                "--quiet"
+            };
+
+            var rawOutput = await RunProbeWithOptionsAsync(url, probeFlags, ct, tuneProcess);
             if (string.IsNullOrWhiteSpace(rawOutput)) return null;
 
             var parts = rawOutput.Trim().Split(separator);
@@ -443,6 +455,8 @@ public sealed partial class Ytdlp
           
             var result = await runner.ExecuteAsync(
                 arguments,
+                auth: _auth,
+                adobePass: _adobePass,
                 onLineReceived: null,
                 ct: ct,
                 tuneProcess: tuneProcess,
@@ -475,15 +489,33 @@ public sealed partial class Ytdlp
         if (string.IsNullOrWhiteSpace(url))
             throw new ArgumentException("URL cannot be empty.", nameof(url));
 
-        var arguments =
-            "--dump-single-json " +
-            "--simulate " +
-            "--skip-download " +
-            (flat ? "--flat-playlist " : "") +
-            "--lazy-playlist " +
-            "--quiet " +
-            "--no-warnings " +
-            $"{Quote(url)}";
+        var probeFlags = new List<string>
+        {
+            "--dump-single-json",
+            "--simulate",
+            "--skip-download"
+        };
+
+        if (flat)
+        {
+            probeFlags.Add("--flat-playlist");
+            probeFlags.Add("--lazy-playlist");
+        }
+
+        probeFlags.Add("--quiet");
+        probeFlags.Add("--no-warnings");
+
+        return await RunProbeWithOptionsAsync(url, probeFlags, ct, tuneProcess);
+    }
+
+    private async Task<string?> RunProbeWithOptionsAsync(string url, IEnumerable<string> probeFlags, CancellationToken ct, bool tuneProcess)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("URL cannot be empty.", nameof(url));
+
+        var argsList = BuildProbeArguments(url, probeFlags);
+
+        var arguments = string.Join(" ", argsList.Select(EscapeArgument));
 
         return await RunProbeAsync(arguments, ct, tuneProcess);
     }
@@ -523,7 +555,7 @@ public sealed partial class Ytdlp
         var subtitles = new List<SubtitleTrack>();
         var lines = output.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
-        var rowRegex = new System.Text.RegularExpressions.Regex(@"^(\S+)\s+(.+?)\s{2,}([a-z0-9, ]+)$");
+        var rowRegex = new Regex(@"^(\S+)\s+(.+?)\s{2,}([a-z0-9, ]+)$");
 
         bool foundStartPoint = false;
         bool foundHeader = false;

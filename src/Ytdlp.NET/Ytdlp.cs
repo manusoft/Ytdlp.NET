@@ -398,6 +398,65 @@ public sealed partial class Ytdlp
         return args;
     }
 
+    /// <summary>
+    /// Builds the command-line arguments for a probe operation (metadata extraction) for a given URL based on the current configuration.
+    /// </summary>
+    /// <param name="url"></param>
+    /// <param name="probeFlags"></param>
+    /// <returns></returns>
+    private List<string> BuildProbeArguments(string url, IEnumerable<string> probeFlags)
+    {
+        var args = new List<string>();
+
+        // Authentication (Needed for protected or members-only videos during probe/metadata extraction)
+        if (_auth is not null)
+        {
+            args.Add("--username");
+            args.Add(_auth.Username);
+            args.Add("--password");
+            args.Add("-"); // tells yt-dlp to read from stdin
+        }
+
+        // Adobe Pass authentication
+        if (_adobePass is not null)
+        {
+            args.Add("--ap-mso");
+            args.Add(_adobePass.Mso);
+            args.Add("--ap-username");
+            args.Add(_adobePass.Username);
+            args.Add("--ap-password");
+            args.Add("-");
+        }
+
+        // Custom user flags (Safe to include for probes)
+        if (_flags.Length > 0)
+            args.AddRange(_flags);
+
+        // Custom user options (Safe to include for probes, e.g., proxies, cookies, user-agent)
+        if (_options.Length > 0)
+        {
+            foreach (var kv in _options)
+            {
+                args.Add(kv.Key);
+                if (kv.Value != null)
+                    args.Add(kv.Value);
+            }
+        }
+
+        // Global utility settings
+        if (_cookiesFile is not null) { args.Add("--cookies"); args.Add(_cookiesFile); }
+        if (_cookiesFromBrowser is not null) { args.Add("--cookies-from-browser"); args.Add(_cookiesFromBrowser); }
+        if (_proxy is not null) { args.Add("--proxy"); args.Add(_proxy); }
+
+        // Append the specific probe flags requested by the caller (e.g. --dump-single-json, -F, --list-subs)
+        args.AddRange(probeFlags);
+
+        // URL last
+        args.Add(url);
+
+        return args;
+    }
+
     private static string Quote(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return "\"\"";

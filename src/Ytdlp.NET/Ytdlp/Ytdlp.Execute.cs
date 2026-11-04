@@ -41,10 +41,10 @@ public sealed partial class Ytdlp
         runner.ErrorReceived += OnErrorMessageHandler;
         runner.CommandCompleted += OnCommandCompletedHandler;
 
-        bool captureFullOutput = (onLineReceived == null);
-
         try
         {
+            bool captureFullOutput = (onLineReceived == null);
+
             return await runner.ExecuteAsync(
                 arguments: arguments, // Now we know it's "cleaner"
                 auth: _auth,

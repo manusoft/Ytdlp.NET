@@ -4,11 +4,9 @@
   </Folder>
   <Folder Name="/archives/" />
   <Folder Name="/archives/feature/">
-    <Project Path="archives/feature/Ytdlp.NET.vNext.Console/Ytdlp.NET.vNext.Console.csproj" />
     <Project Path="archives/feature/Ytdlp.NET.vNext/Ytdlp.NET.vNext.csproj" />
   </Folder>
   <Folder Name="/archives/legacy/">
-    <Project Path="archives/legacy/Ytdlp.Wrapper.Console/Ytdlp.Wrapper.Console.csproj" />
     <Project Path="archives/legacy/Ytdlp.Wrapper/Ytdlp.Wrapper.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
