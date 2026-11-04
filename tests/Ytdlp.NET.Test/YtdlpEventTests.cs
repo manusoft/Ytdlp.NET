@@ -24,7 +24,7 @@ public class YtdlpEventTests
         {
             try
             {
-                File.WriteAllText(_fullFakePath, "");
+                File.WriteAllText(_fullFakePath, "fake yt-dlp executable");
             }
             catch (IOException)
             {
