@@ -19,6 +19,8 @@ public sealed partial class Ytdlp
                                                      CancellationToken ct = default,
                                                      bool tuneProcess = true)
     {
+        ct.ThrowIfCancellationRequested();
+
         if (string.IsNullOrWhiteSpace(arguments))
             throw new ArgumentException("Arguments cannot be null or empty.", nameof(arguments));
 

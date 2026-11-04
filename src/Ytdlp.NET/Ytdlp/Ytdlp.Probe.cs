@@ -427,7 +427,7 @@ public sealed partial class Ytdlp
     /// Returns <see langword="null"/> if the process fails, is cancelled, or produces no output.
     /// </summary>
     private async Task<string?> RunProbeAsync(string arguments, CancellationToken ct = default, bool tuneProcess = true)
-    {
+    {            
         var runner = CreateRunner();
 
         // ── Wire runner events → Ytdlp public events ──────────────────────────
@@ -439,6 +439,8 @@ public sealed partial class Ytdlp
 
         try
         {
+            ct.ThrowIfCancellationRequested();
+          
             var result = await runner.ExecuteAsync(
                 arguments,
                 onLineReceived: null,
