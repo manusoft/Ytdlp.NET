@@ -45,7 +45,8 @@ ClipMate is available on the Microsoft Store.
 
 ## 🚀 New in v4.x.x
 
-- **Livestream Progress** - Implements livestream progress support.
+- **Probe Arguments** — Added support for passing custom yt-dlp arguments to metadata probing operations, providing greater flexibility and consistency with download operations.
+- **Livestream Progress** — Implements livestream progress support, including elapsed time and optional fragment information, without ETA or completion status.
 - **Source-generated JSON** — Switched to `System.Text.Json` source generation via `YtdlpJsonContext` for faster metadata deserialization and full Native AOT support
 - **Expanded Fluent API** — Dozens of new methods covering network, playlist, error handling, retry, fragment, and downloader options
 - **Partial Class Refactor** — Split the large fluent builder into logical partial classes (General, Authentication, Download, etc.) for better maintainability and IntelliSense
