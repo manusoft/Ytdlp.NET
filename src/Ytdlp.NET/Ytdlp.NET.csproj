@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net11.0;net10.0;net8.0</TargetFrameworks>
 		
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -16,7 +16,7 @@
 		<BuildYear>$([System.DateTime]::UtcNow.Year)</BuildYear>
 		<BuildDay>$([System.DateTime]::UtcNow.DayOfYear)</BuildDay>		
 
-		<Version>4.3.0</Version>
+		<Version>4.4.0</Version>
 		<FileVersion>$(Version)</FileVersion>
 
 		<InformationalVersion>$(Version)+build.$(BuildYear).$(BuildDay)</InformationalVersion>	
@@ -42,9 +42,11 @@
 			Ytdlp.NET
 
 			✨ Features
+			- Add yt-dlp probe argument support
+			Allow custom arguments to be passed to metadata probing operations, providing greater flexibility for authentication, extraction, and other yt-dlp options.
 			- Add yt-dlp livestream progress support
-			Parse and report livestream progress with elapsed time and optional fragment information. 
-			Add live-progress handling without ETA or completion status, and bump the version to 4.3.0.
+			Parse and report livestream progress with elapsed time and optional fragment information.
+			Add live-progress handling without ETA or completion status.
 
 			🛠 Notes
 			- Companion packages recommended: ManuHub.Ytdlp, ManuHub.FFmpeg, ManuHub.FFprobe, ManuHub.Deno.

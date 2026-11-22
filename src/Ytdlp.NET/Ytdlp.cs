@@ -301,7 +301,7 @@ public sealed partial class Ytdlp
             _logger.Log(LogType.Debug, "Temp folder ignored because absolute output template is used.");
         }
 
-        // Authentication
+        // Internal authentication
         if (_auth is not null)
         {
             args.Add("--username");
@@ -324,14 +324,14 @@ public sealed partial class Ytdlp
             args.Add("-"); // tells yt-dlp to read from stdin
         }
 
-        // temp folder
+        // Temp folder
         if (!usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_tempFolder))
         {
             args.Add("--paths");
             args.Add($"temp:{_tempFolder}");
         }
 
-        // home folder only if NOT using absolute output
+        // Home folder only if NOT using absolute output
         if (!usingAbsoluteOutput && !string.IsNullOrWhiteSpace(_homeFolder))
         {
             args.Add("--paths");
@@ -383,7 +383,7 @@ public sealed partial class Ytdlp
             }
         }
 
-        // Special single-value options
+        // Global settings
         if (_cookiesFile is not null) { args.Add("--cookies"); args.Add(_cookiesFile); }
         if (_cookiesFromBrowser is not null) { args.Add("--cookies-from-browser"); args.Add(_cookiesFromBrowser); }
         if (_proxy is not null) { args.Add("--proxy"); args.Add(_proxy); }
@@ -392,7 +392,7 @@ public sealed partial class Ytdlp
         if (_sponsorblockRemove is not null) { args.Add("--sponsorblock-remove"); args.Add(_sponsorblockRemove); }
         if (_sponsorblockChapterTitle is not null) { args.Add("--sponsorblock-chapter-title"); args.Add(_sponsorblockChapterTitle); }
 
-        // URL last
+        // URL 
         args.Add(url);
 
         return args;
@@ -408,7 +408,7 @@ public sealed partial class Ytdlp
     {
         var args = new List<string>();
 
-        // Authentication (Needed for protected or members-only videos during probe/metadata extraction)
+        // Internal authentication
         if (_auth is not null)
         {
             args.Add("--username");
@@ -428,11 +428,11 @@ public sealed partial class Ytdlp
             args.Add("-");
         }
 
-        // Custom user flags (Safe to include for probes)
+        // Custom flags
         if (_flags.Length > 0)
             args.AddRange(_flags);
 
-        // Custom user options (Safe to include for probes, e.g., proxies, cookies, user-agent)
+        // Custom options
         if (_options.Length > 0)
         {
             foreach (var kv in _options)
@@ -443,15 +443,15 @@ public sealed partial class Ytdlp
             }
         }
 
-        // Global utility settings
+        // Global settings
         if (_cookiesFile is not null) { args.Add("--cookies"); args.Add(_cookiesFile); }
         if (_cookiesFromBrowser is not null) { args.Add("--cookies-from-browser"); args.Add(_cookiesFromBrowser); }
         if (_proxy is not null) { args.Add("--proxy"); args.Add(_proxy); }
 
-        // Append the specific probe flags requested by the caller (e.g. --dump-single-json, -F, --list-subs)
+        // Operation-specific flags
         args.AddRange(probeFlags);
 
-        // URL last
+        // URL
         args.Add(url);
 
         return args;
